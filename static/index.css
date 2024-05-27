@@ -1,0 +1,52 @@
+/* styles.css */
+
+/* General Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 20px;
+    color: #ffffff;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 20px auto;
+    max-width: 600px;
+}
+
+li {
+    margin: 10px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
+}
+
+a {
+    display: block;
+    padding: 15px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 18px;
+    transition: background-color 0.3s ease;
+}
+
+a:hover {
+    background-color: #333333;
+    text-decoration: none;
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+    ul {
+        padding: 0 20px;
+    }
+}

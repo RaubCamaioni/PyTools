@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Converter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="/static/converter.css">
+</head>
+<body class="dark-mode">
+    
+    <a href="/" class="return-home"><i class="fas fa-home"></i></a>
+    
+    <div id="container">
+        <div class="title">{{ converter_name }}</div>
+        <div class="description">{{ description }}</div>
+        
+        <div id="code-area">
+            <pre><code class="language-python">{{ code }}</code></pre>
+        </div>
+
+        <div id="drop-area">
+            <form id="upload-form" class="my-form" action="/convert/{{ endpoint }}" method="post" enctype="multipart/form-data">
+                <p>Drag, Drop, Click</p>
+                <input type="file" id="fileElem" name="files" multiple onchange="handleFiles(this.files)">
+            </form>
+            <progress id="progress-bar" max="100" value="0"></progress>
+            <div id="gallery"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const progressBar = document.getElementById('progress-bar');
+        const uploadForm = document.getElementById('upload-form');
+        const fileElem = document.getElementById('fileElem');
+        
+        ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false)
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+
+        ;['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => highlight(dropArea), false)
+        });
+
+        ;['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => unhighlight(dropArea), false)
+        });
+
+        function highlight(e) {
+            e.classList.add('highlight')
+        }
+
+        function unhighlight(e) {
+            e.classList.remove('highlight')
+        }
+
+        dropArea.addEventListener('drop', handleDrop, false);
+        dropArea.addEventListener('click', () => fileElem.click());
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer
+            const files = dt.files
+
+            handleFiles(files)
+        }
+
+        function handleFiles(files) {
+            files = [...files]
+            initializeProgress(files.length) // Initialize the progress bar
+            files.forEach(uploadFile)
+        }
+
+        function initializeProgress(numFiles) {
+            progressBar.value = 0
+            uploadForm.filesDone = 0
+            uploadForm.filesToDo = numFiles
+        }
+
+        function progressDone() {
+            uploadForm.filesDone++
+            progressBar.value = uploadForm.filesDone / uploadForm.filesToDo * 100
+        }
+
+        function uploadFile(file) {
+            const url = uploadForm.action
+            const formData = new FormData()
+            formData.append('files', file)
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+
+                if (!response.ok) {
+                    throw new Error('Error converting file');
+                }
+
+                const contentDisposition = response.headers.get('Content-Disposition')
+                let filename = 'download.zip'
+
+                if (contentDisposition && contentDisposition.indexOf('attachment') !== -1) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch.length === 2) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                return response.blob().then(blob => {
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.style.display = 'none'
+                    a.href = url
+                    a.download = filename
+                    document.body.appendChild(a)
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                    progressDone()
+                })
+            })
+            .catch(() => { progressDone() })
+        }
+    </script>
+</body>
+</html>

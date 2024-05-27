@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyConverter</title>
+    <link rel="stylesheet" href="/static/index.css">
+</head>
+<body>
+
+    <h1>PyConverter</h1>
+    <ul id="converter-list">
+        <!-- Populated by converter files. -->
+    </ul>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch("/converters")
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById("converter-list");
+                    data.converters.forEach(converter => {
+                        const [name, endpoint] = converter;
+                        const listItem = document.createElement("li");
+                        const link = document.createElement("a");
+                        link.href = `/convert/${endpoint}`;
+                        link.textContent = name;
+                        listItem.appendChild(link);
+                        list.appendChild(listItem);
+                    });
+                });
+        });
+    </script>
+</body>
+</html>

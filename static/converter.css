@@ -1,0 +1,134 @@
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+#container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #1e1e1e;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    font-size: 2em;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.description {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    text-align: left;
+    color: #bbbbbb;
+}
+
+#code-area {
+    background-color: #2d2d2d;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+#code-area code {
+    color: #c5c5c5;
+}
+
+#drop-area {
+    background-color: #333;
+    border: 2px dashed #555;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    transition: border 0.3s ease, transform 0.3s ease;
+}
+
+#drop-area:hover {
+    border-color: #888;
+    transform: scale(1.005);
+}
+
+#drop-area.highlight {
+    border-color: #888;
+}
+
+#upload-form p {
+    margin: 0;
+    font-size: 18px;
+    color: #bbb;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+progress {
+    width: 100%;
+    margin-top: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+progress::-webkit-progress-bar {
+    background-color: #444;
+    border-radius: 5px;
+}
+
+progress::-webkit-progress-value {
+    background-color: #1e90ff;
+    border-radius: 5px;
+}
+
+#gallery {
+    margin-top: 20px;
+}
+
+.return-home {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #696969;
+    font-size: 24px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.return-home:hover {
+    color: #ffffff;
+}
+
+/* PrismJS specific styles for dark mode */
+code[class*="language-"],
+pre[class*="language-"] {
+    color: white;
+    background: none;
+    text-shadow: none;
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    direction: ltr;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    line-height: 1.5;
+    tab-size: 4;
+    hyphens: none;
+}
+
+pre[class*="language-"] {
+    padding: 1em;
+    margin: 0.5em 0;
+    overflow: auto;
+    border-radius: 0.3em;
+}
+
+:not(pre) > code[class*="language-"] {
+    padding: 0.1em;
+    border-radius: 0.3em;
+    white-space: normal;
+}
