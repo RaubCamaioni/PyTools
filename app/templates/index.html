@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PyConverter</title>
-    <link rel="stylesheet" href="/static/index.css">
+    <link rel="stylesheet" href="{{ base_url }}/static/index.css">
 </head>
 <body>
 
     <h1>PyConverter</h1>
     <ul id="converter-list">
-        <!-- Populated by converter files. -->
-    </ul>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            fetch("/converters")
+            fetch("{{ base_url }}/converters")
                 .then(response => response.json())
                 .then(data => {
                     const list = document.getElementById("converter-list");
@@ -23,7 +21,7 @@
                         const [name, endpoint] = converter;
                         const listItem = document.createElement("li");
                         const link = document.createElement("a");
-                        link.href = `/convert/${endpoint}`;
+                        link.href = `{{ base_url }}/convert/${endpoint}`;
                         link.textContent = name;
                         listItem.appendChild(link);
                         list.appendChild(listItem);

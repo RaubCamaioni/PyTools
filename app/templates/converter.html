@@ -6,7 +6,7 @@
     <title>File Converter</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
-    <link rel="stylesheet" href="/static/converter.css">
+    <link rel="stylesheet" href="{{ base_url }}/static/converter.css">
 </head>
 <body class="dark-mode">
     
@@ -21,7 +21,7 @@
         </div>
 
         <div id="drop-area">
-            <form id="upload-form" class="my-form" action="/convert/{{ endpoint }}" method="post" enctype="multipart/form-data">
+            <form id="upload-form" class="my-form" action="{{ base_url }}/convert/{{ endpoint }}" method="post" enctype="multipart/form-data">
                 <p>Drag, Drop, Click</p>
                 <input type="file" id="fileElem" name="files" multiple onchange="handleFiles(this.files)">
             </form>
