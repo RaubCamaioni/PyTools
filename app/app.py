@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from types import ModuleType
 from pathlib import Path
 import importlib.util
+import traceback
 import zipfile
 import inspect
 import json
@@ -149,7 +150,7 @@ async def convert_file(
                     str(temp_file), str(Path(tmpdir) / f"converted_{temp_file.name}")
                 )
             except Exception as e:
-                print(e)
+                traceback.print_exc()
                 raise HTTPException(status_code=500, detail=str(e))
 
         with NamedTemporaryFile(delete=False, suffix="zip") as tempzip:

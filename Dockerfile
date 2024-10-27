@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir \
     fastapi[standard] \
     opencv-python \
-    numpy \
     pandas \
-    scipy
+    numpy \
+    scipy \
+    pyav
 
 COPY /app /app
 

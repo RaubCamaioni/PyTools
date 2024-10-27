@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir \
     opencv-python \
     numpy \
     pandas \
-    scipy
+    scipy \
+    pyav
 
 ARG USERNAME=vscode
 ARG USER_UID=1000
