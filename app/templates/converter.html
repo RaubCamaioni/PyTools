@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Converter</title>
+    <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="{{ base_url }}/static/converter.css?t={{ time }}">
@@ -23,26 +24,13 @@
             <div class="code-area">
                 <pre><code class="language-python">{{ code }}</code></pre>
             </div>
-            <form id="master-form" action="/submit" method="post" enctype="multipart/form-data">
-
-                <div class="form-group">
-                    <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="age">Age:</label>
-                    <input type="number" id="age" name="age" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="price">Parent:</label>
-                    <input type="number" id="price" name="price" step="0.01" required>
-                </div>
-
+            <form id="master-form" hx-post="{{ endpoint }}" hx-target="#result" hx-swap="innerHTML">
+                {{ form_groups|safe }}
                 <input type="submit" value="Submit">
             </form>
         </div>
+
+        <div id="result"></div>
 
     </div>
 

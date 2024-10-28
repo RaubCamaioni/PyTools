@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from starlette.background import BackgroundTasks
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from typing import List, Generator, Tuple, Any, Callable
+from typing import List, Generator, Tuple, Any, Callable, Dict
 from dataclasses import dataclass, fields
 from types import ModuleType
 from pathlib import Path
@@ -30,13 +30,26 @@ class ConverterModule:
     endpoint: str
     module: ModuleType
     func: Callable
+    form: str
+    types: Dict[str, type]
+
+
+def form_group(name: str, type: str):
+    form = "\n".join(
+        [
+            '<div class="form-group">',
+            f'	<label for="{name}">{name}:</label>',
+            f'	<input type="{type}" id="{name}" name="{name}" required>',
+            "</div>",
+        ]
+    )
+    return form
 
 
 def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
     converter_modules: dict[str, ConverterModule] = {}
 
     for converter_file in converters_folder.glob("*.py"):
-
         module_name = converter_file.stem
         spec = importlib.util.spec_from_file_location(module_name, converter_file)
         module = importlib.util.module_from_spec(spec)
@@ -51,13 +64,26 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
 
         func = get_converter_function(module)
 
-        func(1, 1)
-
         signature = inspect.signature(func)
+
+        forms = []
+        types = {}
         for param in signature.parameters.values():
             param_name = param.name
-            param_type = param.annotation if param.annotation is not inspect.Parameter.empty else 'No type hint'
-            print(f'Parameter: {param_name}, Type: {param_type}')
+            param_type = (
+                param.annotation
+                if param.annotation is not inspect.Parameter.empty
+                else "No type hint"
+            )
+            types[param_name] = param_type
+            form_type = {
+                "str": "text",
+                "int": "number",
+                "float": "number",
+            }
+            forms.append(
+                form_group(param_name, form_type.get(param_type.__name__, "text"))
+            )
 
         converter_module = ConverterModule(
             name=meta_data["name"],
@@ -66,6 +92,8 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
             endpoint=module_name,
             module=module,
             func=func,
+            form="\n".join(forms),
+            types=types,
         )
 
         print(f"loaded converter: {module_name}")
@@ -73,13 +101,15 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
 
     return converter_modules
 
+
 def get_converter_function(module: ModuleType) -> str:
     functions = (
         name for name, obj in inspect.getmembers(module) if inspect.isfunction(obj)
     )
     for name in functions:
-        if name.startswith("convert"):    
+        if name.startswith("convert"):
             return getattr(module, name, None)
+
 
 converter_modules = load_converter_files(Path(__file__).parent / "converters")
 templates = Jinja2Templates(directory="templates")
@@ -108,7 +138,6 @@ async def get_converters():
 
 @router.get("/convert/{converter_name}", response_class=HTMLResponse)
 async def convert_page(request: Request, converter_name: str):
-
     if converter_name not in converter_modules:
         raise HTTPException(status_code=404, detail="Converter not found")
 
@@ -122,12 +151,11 @@ async def convert_page(request: Request, converter_name: str):
             "converter_name": converter.name,
             "description": converter.description,
             "code": converter.code,
+            "form_groups": converter.form,
             "time": time.time(),
             "base_url": BASE_URL,
         },
     )
-
-
 
 
 def TempFileGenerator(files: List[UploadFile]) -> Generator[Path, None, None]:
@@ -141,11 +169,10 @@ def TempFileGenerator(files: List[UploadFile]) -> Generator[Path, None, None]:
 
 @router.post("/convert/{converter_name}")
 async def convert_file(
+    request: Request,
     converter_name: str,
     background_tasks: BackgroundTasks,
-    files: List[UploadFile] = File(...),
 ):
-
     if converter_name not in converter_modules:
         raise HTTPException(status_code=404, detail="Converter module not found")
     module = converter_modules[converter_name]
@@ -154,29 +181,17 @@ async def convert_file(
     if not callable(converter_func):
         raise HTTPException(status_code=500, detail="Invalid converter function")
 
-    with TemporaryDirectory() as tmpdir:
+    form_data = await request.form()
+    kwargs = {}
+    for key, value in form_data.items():
+        kwargs[key] = module.types[key](value)
 
-        for temp_file in TempFileGenerator(files):
-            try:
-                converter_func(
-                    str(temp_file), str(Path(tmpdir) / f"converted_{temp_file.name}")
-                )
-            except Exception as e:
-                traceback.print_exc()
-                raise HTTPException(status_code=500, detail=str(e))
+    print(converter_name)
+    for key, val in kwargs.items():
+        print(f"  {key}: {val}")
+    print(f"  result: {converter_func(**kwargs)}")
 
-        with NamedTemporaryFile(delete=False, suffix="zip") as tempzip:
-            background_tasks.add_task(lambda path: os.unlink(path), tempzip.name)
-            with zipfile.ZipFile(tempzip.name, "w", zipfile.ZIP_DEFLATED) as zip:
-                for temp_path in Path(tmpdir).rglob("*"):
-                    if temp_path.is_file():
-                        zip.write(temp_path, arcname=temp_path.relative_to(tmpdir))
-
-    return FileResponse(
-        tempzip.name,
-        media_type="application/x-zip-compressed",
-        filename="converted_files.zip",
-    )
+    return "<div>Hello World!</div>"
 
 
 app.include_router(router)
