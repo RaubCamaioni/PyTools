@@ -51,6 +51,8 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
 
         func = get_converter_function(module)
 
+        func(1, 1)
+
         signature = inspect.signature(func)
         for param in signature.parameters.values():
             param_name = param.name

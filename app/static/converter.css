@@ -58,10 +58,57 @@ body.dark-mode {
     overflow-x: auto;
 }
 
-.master-form {
+#master-form {
     width: 40% !important;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+}
+
+form {
+    max-width: 400px;
+    margin: auto;
+    padding: 10px;
+    background-color: #2d2d2d;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 0px; 
+    display: flex;
+    flex-direction: row;
+}
+
+label {
+    margin-bottom: 1px;
+    margin-right: 10px;
+    white-space: nowrap;
+    line-height: 2;
+    min-width: 70px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="file"],
+input[type="submit"] {
+    height: 2.5em;        /* Set a specific height for input fields */
+    padding: 0 10px;      /* Horizontal padding */
+    border: 1px solid #ddd; 
+    border-radius: 5px;
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    flex-grow: 1;          /* Allow the input to take the remaining space */
+    background-color: #202020;
+    color: white;
+}
+input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+input[type="submit"]:hover {
+    background-color: #0056b3;
 }
 
 #drop-area {
