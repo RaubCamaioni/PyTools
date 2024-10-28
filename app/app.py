@@ -4,8 +4,8 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from starlette.background import BackgroundTasks
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from typing import List, Generator, Tuple
-from dataclasses import dataclass
+from typing import List, Generator, Tuple, Any, Callable
+from dataclasses import dataclass, fields
 from types import ModuleType
 from pathlib import Path
 import importlib.util
@@ -29,6 +29,7 @@ class ConverterModule:
     code: str
     endpoint: str
     module: ModuleType
+    func: Callable
 
 
 def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
@@ -48,12 +49,21 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
         with open(converter_file, "r") as f:
             code = f.read().strip()
 
+        func = get_converter_function(module)
+
+        signature = inspect.signature(func)
+        for param in signature.parameters.values():
+            param_name = param.name
+            param_type = param.annotation if param.annotation is not inspect.Parameter.empty else 'No type hint'
+            print(f'Parameter: {param_name}, Type: {param_type}')
+
         converter_module = ConverterModule(
             name=meta_data["name"],
             description=meta_data["description"],
             code=code,
             endpoint=module_name,
             module=module,
+            func=func,
         )
 
         print(f"loaded converter: {module_name}")
@@ -61,6 +71,13 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
 
     return converter_modules
 
+def get_converter_function(module: ModuleType) -> str:
+    functions = (
+        name for name, obj in inspect.getmembers(module) if inspect.isfunction(obj)
+    )
+    for name in functions:
+        if name.startswith("convert"):    
+            return getattr(module, name, None)
 
 converter_modules = load_converter_files(Path(__file__).parent / "converters")
 templates = Jinja2Templates(directory="templates")
@@ -94,6 +111,7 @@ async def convert_page(request: Request, converter_name: str):
         raise HTTPException(status_code=404, detail="Converter not found")
 
     converter = converter_modules[converter_name]
+
     return templates.TemplateResponse(
         "converter.html",
         {
@@ -108,13 +126,6 @@ async def convert_page(request: Request, converter_name: str):
     )
 
 
-def get_converter_function(module: ModuleType) -> List[str]:
-    functions = (
-        name for name, obj in inspect.getmembers(module) if inspect.isfunction(obj)
-    )
-    for name in functions:
-        if name.startswith("convert"):
-            return name
 
 
 def TempFileGenerator(files: List[UploadFile]) -> Generator[Path, None, None]:
@@ -137,11 +148,7 @@ async def convert_file(
         raise HTTPException(status_code=404, detail="Converter module not found")
     module = converter_modules[converter_name]
 
-    converter_func_name = get_converter_function(module.module)
-    if converter_func_name is None:
-        raise HTTPException(status_code=404, detail=f"Converter function not found")
-
-    converter_func = getattr(module.module, converter_func_name, None)
+    converter_func = module.func
     if not callable(converter_func):
         raise HTTPException(status_code=500, detail="Invalid converter function")
 
