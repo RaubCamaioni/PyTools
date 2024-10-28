@@ -7,55 +7,77 @@ body.dark-mode {
 }
 
 #container {
-    max-width: 800px;
+    max-width: 75%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 5px;
     border-radius: 10px;
     background-color: #1e1e1e;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.summary {
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    margin-bottom: 20px;
+}
+
+.title,
+.description {
+    display: inline-block;
+    text-align: center;
+    max-width: 100%;
+}
+
 .title {
     font-size: 2em;
     margin-bottom: 10px;
-    text-align: left;
 }
 
 .description {
     font-size: 1.2em;
-    margin-bottom: 20px;
-    text-align: left;
     color: #bbbbbb;
 }
 
-#code-area {
+.content {
+    display: flex !important;
+    gap: 10px;
+    width: 100% !important;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.code-area {
+    width: 60% !important;
     background-color: #2d2d2d;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 20px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    margin-left: 5px;
     overflow-x: auto;
 }
 
-#code-area code {
-    color: #c5c5c5;
+.master-form {
+    width: 40% !important;
+    display: flex;
+    justify-content: center;
 }
 
 #drop-area {
+    width: 100%;
+    margin-right: 5px;
     background-color: #333;
     border: 2px dashed #555;
-    border-radius: 5px;
-    padding: 20px;
+    border-radius: 10px;
+    padding: 5px;
     text-align: center;
     transition: border 0.3s ease, transform 0.3s ease;
 }
 
 #drop-area:hover {
-    border-color: #888;
+    border-color: #ffffff;
     transform: scale(1.005);
-}
-
-#drop-area.highlight {
-    border-color: #888;
 }
 
 #upload-form p {
@@ -68,27 +90,7 @@ input[type="file"] {
     display: none;
 }
 
-progress {
-    width: 100%;
-    margin-top: 10px;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-progress::-webkit-progress-bar {
-    background-color: #444;
-    border-radius: 5px;
-}
-
-progress::-webkit-progress-value {
-    background-color: #1e90ff;
-    border-radius: 5px;
-}
-
-#gallery {
-    margin-top: 20px;
-}
-
+/* return home css */
 .return-home {
     position: absolute;
     top: 20px;

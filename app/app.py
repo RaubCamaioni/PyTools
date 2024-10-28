@@ -13,6 +13,7 @@ import traceback
 import zipfile
 import inspect
 import json
+import time
 import os
 
 BASE_URL = os.getenv("BASE_URL", "")
@@ -64,6 +65,7 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
 converter_modules = load_converter_files(Path(__file__).parent / "converters")
 templates = Jinja2Templates(directory="templates")
 app.mount(f"{BASE_URL}/static", StaticFiles(directory="static"), name="static")
+app.mount(f"{BASE_URL}/scripts", StaticFiles(directory="scripts"), name="scripts")
 
 
 @router.get(f"/", response_class=HTMLResponse)
@@ -100,6 +102,7 @@ async def convert_page(request: Request, converter_name: str):
             "converter_name": converter.name,
             "description": converter.description,
             "code": converter.code,
+            "time": time.time(),
             "base_url": BASE_URL,
         },
     )
