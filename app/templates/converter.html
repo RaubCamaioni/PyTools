@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Converter</title>
     <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vtk.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="{{ base_url }}/static/converter.css?t={{ time }}">
@@ -13,25 +14,19 @@
     
     <a href="{{ base_url }}/" class="return-home"><i class="fas fa-home"></i></a>
     
-    <div id="container">
-
-        <div class="summary">
-            <div class="title">{{ converter_name }}</div>
-            <div class="description">{{ description }}</div>
+    <div class="outer-container">
+        <div class="container">
+            <div class="content">
+                <div class="code-area">
+                    <pre><code class="language-python">{{ code }}</code></pre>
+                </div>
+                <form id="master-form" hx-post="{{ endpoint }}" hx-target="#result" hx-swap="outerHTML">
+                    {{ form_groups|safe }}
+                    <input type="submit" value="Submit">
+                </form>
+            </div>        
         </div>
-
-        <div class="content">
-            <div class="code-area">
-                <pre><code class="language-python">{{ code }}</code></pre>
-            </div>
-            <form id="master-form" hx-post="{{ endpoint }}" hx-target="#result" hx-swap="innerHTML">
-                {{ form_groups|safe }}
-                <input type="submit" value="Submit">
-            </form>
-        </div>
-
         <div id="result"></div>
-
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>

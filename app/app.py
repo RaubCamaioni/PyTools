@@ -1,20 +1,24 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request, APIRouter
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request, APIRouter, Header
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from starlette.background import BackgroundTasks
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from typing import List, Generator, Tuple, Any, Callable, Dict
+from typing import List, Generator, Tuple, Any, Callable, Dict, Annotated, Union
 from dataclasses import dataclass, fields
 from types import ModuleType
 from pathlib import Path
+import cadquery as cq
+from cadquery.occ_impl import jupyter_tools
 import importlib.util
 import traceback
 import zipfile
+from IPython.display import Javascript
 import inspect
 import json
 import time
 import os
+import vtk
 
 BASE_URL = os.getenv("BASE_URL", "")
 print(f"BASE_URL: {BASE_URL}")
@@ -39,7 +43,7 @@ def form_group(name: str, type: str):
         [
             '<div class="form-group">',
             f'	<label for="{name}">{name}:</label>',
-            f'	<input type="{type}" id="{name}" name="{name}" required>',
+            f'	<input type="{type}" id="{name}" name="{name}" step=".01" required>',
             "</div>",
         ]
     )
@@ -55,9 +59,9 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        json_name = converter_file.with_suffix(".json")
-        with open(json_name, "r") as f:
-            meta_data = json.load(f)
+        # json_name = converter_file.with_suffix(".json")
+        # with open(json_name, "r") as f:
+        #     meta_data = json.load(f)
 
         with open(converter_file, "r") as f:
             code = f.read().strip()
@@ -65,6 +69,8 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
         func = get_converter_function(module)
 
         signature = inspect.signature(func)
+        name = func.__name__
+        comment = inspect.getdoc(func)
 
         forms = []
         types = {}
@@ -86,8 +92,8 @@ def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
             )
 
         converter_module = ConverterModule(
-            name=meta_data["name"],
-            description=meta_data["description"],
+            name=name,
+            description=comment,
             code=code,
             endpoint=module_name,
             module=module,
@@ -167,12 +173,11 @@ def TempFileGenerator(files: List[UploadFile]) -> Generator[Path, None, None]:
             yield temp_file_name
 
 
-@router.post("/convert/{converter_name}")
+@router.post("/convert/{converter_name}", response_class=HTMLResponse)
 async def convert_file(
     request: Request,
     converter_name: str,
-    background_tasks: BackgroundTasks,
-):
+) -> str:
     if converter_name not in converter_modules:
         raise HTTPException(status_code=404, detail="Converter module not found")
     module = converter_modules[converter_name]
@@ -186,12 +191,17 @@ async def convert_file(
     for key, value in form_data.items():
         kwargs[key] = module.types[key](value)
 
-    print(converter_name)
-    for key, val in kwargs.items():
-        print(f"  {key}: {val}")
-    print(f"  result: {converter_func(**kwargs)}")
+    result = converter_func(**kwargs)
 
-    return "<div>Hello World!</div>"
+    if isinstance(result, cq.Shape):
+        # return_string = vtk.generate_vtk_inner_html(result)
+        return_string = vtk.display(result)
+    else:
+        return_string = f"{type(result).__name__}: {result}"
+
+    structure = f'<div id="result" class="result-container"><div class="return">{return_string}</div></div>'
+
+    return HTMLResponse(structure)
 
 
 app.include_router(router)

@@ -2,54 +2,42 @@ body.dark-mode {
     background-color: #121212;
     color: #e0e0e0;
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
+    margin: auto;
+    padding: 10px;
 }
 
-#container {
-    max-width: 75%;
-    margin: 0 auto;
+.outer-container {
+    width: 80%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    background-color: #121212;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    min-width: 100%;
+    margin: 20px 0;
     padding: 5px;
     border-radius: 10px;
     background-color: #1e1e1e;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.summary {
-    width: 100%;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    margin-bottom: 20px;
-}
-
-.title,
-.description {
-    display: inline-block;
-    text-align: center;
-    max-width: 100%;
-}
-
-.title {
-    font-size: 2em;
-    margin-bottom: 10px;
-}
-
-.description {
-    font-size: 1.2em;
-    color: #bbbbbb;
-}
-
 .content {
-    display: flex !important;
+    display: flex;
+    flex-direction: row;
     gap: 10px;
-    width: 100% !important;
-    justify-content: center;
-    align-items: flex-start;
+    width: 100%;
 }
 
 .code-area {
+    max-height: 700px;
     width: 60% !important;
     background-color: #2d2d2d;
     border-radius: 10px;
@@ -66,12 +54,32 @@ body.dark-mode {
 }
 
 form {
-    max-width: 400px;
+    max-width: 80%;
     margin: auto;
     padding: 10px;
     background-color: #2d2d2d;
     border-radius: 10px;
-    margin-bottom: 10px;
+    margin-top: 5px;
+}
+
+.result-container {
+    min-width: 1000px;
+    width: 100%;
+    border-radius: 10px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 5px;
+    background-color: #1e1e1e;
+}
+
+.return {
+    min-width: 1000px;
+    margin: auto;
+    padding: 5px;
+    background-color: #2d2d2d;
+    border-radius: 10px;
 }
 
 .form-group {
@@ -180,4 +188,21 @@ pre[class*="language-"] {
     padding: 0.1em;
     border-radius: 0.3em;
     white-space: normal;
+}
+
+::-webkit-scrollbar {
+    width: 8px; /* Width of the scrollbar */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #555; /* Color of the draggable part of the scrollbar */
+    border-radius: 4px; /* Rounded corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #888; /* Color when hovering over the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+    background: #333; /* Background of the scrollbar track */
 }
