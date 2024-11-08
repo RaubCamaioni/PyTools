@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PyConverter</title>
+    <title>PyTools</title>
     <link rel="stylesheet" href="{{ base_url }}/static/index.css">
 </head>
 <body>
 
-    <h1>PyConverter</h1>
-    <ul id="converter-list">
+    <h1>PyTools</h1>
+    <ul id="tool-list">
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            fetch("{{ base_url }}/converters")
+            fetch("{{ base_url }}/tools")
                 .then(response => response.json())
                 .then(data => {
-                    const list = document.getElementById("converter-list");
-                    data.converters.forEach(converter => {
-                        const [name, endpoint] = converter;
+                    const list = document.getElementById("tool-list");
+                    data.tools.forEach(tool => {
                         const listItem = document.createElement("li");
                         const link = document.createElement("a");
-                        link.href = `{{ base_url }}/convert/${endpoint}`;
-                        link.textContent = name;
+                        link.href = `{{ base_url }}/tool/${tool}`;
+                        link.textContent = tool;
                         listItem.appendChild(link);
                         list.appendChild(listItem);
                     });

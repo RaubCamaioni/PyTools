@@ -1,41 +1,70 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request, APIRouter, Header
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-from starlette.background import BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, APIRouter
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from typing import List, Any, Dict, Optional
 from fastapi.staticfiles import StaticFiles
-from typing import List, Generator, Tuple, Any, Callable, Dict, Annotated, Union
-from dataclasses import dataclass, fields
-from types import ModuleType
+from dataclasses import dataclass
 from pathlib import Path
-import cadquery as cq
-from cadquery.occ_impl import jupyter_tools
-import importlib.util
-import traceback
-import zipfile
-from IPython.display import Javascript
+import subprocess
+import ast
+
 import inspect
-import json
 import time
 import os
-import vtk
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 BASE_URL = os.getenv("BASE_URL", "")
-print(f"BASE_URL: {BASE_URL}")
+logger.info(f"BASE_URL: {BASE_URL}")
 router = APIRouter(prefix=BASE_URL)
 app = FastAPI()
 
 
+class FunctionVisitor(ast.NodeVisitor):
+    def __init__(self, module: ast.Module):
+        self.nodes: List[ast.FunctionDef] = []
+        self.visit(module)
+
+    def visit_FunctionDef(self, node):
+        self.nodes.append(node)
+        self.generic_visit(node)
+
+    def __iter__(self):
+        return iter(self.nodes)
+
+
+class Sandbox:
+
+    def __init__(self, image: str, file: str):
+        self.image = image
+        self.file = file
+        self.command = [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            f"{file}:/{file}",
+            f"{image}",
+            "python3",
+            f"/{file}",
+        ]
+
+    def run(self, args):
+
+        command_with_args = [].extend(self.command)
+        command_with_args
+        subprocess.call(command_with_args, capture_output=True, text=True)
+        print("run_output")
+
+
 @dataclass
-class ConverterModule:
+class Tool:
     name: str
-    description: str
-    code: str
-    endpoint: str
-    module: ModuleType
-    func: Callable
     form: str
-    types: Dict[str, type]
+    source: str
 
 
 def form_group(name: str, type: str):
@@ -50,82 +79,69 @@ def form_group(name: str, type: str):
     return form
 
 
-def load_converter_files(converters_folder: Path) -> dict[str, ConverterModule]:
-    converter_modules: dict[str, ConverterModule] = {}
+def load_tools(converters_folder: Path) -> dict[str, Tool]:
+    tools: dict[str, Tool] = {}
 
     for converter_file in converters_folder.glob("*.py"):
-        module_name = converter_file.stem
-        spec = importlib.util.spec_from_file_location(module_name, converter_file)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
-        # json_name = converter_file.with_suffix(".json")
-        # with open(json_name, "r") as f:
-        #     meta_data = json.load(f)
+        tool_name = converter_file.stem
 
         with open(converter_file, "r") as f:
-            code = f.read().strip()
+            source = "".join(f.readlines()).strip()
 
-        func = get_converter_function(module)
+        tree = ast.parse(source)
+        entry_node = None
+        for node in FunctionVisitor(tree):
+            comment = source.splitlines()[max(node.lineno - 2, 0)]
+            if "#entrypoint" in comment.replace(" ", ""):
+                entry_node = node
+                break
 
-        signature = inspect.signature(func)
-        name = func.__name__
-        comment = inspect.getdoc(func)
+        if entry_node is None:
+            logger.warning(f"no entrypoint foudn in: {tool_name}")
+            continue
 
-        forms = []
-        types = {}
-        for param in signature.parameters.values():
-            param_name = param.name
-            param_type = (
-                param.annotation
-                if param.annotation is not inspect.Parameter.empty
-                else "No type hint"
-            )
-            types[param_name] = param_type
+        arg_form = []
+        arg_types = {}
+        for arg in entry_node.args.args:
+
+            if not arg.annotation:
+                logger.warning(
+                    f"all arguments in entrypoint ({tool_name}) must be annotated"
+                )
+
+            arg_name, arg_type = arg.arg, ast.unparse(arg.annotation)
+
+            arg_types[arg_name] = arg_type
+
             form_type = {
                 "str": "text",
                 "int": "number",
                 "float": "number",
             }
-            forms.append(
-                form_group(param_name, form_type.get(param_type.__name__, "text"))
-            )
 
-        converter_module = ConverterModule(
-            name=name,
-            description=comment,
-            code=code,
-            endpoint=module_name,
-            module=module,
-            func=func,
-            form="\n".join(forms),
-            types=types,
+            arg_form.append(form_group(arg.arg, form_type.get(arg_type, "text")))
+
+        converter_module = Tool(
+            name=tool_name,
+            source=source,
+            form="\n".join(arg_form),
         )
 
-        print(f"loaded converter: {module_name}")
-        converter_modules[module_name] = converter_module
+        logger.info(f"loaded converter: {tool_name}")
+        tools[tool_name] = converter_module
 
-    return converter_modules
-
-
-def get_converter_function(module: ModuleType) -> str:
-    functions = (
-        name for name, obj in inspect.getmembers(module) if inspect.isfunction(obj)
-    )
-    for name in functions:
-        if name.startswith("convert"):
-            return getattr(module, name, None)
+    return tools
 
 
-converter_modules = load_converter_files(Path(__file__).parent / "converters")
-templates = Jinja2Templates(directory="templates")
+TOOLS = load_tools(Path(__file__).parent / "converters")
+TEMPLATES = Jinja2Templates(directory="templates")
 app.mount(f"{BASE_URL}/static", StaticFiles(directory="static"), name="static")
 app.mount(f"{BASE_URL}/scripts", StaticFiles(directory="scripts"), name="scripts")
 
 
-@router.get(f"/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse(
+    return TEMPLATES.TemplateResponse(
         "index.html",
         {
             "request": request,
@@ -134,70 +150,48 @@ async def read_root(request: Request):
     )
 
 
-@router.get("/converters", response_class=JSONResponse)
-async def get_converters():
-    converters = [
-        (module.name, module.endpoint) for module in converter_modules.values()
-    ]
-    return {"converters": converters}
+@router.get("/tools", response_class=JSONResponse)
+async def get_tools():
+    tools = [e.name for e in TOOLS.values()]
+    return {"tools": tools}
 
 
-@router.get("/convert/{converter_name}", response_class=HTMLResponse)
-async def convert_page(request: Request, converter_name: str):
-    if converter_name not in converter_modules:
-        raise HTTPException(status_code=404, detail="Converter not found")
+@router.get("/tool/{tool_name}", response_class=HTMLResponse)
+async def entrypoint_page(request: Request, tool_name: str):
 
-    converter = converter_modules[converter_name]
+    if not (tool := TOOLS.get(tool_name, None)):
+        raise HTTPException(status_code=404, detail="Entrypoint not found")
 
-    return templates.TemplateResponse(
+    return TEMPLATES.TemplateResponse(
         "converter.html",
         {
             "request": request,
-            "endpoint": converter.endpoint,
-            "converter_name": converter.name,
-            "description": converter.description,
-            "code": converter.code,
-            "form_groups": converter.form,
+            "endpoint": f"/tool/{tool.name}",
+            "converter_name": tool.name,
+            "code": tool.source,
+            "form_groups": tool.form,
             "time": time.time(),
             "base_url": BASE_URL,
         },
     )
 
 
-def TempFileGenerator(files: List[UploadFile]) -> Generator[Path, None, None]:
-    with TemporaryDirectory() as tmpdir:
-        for file in files:
-            temp_file_name = Path(tmpdir) / file.filename
-            with open(temp_file_name, "wb") as f:
-                f.write(file.file.read())
-            yield temp_file_name
+@router.post("/tool/{tool_name}", response_class=HTMLResponse)
+async def run_entrypoint_in_sandbox(request: Request, tool_name: str) -> str:
 
-
-@router.post("/convert/{converter_name}", response_class=HTMLResponse)
-async def convert_file(
-    request: Request,
-    converter_name: str,
-) -> str:
-    if converter_name not in converter_modules:
+    if tool_name not in TOOLS:
         raise HTTPException(status_code=404, detail="Converter module not found")
-    module = converter_modules[converter_name]
-
-    converter_func = module.func
-    if not callable(converter_func):
-        raise HTTPException(status_code=500, detail="Invalid converter function")
-
+    module = TOOLS[tool_name]
     form_data = await request.form()
+
+    # parse the form data and run code in isolated docker container...
+
     kwargs = {}
     for key, value in form_data.items():
         kwargs[key] = module.types[key](value)
 
-    result = converter_func(**kwargs)
-
-    if isinstance(result, cq.Shape):
-        # return_string = vtk.generate_vtk_inner_html(result)
-        return_string = vtk.display(result)
-    else:
-        return_string = f"{type(result).__name__}: {result}"
+    result = None
+    return_string = f"{type(result).__name__}: {result}"
 
     structure = f'<div id="result" class="result-container"><div class="return">{return_string}</div></div>'
 

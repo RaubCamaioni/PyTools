@@ -44,7 +44,7 @@ def container(
     )
     box = box.cut(side_cut)
 
-    step_cut: occ_shapes.Face = box.faces(">Z").val()
+    step_cut = box.faces(">Z").val()
 
     outer_wire = step_cut.outerWire()
     inner_wire = step_cut.innerWires()[0]
@@ -68,7 +68,7 @@ def container(
     return box.val()
 
 
-def converter_container_with_lid(
+def container_with_lid(
     width: float,
     depth: float,
     height: float,

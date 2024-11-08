@@ -1,0 +1,16 @@
+[project]
+name = "pyconverter"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cadquery==2.3.0",
+    "fastapi[standard]>=0.115.4",
+    "jupyter>=1.1.1",
+    "opencv-python>=4.10.0.84",
+    "restrictedpython>=7.4",
+]
+
+[tool.uv.workspace]
+members = ["local/my_module"]
