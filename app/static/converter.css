@@ -23,7 +23,7 @@ body.dark-mode {
     align-items: flex-start;
     min-width: 100%;
     margin: 20px 0;
-    padding: 5px;
+    padding: 10px;
     border-radius: 10px;
     background-color: #1e1e1e;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -38,19 +38,20 @@ body.dark-mode {
 
 .code-area {
     max-height: 700px;
-    width: 60% !important;
+    width: 80% !important;
     background-color: #2d2d2d;
     border-radius: 10px;
     margin-bottom: 5px;
-    margin-left: 5px;
+    margin-left: 0px;
     overflow-x: auto;
 }
 
 #master-form {
-    width: 40% !important;
+    width: 20% !important;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    margin-top: 0px;
+    gap: 0px;
 }
 
 form {
@@ -63,7 +64,6 @@ form {
 }
 
 .result-container {
-    min-width: 1000px;
     width: 100%;
     border-radius: 10px;
     margin: 0 auto;
@@ -75,7 +75,7 @@ form {
 }
 
 .return {
-    min-width: 1000px;
+    width: 100%;
     margin: auto;
     padding: 5px;
     background-color: #2d2d2d;
@@ -97,9 +97,22 @@ label {
 }
 
 input[type="text"],
-input[type="number"],
 input[type="file"],
+input[type="number"] {
+    margin-top: 1px;
+    height: 2.5em;      
+    padding: 0 10px;
+    border: 1px solid #ddd; 
+    border-radius: 5px;
+    box-sizing: border-box;
+    flex-grow: 1;
+    background-color: #202020;
+    color: white;   
+    min-width: 5px;
+}
 input[type="submit"] {
+    width: 100%;
+    margin-top: 5px;
     height: 2.5em;      
     padding: 0 10px;
     border: 1px solid #ddd; 
@@ -109,41 +122,13 @@ input[type="submit"] {
     background-color: #202020;
     color: white;
 }
-input[type="submit"] {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
+input[type="file"] {
+  line-height: 2.5;
 }
 input[type="submit"]:hover {
-    background-color: #0056b3;
+    background-color: rgb(63, 63, 63);
 }
 
-#drop-area {
-    width: 100%;
-    margin-right: 5px;
-    background-color: #333;
-    border: 2px dashed #555;
-    border-radius: 10px;
-    padding: 5px;
-    text-align: center;
-    transition: border 0.3s ease, transform 0.3s ease;
-}
-
-#drop-area:hover {
-    border-color: #ffffff;
-    transform: scale(1.005);
-}
-
-#upload-form p {
-    margin: 0;
-    font-size: 18px;
-    color: #bbb;
-}
-
-input[type="file"] {
-    display: none;
-}
 
 /* return home css */
 .return-home {
