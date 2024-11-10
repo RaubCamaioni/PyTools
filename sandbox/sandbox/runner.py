@@ -7,7 +7,7 @@ import serializer
 
 def main(file: Path, workdir: Path) -> Any:
     with open(workdir / "args.json", "r") as f:
-        args = serializer.json_load(f)
+        args = serializer.load(f)
 
     module_name = file.stem
     spec = importlib.util.spec_from_file_location(module_name, file)
@@ -21,7 +21,7 @@ def main(file: Path, workdir: Path) -> Any:
 
     results = partial(func, **args)()
     with open(workdir / "result.json", "w") as f:
-        serializer.json_dump(results, f)
+        serializer.dump(results, f)
 
 
 if __name__ == "__main__":

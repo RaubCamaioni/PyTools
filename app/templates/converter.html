@@ -20,8 +20,13 @@
                 <div class="code-area">
                     <pre><code class="language-python">{{ code }}</code></pre>
                 </div>
-                <form class="master-form" enctype="multipart/form-data" hx-post="{{ endpoint }}" hx-target="#result" hx-swap="outerHTML">
+                <form class="master-form" 
+                    enctype="multipart/form-data" 
+                    hx-post="{{ endpoint }}"
+                    hx-target="#result" 
+                    hx-swap="outerHTML">
                     {{ form_groups|safe }}
+                    <input type="hidden" name="__blank__" value=""> <!--fixes blank submit when no python arguments-->
                     <input type="submit" value="Submit">
                 </form>
             </div>        

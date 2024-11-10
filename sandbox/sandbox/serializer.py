@@ -21,26 +21,17 @@ class JsonDecoder(json.JSONDecoder):
         return obj
 
 
-def json_dumps(objects: Any) -> str:
+def dumps(objects: Any) -> str:
     return json.dumps(objects, cls=JsonEncoder)
 
 
-def json_loads(serial: str) -> Any:
+def loads(serial: str) -> Any:
     return json.loads(serial, cls=JsonDecoder)
 
 
-def json_dump(objects: Any, file: io.FileIO) -> str:
+def dump(objects: Any, file: io.FileIO) -> str:
     return json.dump(objects, file, cls=JsonEncoder)
 
 
-def json_load(file: io.FileIO) -> Any:
+def load(file: io.FileIO) -> Any:
     return json.load(file, cls=JsonDecoder)
-
-
-if __name__ == "__main__":
-    items = {"sammy": [1, 2, Path("/some/directory/example.txt")]}
-    print(f"original: {items}")
-    encoded = json_dumps(items)
-    print(f"encoded: {encoded}")
-    decoded = json_loads(encoded)
-    print(f"decoded: {decoded}")
