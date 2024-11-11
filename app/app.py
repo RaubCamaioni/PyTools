@@ -68,6 +68,7 @@ def docker_run(image: str, file: Path, workdir: Path):
     command = [
         "docker",
         "run",
+        "--network=none",
         "-m=512m",
         "--cpus=1.5",
         "--rm",
