@@ -5,33 +5,32 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager, suppress
-from utility import serializer, render
+from .utility import serializer, render
 from typing import List, Dict, Type
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
-import tempfile
 import logging
 import asyncio
-import shutil
 import secrets
+import shutil
+import string
 import time
 import ast
 import os
-import string
+
 
 logger = logging.getLogger("uvicorn.error")
 
 
-BASE_URL = os.getenv("BASE_URL", "")
-logger.info(f"BASE_URL: {BASE_URL}")
-router = APIRouter(prefix=BASE_URL)
+router = APIRouter()
 
-allowed_chars = string.ascii_letters + string.digits + "-_"
+
+ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
 
 
 def secret_dir_name(length=32):
-    return "".join(secrets.choice(allowed_chars) for _ in range(length))
+    return "".join(secrets.choice(ALLOWED_CHARACTERS) for _ in range(length))
 
 
 @asynccontextmanager
@@ -64,7 +63,7 @@ class FunctionVisitor(ast.NodeVisitor):
         return iter(self.nodes)
 
 
-def docker_run(image: str, file: Path, workdir: Path):
+def docker_run(image: str, tool: Path, workdir: Path):
     command = [
         "docker",
         "run",
@@ -73,14 +72,14 @@ def docker_run(image: str, file: Path, workdir: Path):
         "--cpus=1.5",
         "--rm",
         "-v",
-        f"{file}:/sandbox/{file.name}",
+        f"{tool}:/sandbox/{tool.name}:ro",
         "-v",
         f"{workdir}:{'/sandbox' / workdir}",
         f"{image}",
         "python3",
         "runner.py",
         "--file",
-        f"/sandbox/{file.name}",
+        f"/sandbox/{tool.name}",
         "--workdir",
         f"{'sandbox' / workdir}",
     ]
@@ -96,12 +95,14 @@ class Tool:
     arg_types: Dict[str, Type]
 
 
-def form_group(name: str, type: str):
+def form_group(name: str, type: str, default: str):
+    default = default or ""
+
     form = "\n".join(
         [
             '<div class="form-group">',
             f'	<label for="{name}">{name}:</label>',
-            f'	<input type="{type}" id="{name}" name="{name}" step=".01" required>',
+            f'	<input type="{type}" id="{name}" name="{name}" step=".01" required value="{default}">',
             "</div>",
         ]
     )
@@ -129,7 +130,12 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
 
         arg_form = []
         arg_types = {}
-        for arg in entry_node.args.args:
+
+        default_args = [None] * len(entry_node.args.args)
+        for i, default in enumerate(entry_node.args.defaults):
+            default_args[-i] = ast.unparse(default)
+
+        for arg, default in zip(entry_node.args.args, default_args):
             if not arg.annotation:
                 logger.warning(
                     f"all arguments in entrypoint ({tool_name}) must be annotated"
@@ -150,7 +156,9 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
                 "Path": "file",
             }
 
-            arg_form.append(form_group(arg.arg, form_type.get(arg_type, "text")))
+            arg_form.append(
+                form_group(arg.arg, form_type.get(arg_type, "text"), default)
+            )
 
         tool_arg_string = []
         for k, v in arg_types.items():
@@ -171,10 +179,11 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
     return tools
 
 
-TOOLS = load_tools(Path(__file__).parent / "tools")
-TEMPLATES = Jinja2Templates(directory="templates")
-app.mount(f"{BASE_URL}/static", StaticFiles(directory="static"), name="static")
-app.mount(f"{BASE_URL}/scripts", StaticFiles(directory="scripts"), name="scripts")
+APP_DIRECTORY = Path(__file__).parent
+TOOLS = load_tools(APP_DIRECTORY / "tools")
+TEMPLATES = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory=APP_DIRECTORY / "static"), name="static")
+app.mount("/scripts", StaticFiles(directory=APP_DIRECTORY / "scripts"), name="scripts")
 
 
 async def delete_temp_dir(temp_dir: Path):
@@ -198,7 +207,7 @@ async def read_root(request: Request):
         "index.html",
         {
             "request": request,
-            "base_url": BASE_URL,
+            "root_path": request.scope.get("root_path"),
         },
     )
 
@@ -218,11 +227,11 @@ async def entrypoint_page(request: Request, tool_name: str):
         "tool.html",
         {
             "request": request,
+            "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.name}",
             "code": tool.source,
             "form_groups": tool.form,
             "time": time.time(),
-            "base_url": BASE_URL,
         },
     )
 

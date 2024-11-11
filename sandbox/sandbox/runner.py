@@ -3,10 +3,13 @@ from functools import partial
 from pathlib import Path
 import importlib.util
 import serializer
+import os
 
 
 def main(file: Path, workdir: Path) -> Any:
-    with open(workdir / "args.json", "r") as f:
+    os.chdir(workdir)
+
+    with open("args.json", "r") as f:
         args = serializer.load(f)
 
     module_name = file.stem
@@ -20,7 +23,7 @@ def main(file: Path, workdir: Path) -> Any:
     func: Callable[[Any], Any] = getattr(module, module_name, None)
 
     results = partial(func, **args)()
-    with open(workdir / "result.json", "w") as f:
+    with open("result.json", "w") as f:
         serializer.dump(results, f)
 
 

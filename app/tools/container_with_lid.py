@@ -1,6 +1,7 @@
 from cadquery.occ_impl import shapes as occ_shapes
 import cadquery as cq
 import numpy as np
+from pathlib import Path
 
 
 def loft_faces(f1: occ_shapes.Face, f2: occ_shapes.Face) -> occ_shapes.Solid:
@@ -69,12 +70,12 @@ def container(
 
 
 def container_with_lid(
-    width: float,
-    depth: float,
-    height: float,
-    thickness: float,
-    ledge: float,
-    fillet: float,
+    width: float = 100,
+    depth: float = 100,
+    height: float = 100,
+    thickness: float = 5,
+    ledge: float = 10,
+    fillet: float = 3,
     angle: float = 15.0,
     tolerance: float = 0.2,
 ):
@@ -115,4 +116,8 @@ def container_with_lid(
         .translate([width * 1.2, 0, 0])
     )
 
-    return cq.Compound.makeCompound([lower, higher])
+    compound = cq.Compound.makeCompound([lower, higher])
+    compound_path = "container_with_lid.stl"
+    compound.exportStl(compound_path)
+
+    return Path(compound_path)

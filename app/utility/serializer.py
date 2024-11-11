@@ -7,7 +7,7 @@ import io
 class JsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (Path, PosixPath)):
-            return {"__path__": str(obj)}
+            return {"__path__": str(obj.absolute())}
         return super().default(obj)
 
 

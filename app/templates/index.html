@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PyTools</title>
-    <link rel="stylesheet" href="{{ base_url }}/static/index.css">
+    <link rel="stylesheet" href="{{ root_path }}/static/index.css">
 </head>
 <body>
 
@@ -13,14 +13,14 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            fetch("{{ base_url }}/tools")
+            fetch("{{ root_path }}/tools")
                 .then(response => response.json())
                 .then(data => {
                     const list = document.getElementById("tool-list");
                     data.tools.forEach(tool => {
                         const listItem = document.createElement("li");
                         const link = document.createElement("a");
-                        link.href = `{{ base_url }}/tool/${tool}`;
+                        link.href = `{{ root_path }}/tool/${tool}`;
                         link.textContent = tool;
                         listItem.appendChild(link);
                         list.appendChild(listItem);

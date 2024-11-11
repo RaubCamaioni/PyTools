@@ -7,7 +7,6 @@ class MyPrettyPrinter(PrettyPrinter):
     def format(self, object, context, maxlevels, level):
         if isinstance(object, (Path, PosixPath)):
             hyper_link = Path("/download") / object.relative_to(object.anchor)
-            print(hyper_link)
             return (
                 f'<a href="{hyper_link}" style="white-space: pre;">{object}</a>',
                 True,
