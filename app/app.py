@@ -107,10 +107,10 @@ def form_group(name: str, type: str):
     return form
 
 
-def load_tools(converters_folder: Path) -> dict[str, Tool]:
+def load_tools(tools_directory: Path) -> dict[str, Tool]:
     tools: dict[str, Tool] = {}
 
-    for tool_file in converters_folder.glob("*.py"):
+    for tool_file in tools_directory.glob("*.py"):
         tool_name = tool_file.stem
 
         with open(tool_file, "r") as f:
@@ -170,7 +170,7 @@ def load_tools(converters_folder: Path) -> dict[str, Tool]:
     return tools
 
 
-TOOLS = load_tools(Path(__file__).parent / "converters")
+TOOLS = load_tools(Path(__file__).parent / "tools")
 TEMPLATES = Jinja2Templates(directory="templates")
 app.mount(f"{BASE_URL}/static", StaticFiles(directory="static"), name="static")
 app.mount(f"{BASE_URL}/scripts", StaticFiles(directory="scripts"), name="scripts")
@@ -214,11 +214,10 @@ async def entrypoint_page(request: Request, tool_name: str):
         raise HTTPException(status_code=404, detail="Entrypoint not found")
 
     return TEMPLATES.TemplateResponse(
-        "converter.html",
+        "tool.html",
         {
             "request": request,
             "endpoint": f"/tool/{tool.name}",
-            "converter_name": tool.name,
             "code": tool.source,
             "form_groups": tool.form,
             "time": time.time(),
@@ -234,7 +233,7 @@ async def run_entrypoint_in_sandbox(
     temp_dir: Path = Depends(get_temp_dir),
 ) -> str:
     if tool_name not in TOOLS:
-        raise HTTPException(status_code=404, detail="Converter module not found")
+        raise HTTPException(status_code=404, detail="tool module not found")
 
     tool = TOOLS[tool_name]
     form_data = await request.form()
