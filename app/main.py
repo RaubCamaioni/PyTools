@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException, Request, APIRouter, Depends
-from fastapi.responses import FileResponse
 from starlette.datastructures import UploadFile as StarUploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
+from contextlib import asynccontextmanager, suppress
+from .utility import serializer, render, security
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from contextlib import asynccontextmanager, suppress
-from .utility import serializer, render
+from fastapi.responses import FileResponse
 from typing import List, Dict, Type
 from dataclasses import dataclass
 from pathlib import Path
@@ -95,20 +95,6 @@ class Tool:
     arg_types: Dict[str, Type]
 
 
-def form_group(name: str, type: str, default: str):
-    default = default or ""
-
-    form = "\n".join(
-        [
-            '<div class="form-group">',
-            f'	<label for="{name}">{name}:</label>',
-            f'	<input type="{type}" id="{name}" name="{name}" step=".01" required value="{default}">',
-            "</div>",
-        ]
-    )
-    return form
-
-
 def load_tools(tools_directory: Path) -> dict[str, Tool]:
     tools: dict[str, Tool] = {}
 
@@ -148,17 +134,7 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
                 continue
 
             arg_types[arg_name] = eval(arg_type)
-
-            form_type = {
-                "str": "text",
-                "int": "number",
-                "float": "number",
-                "Path": "file",
-            }
-
-            arg_form.append(
-                form_group(arg.arg, form_type.get(arg_type, "text"), default)
-            )
+            arg_form.append(render.form_group(arg.arg, arg_type, default))
 
         tool_arg_string = []
         for k, v in arg_types.items():
@@ -188,7 +164,7 @@ app.mount("/scripts", StaticFiles(directory=APP_DIRECTORY / "scripts"), name="sc
 
 async def delete_temp_dir(temp_dir: Path):
     with suppress(asyncio.TimeoutError):
-        await asyncio.wait_for(shutdown_event.wait(), timeout=60 * 5)
+        await asyncio.wait_for(shutdown_event.wait(), timeout=60 * 10)
 
     if temp_dir.exists() and temp_dir.is_dir():
         shutil.rmtree(temp_dir)
@@ -221,7 +197,7 @@ async def get_tools():
 @router.get("/tool/{tool_name}", response_class=HTMLResponse)
 async def entrypoint_page(request: Request, tool_name: str):
     if not (tool := TOOLS.get(tool_name, None)):
-        raise HTTPException(status_code=404, detail="Entrypoint not found")
+        raise HTTPException(status_code=404, detail="Tool Not Found")
 
     return TEMPLATES.TemplateResponse(
         "tool.html",
@@ -243,16 +219,17 @@ async def run_entrypoint_in_sandbox(
     temp_dir: Path = Depends(get_temp_dir),
 ) -> str:
     if tool_name not in TOOLS:
-        raise HTTPException(status_code=404, detail="tool module not found")
+        raise HTTPException(status_code=404, detail="Tool Not Found")
 
     tool = TOOLS[tool_name]
-    form_data = await request.form()
+
+    if len(tool.arg_types):  # check for empty form
+        form_data = await request.form()
+    else:
+        form_data = {}
 
     kwargs = {}
     for key, value in form_data.items():
-        if key == "__blank__":  # fixes empty submit error
-            continue
-
         python_type = tool.arg_types[key]
 
         if isinstance(value, StarUploadFile):
@@ -269,33 +246,33 @@ async def run_entrypoint_in_sandbox(
 
     results_file = temp_dir / "result.json"
     if not results_file.exists():
-        results = Exception("Falure to produce results!")
-    else:
-        with open(temp_dir / "result.json", "r") as f:
-            results = serializer.load(f)
+        raise HTTPException(status_code=404, detail="Runner Failed")
 
-    structure = render.render(results)
+    with open(results_file, "r") as f:
+        results = serializer.load(f)
 
-    return HTMLResponse(structure)
+    return HTMLResponse(render.render(results))
 
 
 app.include_router(router)
 
 
+@security.constant_time_with_random_delay(0.2, 1)
 @app.get("/download/{file_str:path}")
 async def download_file(file_str: str):
     file_path = Path("/") / Path(file_str)
-    logger.info(f"File Path: {file_path}")
+    file_path = file_path.resolve()
 
-    if not file_path.is_absolute():
-        raise HTTPException(
-            status_code=400, detail="Invalid path: Only absolute paths are allowed."
-        )
+    forbidden = HTTPException(status_code=403, detail="Forbidden File Access")
 
-    if not file_path.parts[1] == "tmp":
-        raise HTTPException(
-            status_code=403, detail=f"Forbidden File Access: {file_path.parts[0]}"
-        )
+    if not str(file_path).startswith("/tmp/"):
+        raise forbidden
+
+    if not file_path.exists():
+        raise forbidden
+
+    if file_path.is_file():
+        raise forbidden
 
     return FileResponse(
         file_path,
@@ -307,7 +284,7 @@ async def download_file(file_str: str):
 def main():
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
 
 
 if __name__ == "__main__":

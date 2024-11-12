@@ -1,7 +1,7 @@
 from cadquery.occ_impl import shapes as occ_shapes
+from pathlib import Path
 import cadquery as cq
 import numpy as np
-from pathlib import Path
 
 
 def loft_faces(f1: occ_shapes.Face, f2: occ_shapes.Face) -> occ_shapes.Solid:
@@ -78,7 +78,7 @@ def container_with_lid(
     fillet: float = 3,
     angle: float = 15.0,
     tolerance: float = 0.2,
-):
+) -> Path:
     width = 20 + thickness
     depth = 20 + thickness
     lower_height = height * 0.80 + thickness
