@@ -1,23 +1,17 @@
-from contextlib import closing, ExitStack
+from contextlib import closing
 from pathlib import Path
 import av
 
 
 def video_to_audio(video_file: Path) -> Path:
-    output_path = video_file.with_suffix(".mp3")
-
-    with ExitStack() as stack:
-        context_a = closing(av.open(video_file))
-        input_c = stack.enter_context(context_a)
-        input_a = input_c.streams.audio[0]
-
-        context_b = closing(av.open(output_path, mode="w"))
-        output_c = stack.enter_context(context_b)
-        output_a = output_c.add_stream("mp3", rate=input_a.rate)
-
-        for packet in input_c.demux(input_a):
-            for frame in packet.decode():
-                for packet in output_a.encode(frame):
-                    output_c.mux(packet)
+    with closing(av.open(video_file)) as src_c:
+        for i, stream in enumerate(src_c.streams.audio):
+            output_path = video_file.with_name(video_file.stem + f"_{i}.mp4")
+            with closing(av.open(output_path, mode="w")) as dst_c:
+                dst_s = dst_c.add_stream("mp3", rate=stream.rate)
+                for packet in src_c.demux(stream):
+                    for frame in packet.decode():
+                        for packet in dst_s.encode(frame):
+                            dst_c.mux(packet)
 
     return output_path

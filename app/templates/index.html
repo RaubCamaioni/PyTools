@@ -5,25 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PyTools</title>
     <script src="/scripts/htmx.min.js"></script>
-    <link rel="stylesheet" href="{{ root_path }}/static/index.css?t={{ time }}">
+    <link rel="stylesheet" href="{{ root_path }}/static/index.css">
 </head>
 <body>
-    
-    <script src="https://accounts.google.com/gsi/client" async></script>
-    <div id="g_id_onload"
-        data-client_id="{{ GOOGLE_CLIENT_ID }}"
-        data-login_uri="http://localhost:8080/auth/google"
-        data-auto_prompt="false">
-    </div>
 
-    <div class="g_id_signin"
-        data-type="standard"
-        data-size="large"
-        data-theme="dark"
-        data-text="sign_in_with"
-        data-shape="rectangular"
-        data-logo_alignment="left">
-    </div>
+    <a hx-get="/login/button" hx-trigger="load" hx-swap="outerHTML">Login</a>
 
     <h1>PyTools</h1>
     <ul id="tool-list">

@@ -1,15 +1,21 @@
-from typing import Any
+import pyparsing as pp
+from typing import Any, get_args, Literal
 from pprint import PrettyPrinter, pformat
 from pathlib import Path, PosixPath
+import ast
 
-# TODO: added multi choice literal to form
 
-TYPE_MAP = {
-    "str": "text",
-    "int": "number",
-    "float": "number",
-    "Path": "file",
-}
+def parser_literal(input: str):
+    LITERAL = pp.Literal("Literal")
+    OPEN_BRACKET = pp.Literal("[")
+    CLOSE_BRACKET = pp.Literal("]")
+    literal_type = pp.Word(pp.alphas + "_.", pp.alphanums + "_.")
+    double_quote = '"' + literal_type + '"'
+    single_quote = "'" + literal_type + "'"
+    field = double_quote ^ single_quote
+    literal_values = pp.ZeroOrMore(field + pp.Optional(","))
+    literal_expr = LITERAL + OPEN_BRACKET + literal_values + CLOSE_BRACKET
+    return "".join(literal_expr.parseString(input))
 
 
 # TODO: improve string representation of objects
@@ -32,20 +38,58 @@ class MyPrettyPrinter(PrettyPrinter):
         return super().format(object, context, maxlevels, level)
 
 
-def form_group(name: str, type: str, default: str):
+def literal_to_label(name: str, type: str, default: str):
     default = default or ""
-    form_type = TYPE_MAP.get(type, "text")
 
-    form = "\n".join(
-        [
-            '<div class="form-group">',
-            f'	<label for="{name}">{name}:</label>',
-            f'	<input type="{form_type}" id="{name}" name="{name}" step=".01" required value="{default}">',
-            "</div>",
-        ]
-    )
+    option = """<option value="{option}">{option}</option>"""
+
+    values = get_args(eval(parser_literal(type)))
+
+    form = f"""
+    <label for="{name}">{name}:</label>
+    <select id="{name}" name="{name}">
+    {"\n".join([option.format(option=o) for o in values])}
+    </select>
+    """
 
     return form
+
+
+def type_to_label(name: str, type: str, default: str):
+    default = default or ""
+
+    form = f"""
+    <div class="form-group">
+    <label for="{name}">{name}:</label>
+    <input type="{TYPE_MAP.get(type, "text")}" id="{name}" name="{name}" step=".01" required value="{default}">
+    </div>
+    """
+
+    return form
+
+
+TYPE_MAP = {
+    "str": "text",
+    "int": "number",
+    "float": "number",
+    "Path": "file",
+}
+
+TYPE_TO_LABEL = {
+    "str": type_to_label,
+    "int": type_to_label,
+    "float": type_to_label,
+    "Path": type_to_label,
+    "Literal": literal_to_label,
+}
+
+
+def form_group(name: str, type: str, default: str):
+    default = default or ""
+    if "Literal" in type:
+        return TYPE_TO_LABEL["Literal"](name, type, default)
+    else:
+        return TYPE_TO_LABEL[type](name, type, default)
 
 
 def list_item(base_url: str, tools: list):
@@ -55,11 +99,10 @@ def list_item(base_url: str, tools: list):
     return "".join(htmlx)
 
 
-pp = MyPrettyPrinter(indent=4, width=10**5)
+pretty_printer = MyPrettyPrinter(indent=4, width=10**5)
 
 
 def render(results: Any):
-    return_string = pp.pformat(results)
-    print(return_string)
+    return_string = pretty_printer.pformat(results)
     structure = f'<div class="container" id="result" ><div class="return"><pre>{return_string}</pre></div></div>'
     return structure

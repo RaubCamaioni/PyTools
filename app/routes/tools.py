@@ -5,11 +5,10 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse
-from typing import List, Dict, Type
+from typing import List, Dict, Type, Literal, get_origin
 from dataclasses import dataclass
 from contextlib import suppress
 from pathlib import Path
-from app.routes.auth import oauth, OAuthError
 import asyncio
 import secrets
 import logging
@@ -22,8 +21,8 @@ import os
 
 logger = logging.getLogger("uvicorn.error")
 ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 APP_DIRECTORY = Path(__file__).parent.parent
+TEMPLATES = Jinja2Templates(directory="app/templates")
 
 
 @asynccontextmanager
@@ -98,12 +97,18 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
 
             arg_name, arg_type = arg.arg, ast.unparse(arg.annotation)
 
-            if arg_type not in ["int", "float", "str", "Path"]:
+            base_type = arg_type not in ["int", "float", "str", "Path"]
+            literal_type = "Literal" not in arg_type
+            if base_type and literal_type:
                 logger.warning(f"invalid arg_type {arg_type} in {tool_name}")
                 skip_tool = True
                 break
 
-            arg_types[arg_name] = eval(arg_type)
+            if not base_type:
+                arg_types[arg_name] = eval(arg_type)
+            elif not literal_type:
+                arg_types[arg_name] = eval(render.parser_literal(arg_type))
+
             arg_form.append(render.form_group(arg.arg, arg_type, default))
 
         if skip_tool:
@@ -126,9 +131,6 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
         tools[tool_name] = tool
 
     return tools
-
-
-TEMPLATES = Jinja2Templates(directory="app/templates")
 
 
 def secret_dir_name(length=32):
@@ -158,13 +160,11 @@ async def get_temp_dir():
 @router.route("/", methods=["GET", "POST"])
 async def read_root(request: Request):
     user = request.session.get("user")
-    print(f"user: {user}")
 
     return TEMPLATES.TemplateResponse(
         "index.html",
         {
             "time": time.time(),
-            "GOOGLE_CLIENT_ID": GOOGLE_CLIENT_ID,
             "request": request,
             "root_path": request.scope.get("root_path"),
         },
@@ -223,6 +223,8 @@ async def run_entrypoint_in_sandbox(
             with open(temp_dir / value.filename, "wb+") as f:
                 f.write(value.file.read())
             kwargs[key] = temp_dir / value.filename
+        elif get_origin(python_type) is Literal:
+            kwargs[key] = str(value)
         else:
             kwargs[key] = python_type(value)
 
@@ -263,3 +265,15 @@ async def download_file(file_str: str):
         media_type="application/octet-stream",
         filename=file_path.name,
     )
+
+
+@router.get("/terms-of-service", response_class=FileResponse)
+async def terms_of_service(request: Request):
+    kwargs = {"request": request}
+    return TEMPLATES.TemplateResponse("terms_of_service.html", kwargs)
+
+
+@router.get("/privacy-policy", response_class=FileResponse)
+async def privacy_policy(request: Request):
+    kwargs = {"request": request}
+    return TEMPLATES.TemplateResponse("privacy_policy.html", kwargs)

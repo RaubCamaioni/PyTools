@@ -13,8 +13,10 @@ dependencies = [
     "itsdangerous>=2.2.0",
     "jupyter>=1.1.1",
     "opencv-python>=4.10.0.84",
+    "pyav>=13.1.0",
     "pyjwt>=2.9.0",
     "pymupdf>=1.24.13",
+    "pyparsing>=3.2.0",
     "restrictedpython>=7.4",
 ]
 
