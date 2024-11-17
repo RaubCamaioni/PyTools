@@ -1,6 +1,17 @@
 /* styles.css */
 
 /* General Styles */
+
+.g_id_signin {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    display: inline-block;
+    font-size: 14px;
+    width: auto;
+}
+
 body {
     margin: 0;
     padding: 0;

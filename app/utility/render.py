@@ -44,7 +44,15 @@ def form_group(name: str, type: str, default: str):
             "</div>",
         ]
     )
+
     return form
+
+
+def list_item(base_url: str, tools: list):
+    htmlx = []
+    for e in tools.values():
+        htmlx.append(f'<li><a href="{base_url}/tool/{e.name}">{e.name}</a></li>')
+    return "".join(htmlx)
 
 
 pp = MyPrettyPrinter(indent=4, width=10**5)

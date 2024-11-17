@@ -1,53 +1,44 @@
 from fastapi import FastAPI, HTTPException, Request, APIRouter, Depends
 from starlette.datastructures import UploadFile as StarUploadFile
+from app.utility import sandbox, render, serializer, security
 from fastapi.responses import HTMLResponse, JSONResponse
-from contextlib import asynccontextmanager, suppress
-from .utility import serializer, render, security
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse
 from typing import List, Dict, Type
 from dataclasses import dataclass
+from contextlib import suppress
 from pathlib import Path
-import subprocess
-import logging
+from app.routes.auth import oauth, OAuthError
 import asyncio
 import secrets
+import logging
 import shutil
 import string
 import time
+import stat
 import ast
 import os
 
-
 logger = logging.getLogger("uvicorn.error")
-
-
-router = APIRouter()
-
-
 ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
-
-
-def secret_dir_name(length=32):
-    return "".join(secrets.choice(ALLOWED_CHARACTERS) for _ in range(length))
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+APP_DIRECTORY = Path(__file__).parent.parent
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    app.state.tools = load_tools(APP_DIRECTORY / "tools")
     yield
-
-    shutdown_event.set()
-
     delete_tasks = []
     for task in asyncio.all_tasks():
         if "delete" in task.get_name():
             delete_tasks.append(task)
+            task.cancel()
     await asyncio.gather(*delete_tasks)
 
 
-shutdown_event = asyncio.Event()
-app = FastAPI(lifespan=lifespan)
+router = APIRouter(lifespan=lifespan)
 
 
 class FunctionVisitor(ast.NodeVisitor):
@@ -61,29 +52,6 @@ class FunctionVisitor(ast.NodeVisitor):
 
     def __iter__(self):
         return iter(self.nodes)
-
-
-def docker_run(image: str, tool: Path, workdir: Path):
-    command = [
-        "docker",
-        "run",
-        "--network=none",
-        "-m=512m",
-        "--cpus=1.5",
-        "--rm",
-        "-v",
-        f"{tool}:/sandbox/{tool.name}:ro",
-        "-v",
-        f"{workdir}:{'/sandbox' / workdir}",
-        f"{image}",
-        "python3",
-        "runner.py",
-        "--file",
-        f"/sandbox/{tool.name}",
-        "--workdir",
-        f"{'sandbox' / workdir}",
-    ]
-    subprocess.call(command)
 
 
 @dataclass
@@ -118,23 +86,28 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
         arg_types = {}
 
         default_args = [None] * len(entry_node.args.args)
-        for i, default in enumerate(entry_node.args.defaults):
-            default_args[-i] = ast.unparse(default)
+        for i, default in enumerate(entry_node.args.defaults[::-1]):
+            default_args[-i - 1] = ast.unparse(default)
 
+        skip_tool = False
         for arg, default in zip(entry_node.args.args, default_args):
             if not arg.annotation:
-                logger.warning(
-                    f"all arguments in entrypoint ({tool_name}) must be annotated"
-                )
+                logger.warning(f"{tool_name} arguments must be annotated")
+                skip_tool = True
+                break
 
             arg_name, arg_type = arg.arg, ast.unparse(arg.annotation)
 
             if arg_type not in ["int", "float", "str", "Path"]:
                 logger.warning(f"invalid arg_type {arg_type} in {tool_name}")
-                continue
+                skip_tool = True
+                break
 
             arg_types[arg_name] = eval(arg_type)
             arg_form.append(render.form_group(arg.arg, arg_type, default))
+
+        if skip_tool:
+            continue
 
         tool_arg_string = []
         for k, v in arg_types.items():
@@ -155,33 +128,43 @@ def load_tools(tools_directory: Path) -> dict[str, Tool]:
     return tools
 
 
-APP_DIRECTORY = Path(__file__).parent
-TOOLS = load_tools(APP_DIRECTORY / "tools")
 TEMPLATES = Jinja2Templates(directory="app/templates")
-app.mount("/static", StaticFiles(directory=APP_DIRECTORY / "static"), name="static")
-app.mount("/scripts", StaticFiles(directory=APP_DIRECTORY / "scripts"), name="scripts")
+
+
+def secret_dir_name(length=32):
+    return "".join(secrets.choice(ALLOWED_CHARACTERS) for _ in range(length))
 
 
 async def delete_temp_dir(temp_dir: Path):
-    with suppress(asyncio.TimeoutError):
-        await asyncio.wait_for(shutdown_event.wait(), timeout=60 * 10)
-
-    if temp_dir.exists() and temp_dir.is_dir():
-        shutil.rmtree(temp_dir)
+    try:
+        with suppress(asyncio.CancelledError):
+            await asyncio.sleep(60 * 10)
+    finally:
+        if temp_dir.exists() and temp_dir.is_dir():
+            shutil.rmtree(temp_dir)
 
 
 async def get_temp_dir():
-    temp_dir = Path("/tmp") / secret_dir_name(32)
-    os.mkdir(temp_dir)
-    yield temp_dir
-    asyncio.create_task(delete_temp_dir(temp_dir), name=f"delete-{temp_dir}")
+    try:
+        temp_dir = Path("/tmp") / secret_dir_name(32)
+        os.mkdir(temp_dir)
+        os.chmod(temp_dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        yield temp_dir
+    finally:
+        task = delete_temp_dir(temp_dir)
+        asyncio.create_task(task, name=f"delete-{temp_dir}")
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.route("/", methods=["GET", "POST"])
 async def read_root(request: Request):
+    user = request.session.get("user")
+    print(f"user: {user}")
+
     return TEMPLATES.TemplateResponse(
         "index.html",
         {
+            "time": time.time(),
+            "GOOGLE_CLIENT_ID": GOOGLE_CLIENT_ID,
             "request": request,
             "root_path": request.scope.get("root_path"),
         },
@@ -189,19 +172,22 @@ async def read_root(request: Request):
 
 
 @router.get("/tools", response_class=JSONResponse)
-async def get_tools():
-    tools = [e.name for e in TOOLS.values()]
-    return {"tools": tools}
+async def get_tools(request: Request):
+    tools = request.app.state.tools
+    content = render.list_item(request.scope.get("root_path"), tools)
+    return HTMLResponse(content=content)
 
 
 @router.get("/tool/{tool_name}", response_class=HTMLResponse)
 async def entrypoint_page(request: Request, tool_name: str):
-    if not (tool := TOOLS.get(tool_name, None)):
+    tools = request.app.state.tools
+    if not (tool := tools.get(tool_name, None)):
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
     return TEMPLATES.TemplateResponse(
         "tool.html",
         {
+            "tool": tool.name,
             "request": request,
             "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.name}",
@@ -218,12 +204,13 @@ async def run_entrypoint_in_sandbox(
     tool_name: str,
     temp_dir: Path = Depends(get_temp_dir),
 ) -> str:
-    if tool_name not in TOOLS:
+    tools = request.app.state.tools
+    if tool_name not in tools:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    tool = TOOLS[tool_name]
+    tool = tools[tool_name]
 
-    if len(tool.arg_types):  # check for empty form
+    if len(tool.arg_types):
         form_data = await request.form()
     else:
         form_data = {}
@@ -242,7 +229,7 @@ async def run_entrypoint_in_sandbox(
     with open(temp_dir / "args.json", "w") as f:
         serializer.dump(kwargs, f)
 
-    docker_run("sandbox:latest", Path(tool.file), Path(temp_dir))
+    sandbox.docker_run("sandbox:latest", Path(tool.file), Path(temp_dir))
 
     results_file = temp_dir / "result.json"
     if not results_file.exists():
@@ -251,14 +238,11 @@ async def run_entrypoint_in_sandbox(
     with open(results_file, "r") as f:
         results = serializer.load(f)
 
-    return HTMLResponse(render.render(results))
-
-
-app.include_router(router)
+    return HTMLResponse(content=render.render(results))
 
 
 @security.constant_time_with_random_delay(0.2, 1)
-@app.get("/download/{file_str:path}")
+@router.get("/download/{file_str:path}", response_class=FileResponse)
 async def download_file(file_str: str):
     file_path = Path("/") / Path(file_str)
     file_path = file_path.resolve()
@@ -271,7 +255,7 @@ async def download_file(file_str: str):
     if not file_path.exists():
         raise forbidden
 
-    if file_path.is_file():
+    if not file_path.is_file():
         raise forbidden
 
     return FileResponse(
@@ -279,13 +263,3 @@ async def download_file(file_str: str):
         media_type="application/octet-stream",
         filename=file_path.name,
     )
-
-
-def main():
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8080)
-
-
-if __name__ == "__main__":
-    main()

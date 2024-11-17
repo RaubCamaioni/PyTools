@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Tool</title>
-    <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+    <title>{{ tool }}</title>
+    <script src="/scripts/htmx.min.js"></script>
     <script src="https://unpkg.com/vtk.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
@@ -26,7 +26,6 @@
                     hx-target="#result" 
                     hx-swap="outerHTML">
                     {{ form_groups|safe }}
-                    <!-- <input type="hidden" name="__blank__" value=""> fixes blank submit when no python arguments -->
                     <input type="submit" value="Submit">
                 </form>
             </div>        

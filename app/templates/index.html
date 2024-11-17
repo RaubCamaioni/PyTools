@@ -4,29 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PyTools</title>
-    <link rel="stylesheet" href="{{ root_path }}/static/index.css">
+    <script src="/scripts/htmx.min.js"></script>
+    <link rel="stylesheet" href="{{ root_path }}/static/index.css?t={{ time }}">
 </head>
 <body>
+    
+    <script src="https://accounts.google.com/gsi/client" async></script>
+    <div id="g_id_onload"
+        data-client_id="{{ GOOGLE_CLIENT_ID }}"
+        data-login_uri="http://localhost:8080/auth/google"
+        data-auto_prompt="false">
+    </div>
+
+    <div class="g_id_signin"
+        data-type="standard"
+        data-size="large"
+        data-theme="dark"
+        data-text="sign_in_with"
+        data-shape="rectangular"
+        data-logo_alignment="left">
+    </div>
 
     <h1>PyTools</h1>
     <ul id="tool-list">
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            fetch("{{ root_path }}/tools")
-                .then(response => response.json())
-                .then(data => {
-                    const list = document.getElementById("tool-list");
-                    data.tools.forEach(tool => {
-                        const listItem = document.createElement("li");
-                        const link = document.createElement("a");
-                        link.href = `{{ root_path }}/tool/${tool}`;
-                        link.textContent = tool;
-                        listItem.appendChild(link);
-                        list.appendChild(listItem);
-                    });
-                });
-        });
-    </script>
+        <li hx-get="{{ root_path }}/tools" hx-trigger="load" hx-swap="outerHTML">
+    </ul>
 </body>
 </html>
