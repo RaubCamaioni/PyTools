@@ -104,5 +104,5 @@ pretty_printer = MyPrettyPrinter(indent=4, width=10**5)
 
 def render(results: Any):
     return_string = pretty_printer.pformat(results)
-    structure = f'<div class="container" id="result" ><div class="return"><pre>{return_string}</pre></div></div>'
+    structure = f"<pre>{return_string}</pre>"
     return structure

@@ -1,9 +1,11 @@
 from contextlib import closing
+from typing import Optional
 from pathlib import Path
 import av
 
 
-def video_to_audio(video_file: Path) -> Path:
+def video_to_audio(video_file: Path) -> Optional[Path]:
+    output_path = None
     with closing(av.open(video_file)) as src_c:
         for i, stream in enumerate(src_c.streams.audio):
             output_path = video_file.with_name(video_file.stem + f"_{i}.mp3")
@@ -13,5 +15,4 @@ def video_to_audio(video_file: Path) -> Path:
                     for frame in packet.decode():
                         for packet in dst_s.encode(frame):
                             dst_c.mux(packet)
-
     return output_path

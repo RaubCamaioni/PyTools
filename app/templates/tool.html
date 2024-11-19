@@ -7,7 +7,7 @@
     <script src="/scripts/htmx.min.js"></script>
     <script src="https://unpkg.com/vtk.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-darcula.min.css">
     <link rel="stylesheet" href="{{ root_path }}/static/tool.css?t={{ time }}">
 </head>
 <body class="dark-mode">
@@ -15,6 +15,7 @@
     <a href="{{ root_path }}/" class="return-home"><i class="fas fa-home"></i></a>
     
     <div class="outer-container">
+        <div class="container-title">{{ tool }}</div>
         <div class="container">
             <div class="content">
                 <div class="code-area">
@@ -23,14 +24,19 @@
                 <form class="master-form" 
                     enctype="multipart/form-data" 
                     hx-post="{{ endpoint }}"
-                    hx-target="#result" 
-                    hx-swap="outerHTML">
+                    hx-target="#return" 
+                    hx-swap="innerHTML">
                     {{ form_groups|safe }}
                     <input type="submit" value="Submit">
                 </form>
             </div>        
         </div>
-        <div id="result"></div>
+        <div class="container-title">Results</div>
+        <div class="container", id="result">
+            <div class="return", id="return">
+                <pre></pre>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>

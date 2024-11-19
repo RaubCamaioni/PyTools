@@ -11,6 +11,6 @@ USER root
 COPY sandbox /sandbox
 RUN mkdir /sandbox/tmp
 RUN chown -R $MAMBA_USER:$MAMBA_USER /sandbox
-# USER $MAMBA_USER
+USER $MAMBA_USER
 
 WORKDIR /sandbox
