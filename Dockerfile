@@ -1,26 +1,10 @@
-FROM python:bookworm
+FROM docker:27.4.0-rc.1-dind-alpine3.20
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk --no-cache add python3 py3-pip
 
-RUN pip install --no-cache-dir \
-    fastapi[standard] \
-    opencv-python \
-    pandas \
-    numpy \
-    scipy \
-    pyav
+RUN pip3 install --break-system-packages --no-cache-dir fastapi[standard] itsdangerous requests jwt
 
-COPY /app /app
-
+COPY /app /app/app
 WORKDIR /app
 
-ENTRYPOINT ["uvicorn"]
-CMD ["app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["fastapi", "dev", "app/app.py", "--host", "0.0.0.0", "--port", "8080"]
