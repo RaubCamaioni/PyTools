@@ -1,16 +1,38 @@
 FROM mambaorg/micromamba:2.0.2
 
 USER root
-RUN apt-get update && apt install libgl1-mesa-glx -y
+RUN apt-get update && apt install -y \
+    libgl1-mesa-glx \
+    libcap-dev \
+    pkg-config \
+    libsystemd-dev \ 
+    asciidoc-base \
+    build-essential \
+    git
+
+RUN cd /tmp && \
+    git clone https://github.com/ioi/isolate.git && \
+    cd isolate && \
+    make && \
+    make install && \
+    cd / && rm -rf /tmp/isolate && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /sandbox
+RUN chown $MAMBA_USER:$MAMBA_USER /sandbox
+
 USER $MAMBA_USER
-COPY --chown=$MAMBA_USER:$MAMBA_USER env.yaml /tmp/env.yaml
-RUN micromamba install -y -n base -f /tmp/env.yaml && \
+
+# create sandbox environment
+COPY --chown=$MAMBA_USER:$MAMBA_USER sandbox.yaml /tmp/sandbox.yaml
+RUN micromamba create -y --prefix /sandbox/venv python=3.12 && \
+    micromamba install -y --prefix /sandbox/venv -f /tmp/sandbox.yaml
+
+# create app environment
+COPY --chown=$MAMBA_USER:$MAMBA_USER app.yaml /tmp/app.yaml
+RUN micromamba install -y -n base -f /tmp/app.yaml && \
     micromamba clean --all --yes
 
-USER root
-COPY sandbox /sandbox
-RUN mkdir /sandbox/tmp
-RUN chown -R $MAMBA_USER:$MAMBA_USER /sandbox
 USER $MAMBA_USER
 
 WORKDIR /sandbox
