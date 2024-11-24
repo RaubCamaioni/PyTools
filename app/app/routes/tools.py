@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
     await asyncio.gather(*delete_tasks)
 
 
+isolate = sandbox.IsolationWorkers()
 router = APIRouter(lifespan=lifespan)
 
 
@@ -231,7 +232,14 @@ async def run_entrypoint_in_sandbox(
     with open(temp_dir / "args.json", "w") as f:
         serializer.dump(kwargs, f)
 
-    sandbox.docker_run("sandbox:latest", Path(tool.file), Path(temp_dir))
+    # sandbox.docker_run("sandbox:latest", Path(tool.file), Path(temp_dir))
+
+    try:
+        isolate.run(Path(tool.file), Path(temp_dir))
+    except Exception as e:
+        print(e)
+    finally:
+        print("isolation run")
 
     results_file = temp_dir / "result.json"
     if not results_file.exists():

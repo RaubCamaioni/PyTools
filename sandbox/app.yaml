@@ -9,3 +9,4 @@ dependencies:
     - jwt
     - itsdangerous
     - requests
+    - pyparsing
