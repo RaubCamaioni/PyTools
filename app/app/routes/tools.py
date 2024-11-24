@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException, Request, APIRouter, Depends
+from typing import List, Dict, Type, Literal, get_origin, Annotated
 from starlette.datastructures import UploadFile as StarUploadFile
 from app.utility import sandbox, render, serializer, security
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse
-from typing import List, Dict, Type, Literal, get_origin
+from app.models.tools import SessionDep, User
 from dataclasses import dataclass
 from contextlib import suppress
 from pathlib import Path
@@ -14,6 +15,7 @@ import secrets
 import logging
 import shutil
 import string
+import json
 import time
 import stat
 import ast
@@ -64,6 +66,7 @@ class Tool:
 
 
 def load_tools(tools_directory: Path) -> dict[str, Tool]:
+    
     tools: dict[str, Tool] = {}
 
     for tool_file in tools_directory.glob("*.py"):
@@ -200,11 +203,15 @@ async def entrypoint_page(request: Request, tool_name: str):
 
 
 @router.post("/tool/{tool_name}", response_class=HTMLResponse)
-async def run_entrypoint_in_sandbox(
+async def run_isolated(
     request: Request,
     tool_name: str,
-    temp_dir: Path = Depends(get_temp_dir),
+    temp_dir: Annotated[Path, Depends(get_temp_dir)],
+    session: SessionDep,
 ) -> str:
+    
+    user = User(**(request.session.get("user") or {}))
+
     tools = request.app.state.tools
     if tool_name not in tools:
         raise HTTPException(status_code=404, detail="Tool Not Found")
@@ -232,14 +239,8 @@ async def run_entrypoint_in_sandbox(
     with open(temp_dir / "args.json", "w") as f:
         serializer.dump(kwargs, f)
 
-    # sandbox.docker_run("sandbox:latest", Path(tool.file), Path(temp_dir))
-
-    try:
-        isolate.run(Path(tool.file), Path(temp_dir))
-    except Exception as e:
-        print(e)
-    finally:
-        print("isolation run")
+    # DANGER: user submitted code
+    isolate.run(Path(tool.file), Path(temp_dir))
 
     results_file = temp_dir / "result.json"
     if not results_file.exists():

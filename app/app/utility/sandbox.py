@@ -3,6 +3,7 @@ from pathlib import Path
 from threading import Lock
 import random
 import os
+import shutil
 
 def docker_run(image: str, tool: Path, workdir: Path):
     command = [
@@ -45,7 +46,7 @@ class IsolationWorkers:
         worker = 0
         with self.worker_locks[worker]:
             subprocess.call(["isolate", "--init", f"--box-id={worker}"])
-            os.link(tool, f"/var/local/lib/isolate/0/box/{tool.name}")
+            shutil.copy(tool, f"/var/local/lib/isolate/0/box/{tool.name}")
             subprocess.call(
                 [
                     "isolate",

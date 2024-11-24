@@ -10,3 +10,4 @@ dependencies:
     - itsdangerous
     - requests
     - pyparsing
+    - sqlmodel
