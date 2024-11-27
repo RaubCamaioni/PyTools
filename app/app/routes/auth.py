@@ -3,9 +3,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from app.models.tools import SessionDep, User, hash_id, get_user
 import requests
 import jwt
 import os
+import hashlib
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -14,7 +16,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI")
-print(f"REDIRECT: {GOOGLE_REDIRECT_URI}")
 LOGIN_URL = f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=online"
 TEMPLATES = Jinja2Templates(directory="app/templates")
 
@@ -24,8 +25,8 @@ async def login_button(request: Request):
     logged = "user" in request.session
 
     if logged:
-        user = request.session.get("user")
-        name = user.get("name")
+        user: User = User.model_validate_json(request.session.get("user"))
+        name = user.alias
         kwargs = {"request": request, "name": name}
         button_html = TEMPLATES.TemplateResponse("logout_button.html", kwargs)
     else:
@@ -44,7 +45,7 @@ async def logout(request: Request):
 
 
 @router.get("/auth/google")
-async def auth_google(request: Request, code: str):
+async def auth_google(request: Request, code: str, session: SessionDep):
     token_url = "https://accounts.google.com/o/oauth2/token"
     data = {
         "code": code,
@@ -65,8 +66,9 @@ async def auth_google(request: Request, code: str):
     )
 
     user_info_json = user_info.json()
-    print(user_info_json)
-    request.session["user"] = user_info_json
+    id = hash_id(user_info_json["id"])
+    request.session["user"] = get_user(session, id).json()
+
     return RedirectResponse(url="/")
 
 
