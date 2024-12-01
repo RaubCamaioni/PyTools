@@ -1,5 +1,6 @@
 import pyparsing as pp
 from typing import Any, get_args, Literal
+from app.models.tools import Tool
 from pprint import PrettyPrinter, pformat
 from pathlib import Path, PosixPath
 import ast
@@ -92,10 +93,16 @@ def form_group(name: str, type: str, default: str):
         return TYPE_TO_LABEL[type](name, type, default)
 
 
-def list_item(base_url: str, tools: list):
+def list_item(base_url: str, tools: list[tuple[str, str]]):
     htmlx = []
-    for e in tools.values():
-        htmlx.append(f'<li><a href="{base_url}/tool/{e.name}">{e.name}</a></li>')
+    for id, name in tools:
+        htmlx.append(f"""
+        <li class="my-4 rounded-md overflow-hidden">
+            <a href="{base_url}/tool/{id}" class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg text-gray-300 rounded-md">
+                {name}
+            </a>
+        </li>
+        """)
     return "".join(htmlx)
 
 

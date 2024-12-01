@@ -8,6 +8,7 @@ import requests
 import jwt
 import os
 import hashlib
+import time
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -67,7 +68,7 @@ async def auth_google(request: Request, code: str, session: SessionDep):
 
     user_info_json = user_info.json()
     id = hash_id(user_info_json["id"])
-    request.session["user"] = get_user(session, id).json()
+    request.session["user"] = get_user(session, id).model_dump_json()
 
     return RedirectResponse(url="/")
 
