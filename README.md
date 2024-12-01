@@ -7,3 +7,11 @@ Return types are auto converted for web display.
 
 Using the Path type allows for files to be uploaded.  
 Retured Path types can be downloaded.  
+
+# TODO
+
+-tailwind transition
+-tool database storage
+-function upload 
+-function up vote, down vote, report
+-user banning
