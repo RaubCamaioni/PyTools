@@ -4,20 +4,24 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>PyTools</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
         <script src="/scripts/htmx.min.js"></script>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="/static/styles.css" rel="stylesheet">
     </head>
     <body class="bg-gray-900 text-gray-300 font-sans">
 
-        <a
-            hx-get="{{ root_path }}/login/button"
-            hx-trigger="load"
-            hx-swap="outerHTML"
-            class="absolute top-4 right-4 z-1000 text-sm px-4 py-2 rounded bg-gray-800 hover:bg-gray-700 border-2 border-white shadow-md">
-            Login
-        </a>
+        {% include 'components/header.html'%}
+        
+        <div class="w-full p-4 flex justify-center">
+            <input type="text"
+                class="px-4 py-2 rounded border border-gray-300 bg-gray-900"
+                placeholder="Tags..."
+                hx-get="{{ root_path }}/tool/search" 
+                hx-trigger="keyup delay:500ms"
+                hx-target="#search-results"
+                hx-include="[name='query']">
+        </div>
 
-        <h1 class="text-center text-white text-2xl my-6">PyTools</h1>
         <ul id="tool-list" class="max-w-2xl mx-auto">
             <li
                 hx-get="{{ root_path }}/tools"

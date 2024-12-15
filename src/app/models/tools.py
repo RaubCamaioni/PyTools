@@ -1,6 +1,6 @@
 from typing import Annotated, Optional, Any
 from fastapi import Depends, FastAPI, HTTPException, Query
-from typing import List, Dict, Type, Literal, get_origin, Annotated
+from typing import List, Dict, Type, Literal, get_origin, Annotated, Any
 import hashlib
 import ast
 from pathlib import Path
@@ -40,9 +40,11 @@ class Tool(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     name: str
     code: str
-    arg_form: str
-    arg_types: dict[str, str] = Field(default={}, sa_column=Column(JSON))
-    tags: list[str] = Field(sa_column=Column(JSON))
+    arguments: dict[str, tuple[str, str]] = Field(default={}, sa_column=Column(JSON))
+    tags: list[str] = Field(default={}, sa_column=Column(JSON))
+    upvotes: int = Field(default=0)
+    downvotes: int = Field(default=0)
+    usage: int = Field(default=0)
     public: bool = Field(default=False)
     annonymous: bool = Field(default=True)
     user_id: int = Field(default=None, foreign_key="user.id")
@@ -70,9 +72,30 @@ def get_tools(session: Session) -> list[tuple[int, str]]:
         return list(result)
 
 
+def get_user_tools(session: Session, user: User) -> list[tuple[int, str]]:
+    with Session(engine) as session:
+        statement = select(Tool.id, Tool.name).where(Tool.user_id == user.id)
+        result = session.exec(statement).all()
+        return list(result)
+
+
 def add_tool(session: Session, tool: Tool):
     session.add(tool)
     session.commit()
+
+
+def get_tool(session: Session, id: int):
+    statement = select(Tool).where(Tool.id == id)
+    result = session.exec(statement)
+    return result.first()
+
+
+def del_tool(session: Session, tool: Tool):
+    if not tool:
+        return False
+    session.delete(tool)
+    session.commit()
+    return True
 
 
 def get_tool_by_id(session: Session, tool_id: int) -> Tool | None:
@@ -115,7 +138,11 @@ class FunctionVisitor(ast.NodeVisitor):
 
 
 def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
-    tree = ast.parse(tool_source)
+    try:
+        tree = ast.parse(tool_source)
+    except SyntaxError:
+        logger.info("Upload Code: Syntax Error")
+        return None
 
     entry_node = None
     for node in FunctionVisitor(tree):
@@ -126,49 +153,30 @@ def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
         logger.warning(f"no entrypoint found in: {tool_name}")
         return None
 
-    arg_form = []
-    arg_types = {}
+    arguments = {}
 
-    default_args = [None] * len(entry_node.args.args)
+    defaults = [None] * len(entry_node.args.args)
     for i, default in enumerate(entry_node.args.defaults[::-1]):
-        default_args[-i - 1] = ast.unparse(default)
+        defaults[-i - 1] = ast.unparse(default)
 
-    skip_tool = False
-    for arg, default in zip(entry_node.args.args, default_args):
+    for arg, default in zip(entry_node.args.args, defaults):
         if not arg.annotation:
             logger.warning(f"{tool_name} arguments must be annotated")
-            skip_tool = True
-            break
+            return None
+        name = arg.arg
+        type = ast.unparse(arg.annotation)
+        arguments[name] = (type, default)
 
-        arg_name, arg_type = arg.arg, ast.unparse(arg.annotation)
-
-        base_type = arg_type not in ["int", "float", "str", "Path"]
-        literal_type = "Literal" not in arg_type
-        if base_type and literal_type:
-            logger.warning(f"invalid arg_type {arg_type} in {tool_name}")
-            skip_tool = True
-            break
-
-        if not base_type:
-            arg_types[arg_name] = arg_type
-        elif not literal_type:
-            arg_types[arg_name] = render.parser_literal(arg_type)
-
-        arg_form.append(render.form_group(arg.arg, arg_type, default))
-
-    if skip_tool:
-        return None
-
-    tool_arg_string = []
-    for k, v in arg_types.items():
-        tool_arg_string.append(f"  {k}: {v}")
-    tool_arg_string = "\n".join(tool_arg_string)
-    logger.info(f"Loading Tool: {tool_name}\n{tool_arg_string}")
+    # debug
+    # tool_arg_string = []
+    # for name, (type, default) in arguments.items():
+    #     tool_arg_string.append(f"  {name}: {type}")
+    # tool_arg_string = "\n".join(tool_arg_string)
+    # logger.info(f"Loading Tool: {tool_name}\n{tool_arg_string}")
 
     return Tool(
         name=tool_name,
         code=tool_source,
-        arg_form="\n".join(arg_form),
-        arg_types=arg_types,
+        arguments=arguments,
         user_id=user_id,
     )

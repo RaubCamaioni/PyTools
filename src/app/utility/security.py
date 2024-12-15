@@ -1,6 +1,18 @@
 from functools import wraps
+from app.utility import render
 import random
 import time
+
+
+def check_arguments(arguments: list[tuple[str, str, str]]):
+    for name, type, default in arguments:
+        if type in ["int", "float", "str", "Path"]:
+            continue
+        elif "Literal" in type:
+            render.parser_literal(type)
+            return False
+        else:
+            return False
 
 
 def constant_time_with_random_delay(min_delay: float, max_delay: float):

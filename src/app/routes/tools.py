@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 from contextlib import suppress
 from pathlib import Path
 from app.models import tools as db_tools
+from app.routes.auth import User
 import asyncio
 import secrets
 import logging
@@ -17,11 +18,7 @@ import string
 import time
 import stat
 import os
-
-logger = logging.getLogger("uvicorn.error")
-ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
-APP_DIRECTORY = Path(__file__).parent.parent
-TEMPLATES = Jinja2Templates(directory="app/templates")
+from app import TEMPLATES, ALLOWED_CHARACTERS, logger
 
 
 @asynccontextmanager
@@ -69,9 +66,9 @@ Tempdir = Annotated[Path, Depends(get_temp_dir)]
 @router.route("/", methods=["GET", "POST"])
 async def read_root(request: Request):
     return TEMPLATES.TemplateResponse(
-        "index.html",
+        "pages/index.html",
         {
-            "time": int(time.time()),
+            "header_title": "PyTools",
             "request": request,
             "root_path": request.scope.get("root_path"),
         },
@@ -85,6 +82,16 @@ async def get_tools(request: Request, session: db_tools.SessionDep):
     return HTMLResponse(content=content)
 
 
+@router.get("/user/tools", response_class=JSONResponse)
+async def get_user_tools(request: Request, session: db_tools.SessionDep):
+    if "user" not in request.session:
+        return HTMLResponse(status_code=404)
+    user: User = User.model_validate_json(request.session["user"])
+    tools = db_tools.get_user_tools(session, user)
+    content = render.list_item_user(request.scope.get("root_path"), tools)
+    return HTMLResponse(content=content)
+
+
 @router.get("/tool/{id}", response_class=HTMLResponse)
 async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
@@ -93,14 +100,15 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
     return TEMPLATES.TemplateResponse(
-        "tool.html",
+        "pages/tool.html",
         {
+            "header_title": tool.name,
             "tool": tool.name,
             "request": request,
             "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.id}",
             "code": tool.code,
-            "form_groups": tool.arg_form,
+            "form_groups": render.args_to_form(tool.arguments),
             "time": time.time(),
         },
     )
@@ -108,17 +116,19 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
 
 @router.post("/tool/{id}", response_class=HTMLResponse)
 async def run_isolated(
-    request: Request, temp_dir: Tempdir, session: db_tools.SessionDep
+    request: Request,
+    id: int,
+    temp_dir: Tempdir,
+    session: db_tools.SessionDep,
 ) -> str:
     tool = db_tools.get_tool_by_id(session, id)
 
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    if len(tool.arg_types):
+    form_data = {}
+    if len(tool.arguments):
         form_data = await request.form()
-    else:
-        form_data = {}
 
     kwargs = {}
     temp_tool = (temp_dir / tool.name).with_suffix(".py")
@@ -126,7 +136,7 @@ async def run_isolated(
         f.write(tool.code)
 
     for key, value in form_data.items():
-        python_type = tool.arg_types[key]
+        python_type = eval(tool.arguments[key][0])
 
         if isinstance(value, StarUploadFile):
             upload_path = temp_dir / value.filename

@@ -5,3 +5,4 @@ uv.lock
 .secrets
 .env
 app/database.db
+.vscode/

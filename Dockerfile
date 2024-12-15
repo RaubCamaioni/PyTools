@@ -33,7 +33,7 @@ RUN micromamba install -y -n base -f /tmp/app.yaml && \
     micromamba clean --all --yes
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER /sandbox/sandbox /sandbox
-COPY --chown=$MAMBA_USER:$MAMBA_USER /app /app
+COPY --chown=$MAMBA_USER:$MAMBA_USER /src /app
     
 WORKDIR /app
 ENTRYPOINT ["/usr/local/bin/_entrypoint.sh", "python", "main.py"]

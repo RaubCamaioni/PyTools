@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ensure Tailwind is linked -->
+    <link href="/static/styles.css" rel="stylesheet">
   </head>
   <body class="bg-gray-900 text-gray-300 font-sans p-4">
+
+    {% include 'components/header.html'%}
 
     <h1 class="text-3xl font-bold mb-4">Privacy Policy</h1>
 
     <div>
-      <p class="mt-2 whitespace-pre-line">
+      <p class="whitespace-pre-line max-w-2xl mx-auto">
         PyTools requires user data for the following reasons:
         - Attributing uploaded code to users
         - Allowing users to delete their uploaded code

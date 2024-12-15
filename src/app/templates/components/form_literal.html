@@ -1,0 +1,17 @@
+<div class="form-group mb-2 flex items-center gap-4"> 
+	
+	<label 
+		class="block text-sm font-medium text-gray-300 mr-2 w-1/3"
+		for="{{ name }}">
+		{{ name }}:
+	</label>
+	
+	<select 
+		class="mt-1 block rounded-md bg-gray-700 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+		id="{{ name }}" 
+		name="{{ name }}">
+		{% for option in options %}
+            <option value="{{ option.value }}">{{ option.label }}</option>
+        {% endfor %}
+	</select>
+</div>

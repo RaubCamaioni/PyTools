@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms of Service</title>
-    <script src="https://cdn.tailwindcss.com"></script> <!-- Tailwind CDN -->
+    <link href="/static/styles.css" rel="stylesheet">
   </head>
   <body class="bg-gray-900 text-gray-300 font-sans p-4">
+
+    {% include 'components/header.html'%}
 
     <h1 class="text-3xl font-bold mb-4">Terms of Service</h1>
 
     <div>
-      <p class="mt-2 whitespace-pre-line">
+      <p class="whitespace-pre-line max-w-2xl mx-auto">
         PyTools allows users to upload arbitrary python code.
         This code could contain language or ideas not supported by PyTools.
         Various pre-filters are applied to catch egregious offenders.

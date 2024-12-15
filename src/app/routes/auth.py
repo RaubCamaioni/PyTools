@@ -1,24 +1,19 @@
 from fastapi import Depends, APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
 from app.models.tools import SessionDep, User, hash_id, get_user
+from app import TEMPLATES
 import requests
 import jwt
 import os
-import hashlib
-import time
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI")
 LOGIN_URL = f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=online"
-TEMPLATES = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/login/button", response_class=HTMLResponse)
@@ -29,10 +24,15 @@ async def login_button(request: Request):
         user: User = User.model_validate_json(request.session.get("user"))
         name = user.alias
         kwargs = {"request": request, "name": name}
-        button_html = TEMPLATES.TemplateResponse("logout_button.html", kwargs)
+        button_html = TEMPLATES.TemplateResponse(
+            "components/logout_button.html", kwargs
+        )
     else:
         kwargs = {"request": request, "url": LOGIN_URL}
-        button_html = TEMPLATES.TemplateResponse("login_button.html", kwargs)
+        button_html = TEMPLATES.TemplateResponse(
+            "components/login_button.html",
+            kwargs,
+        )
 
     return button_html
 
@@ -41,7 +41,7 @@ async def login_button(request: Request):
 async def logout(request: Request):
     request.session.clear()
     kwargs = {"request": request, "url": LOGIN_URL}
-    button_html = TEMPLATES.TemplateResponse("login_button.html", kwargs)
+    button_html = TEMPLATES.TemplateResponse("components/login_button.html", kwargs)
     return button_html
 
 

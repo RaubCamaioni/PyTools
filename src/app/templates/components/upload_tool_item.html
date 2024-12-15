@@ -1,0 +1,29 @@
+<li class="my-4 rounded-md overflow-hidden flex justify-between items-center">
+    
+    <div class="flex justify-between bg-gray-800 w-full">
+
+        <a class="block px-6 py-4 bg-gray-800 text-lg text-gray-300 rounded-md">
+            Upload Code
+        </a>
+
+        <div class="flex-grow"></div>
+
+        <div class="flex items-center space-x-2">
+			<label 
+				for="file-input"
+				class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 cursor-pointer text-center m-2">
+				Upload Code File
+			</label>
+
+			<input 
+				type="file" 
+				id="file-input" 
+				name="file" 
+				hx-post="/manage/tool/upload"
+				hx-encoding="multipart/form-data"
+				hx-trigger="change" 
+				hx-swap="none" 
+				style="display: none;" />
+        </div>
+    </div>
+</li>

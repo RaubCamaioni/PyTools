@@ -10,8 +10,16 @@ Retured Path types can be downloaded.
 
 # TODO
 
--tailwind transition
--tool database storage
--function upload 
--function up vote, down vote, report
--user banning
+-tailwind transition: done  
+-tool database storage: done  
+-function upload: done  
+
+-user page for changing user data  
+-- change display name  
+-- upload tool  
+-- view all user uploaded tools  
+-- delete uploaded tool  
+-- change tool public/private  
+
+-function up vote, down vote, report  
+-user banning  

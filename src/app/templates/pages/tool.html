@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{ tool }}</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <link href="/static/shades-of-purple.css" rel="stylesheet">
+        <link href="/static/styles.css" rel="stylesheet">
+        <script src="/scripts/htmx.min.js"></script>
+        <script src="https://unpkg.com/vtk.js"></script>
+        <style>
+
+            ::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: #2d3748;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background-color: #4a5568;
+                border-radius: 10px;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: #718096;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-900 text-gray-300 font-sans">
+
+        {% include 'components/header.html'%}
+
+        <div class="outer-container w-4/5 mx-auto flex flex-col items-center gap-0 p-0 bg-gray-900">
+
+            <div class="container-title w-full text-left font-bold mt-6 mb-2 text-white pl-4">{{ tool }}</div>
+            <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md overflow-x-auto">
+                <div class="content flex flex-row gap-4 w-full">
+                    <div class="code-area max-h-[700px] w-3/4 bg-gray-700 rounded-md mb-2 overflow-x-auto">
+                        <pre><code class="language-python">{{ code }}</code></pre>
+                    </div>
+                    <form class="master-form w-1/4 flex flex-col mt-0 gap-0" enctype="multipart/form-data" hx-post="{{ endpoint }}" hx-target="#return" hx-swap="innerHTML">
+                        {{ form_groups | safe }}
+                        <input type="submit" value="Submit" class="w-full mt-2 h-10 px-4 border border-gray-300 rounded-md bg-gray-700 text-white hover:bg-gray-600">
+                    </form>
+                </div>
+            </div>
+
+            <div class="container-title w-full text-left font-bold mt-6 mb-2 text-white pl-4">Results</div>
+            <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md" id="result">
+                <div class="return w-full mx-auto p-2 bg-gray-700 rounded-md" id="return">
+                    <pre></pre>
+                </div>
+            </div>
+            
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+
+    </body>
+</html>

@@ -1,9 +1,11 @@
 import pyparsing as pp
-from typing import Any, get_args, Literal
-from app.models.tools import Tool
+from typing import Any, get_args
 from pprint import PrettyPrinter, pformat
 from pathlib import Path, PosixPath
-import ast
+from jinja2 import Template
+from app import TEMPLATES
+from typing import Literal  # required for form type
+from fastapi import HTTPException
 
 
 def parser_literal(input: str):
@@ -42,16 +44,16 @@ class MyPrettyPrinter(PrettyPrinter):
 def literal_to_label(name: str, type: str, default: str):
     default = default or ""
 
-    option = """<option value="{option}">{option}</option>"""
-
     values = get_args(eval(parser_literal(type)))
+    options = [{"value": v, "label": v} for v in values]
 
-    form = f"""
-    <label for="{name}">{name}:</label>
-    <select id="{name}" name="{name}">
-    {"\n".join([option.format(option=o) for o in values])}
-    </select>
-    """
+    template: Template = TEMPLATES.get_template("components/form_literal.html")
+    form = template.render(
+        {
+            "name": name,
+            "options": options,
+        },
+    )
 
     return form
 
@@ -59,12 +61,14 @@ def literal_to_label(name: str, type: str, default: str):
 def type_to_label(name: str, type: str, default: str):
     default = default or ""
 
-    form = f"""
-    <div class="form-group">
-    <label for="{name}">{name}:</label>
-    <input type="{TYPE_MAP.get(type, "text")}" id="{name}" name="{name}" step=".01" required value="{default}">
-    </div>
-    """
+    template: Template = TEMPLATES.get_template("components/form_type.html")
+    form = template.render(
+        {
+            "name": name,
+            "type": TYPE_MAP.get(type, "text"),
+            "default": default,
+        },
+    )
 
     return form
 
@@ -87,10 +91,22 @@ TYPE_TO_LABEL = {
 
 def form_group(name: str, type: str, default: str):
     default = default or ""
+
     if "Literal" in type:
         return TYPE_TO_LABEL["Literal"](name, type, default)
-    else:
+
+    if type in TYPE_TO_LABEL:
         return TYPE_TO_LABEL[type](name, type, default)
+
+    return type_to_label(name, "str", "invalid type")
+
+
+def args_to_form(arguments: dict[str, tuple[str, str]]):
+    items = []
+    for name, (type, default) in arguments.items():
+        items.append(form_group(name, type, default))
+
+    return "\n".join(items)
 
 
 def list_item(base_url: str, tools: list[tuple[str, str]]):
@@ -103,6 +119,22 @@ def list_item(base_url: str, tools: list[tuple[str, str]]):
             </a>
         </li>
         """)
+    return "".join(htmlx)
+
+
+def list_item_user(root_path: str, tools: list[tuple[str, str]]):
+    template: Template = TEMPLATES.get_template("components/edit_tool_item.html")
+    htmlx = []
+
+    for id, name in tools:
+        htmlx.append(
+            template.render(
+                root_path=root_path,
+                id=id,
+                name=name,
+            )
+        )
+
     return "".join(htmlx)
 
 
