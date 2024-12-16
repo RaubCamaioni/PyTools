@@ -4,5 +4,5 @@ tailwind/
 uv.lock
 .secrets
 .env
-app/database.db
+src/database.db
 .vscode/
