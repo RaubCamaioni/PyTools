@@ -1,6 +1,7 @@
 from typing import Annotated, Optional, Any
 from fastapi import Depends, FastAPI, HTTPException, Query
 from typing import List, Dict, Type, Literal, get_origin, Annotated, Any
+import pyparsing as pp
 import hashlib
 import ast
 from pathlib import Path
@@ -15,6 +16,9 @@ from sqlmodel import (
     Relationship,
     JSON,
     Column,
+    or_,
+    and_,
+    func,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -65,11 +69,40 @@ def get_user(session: Session, id: int) -> User:
         return new_user
 
 
-def get_tools(session: Session) -> list[tuple[int, str]]:
-    with Session(engine) as session:
-        statement = select(Tool.id, Tool.name)
-        result = session.exec(statement)
-        return list(result)
+def get_tools_by_index(
+    session: Session,
+    start: int,
+    end: int,
+) -> list[tuple[int, str]]:
+    with session:
+        statement = select(Tool.id, Tool.name).offset(start).limit(end - start)
+        return session.exec(statement).all()
+
+
+def get_tools_by_tags(
+    session: Session,
+    tags: list[str],
+    start: int,
+    end: int,
+) -> list[Tool]:
+    with session:
+        # conditions = [Tool.tags.contains(tag) for tag in tags]
+        # statement = (
+        #     select(Tool.id, Tool.name)
+        #     .where(or_(*conditions))
+        #     .offset(start)
+        #     .limit(end - start)
+        # )
+
+        # TODO: this is probably very slow?
+        conditions = [Tool.tags.like(f'%"{tag}"%') for tag in tags]
+        statement = (
+            select(Tool.id, Tool.name)
+            .where(*conditions)
+            .offset(start)
+            .limit(end - start)
+        )
+        return session.exec(statement).all()
 
 
 def get_user_tools(session: Session, user: User) -> list[tuple[int, str]]:
@@ -137,6 +170,17 @@ class FunctionVisitor(ast.NodeVisitor):
         return iter(self.nodes)
 
 
+def get_tags(tool_source: str) -> list[str]:
+    word = pp.Word(pp.alphanums)
+    tag = word + pp.Optional(pp.Suppress(pp.Literal(",")))
+    comment_line = pp.Suppress(pp.Literal("#")) + pp.OneOrMore(tag)
+    try:
+        result = comment_line.parseString(tool_source)
+        return list(result)
+    except pp.ParseException:
+        return []
+
+
 def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
     try:
         tree = ast.parse(tool_source)
@@ -167,6 +211,8 @@ def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
         type = ast.unparse(arg.annotation)
         arguments[name] = (type, default)
 
+    tags = get_tags(tool_source.split("\n")[0])
+
     # debug
     # tool_arg_string = []
     # for name, (type, default) in arguments.items():
@@ -179,4 +225,5 @@ def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
         code=tool_source,
         arguments=arguments,
         user_id=user_id,
+        tags=tags,
     )

@@ -9,11 +9,22 @@
         <div class="flex-grow"></div>
 
         <div class="flex space-x-2">
-            <a
-                href="{{ root_path }}/manage/tool/update/{{ id }}" 
+            
+            <input
+                id="tool-update-{{ id }}"
+                type="file" 
+                name="file" 
+                hx-post="{{ root_path }}/manage/tool/update/{{ id }}"
+                hx-encoding="multipart/form-data"
+                hx-trigger="change" 
+                hx-swap="none" 
+                style="display: none;" />
+
+            <label
+                for="tool-update-{{ id }}"
                 class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg text-gray-300 rounded-md">
                 Update
-            </a>
+            </label>
 
             <a 
                 hx-delete="{{ root_path }}/manage/tool/delete/{{ id }}"
@@ -22,6 +33,7 @@
                 class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg text-gray-300 rounded-md">
                 Delete
             </a>
+
         </div>
     </div>
 </li>

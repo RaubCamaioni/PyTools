@@ -13,25 +13,22 @@
         {% include 'components/header.html'%}
         
         <div class="w-full p-4 flex justify-center">
-            <input type="text"
-                class="px-4 py-2 rounded border border-gray-300 bg-gray-900"
+            <input 
+                class="form-control px-4 py-2 rounded border border-gray-300 bg-gray-900"
+                type="search"
+                name="search"
                 placeholder="Tags..."
-                hx-get="{{ root_path }}/tool/search" 
-                hx-trigger="keyup delay:500ms"
-                hx-target="#search-results"
-                hx-include="[name='query']">
+                hx-post="{{ root_path }}/tools?start=0&end=1"
+                hx-trigger="keyup[key=='Enter']"
+                hx-target="#tool-list"
+                hx-indicator=".htmx-indicator"
+                hx-swap="innerHTML">
         </div>
 
         <ul id="tool-list" class="max-w-2xl mx-auto">
-            <li
-                hx-get="{{ root_path }}/tools"
-                hx-trigger="load"
-                hx-swap="outerHTML"
-                class="my-4 rounded-md overflow-hidden">
-                <a href="#"
-                    class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg">
-                </a>
-            </li>
+            {% with start=0, end=50 %}
+                {% include 'components/tool_scroll_loader.html'%}
+            {% endwith %}
         </ul>
     </body>
 </html>

@@ -65,7 +65,7 @@ async def tool_upload_post(
 
     code = await file.read()
 
-    db_tool = tools.get_tool(session, id)
+    db_tool: tools.Tool = tools.get_tool(session, id)
 
     if db_tool is None:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
@@ -76,7 +76,11 @@ async def tool_upload_post(
 
     else:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
+        db_tool.name = tool.name
         db_tool.code = tool.code
+        db_tool.arguments = tool.arguments
+        db_tool.tags = tool.tags
+        logger.info(tool.tags)
         session.commit()
 
     return HTMLResponse(status_code=200)

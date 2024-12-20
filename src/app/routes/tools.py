@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException, Request, APIRouter, Depends
-from typing import Literal, get_origin, Annotated
+from fastapi import FastAPI, HTTPException, Request, APIRouter, Depends, Query
+from typing import Literal, get_origin, Annotated, Optional
 from starlette.datastructures import UploadFile as StarUploadFile
 from app.utility import sandbox, render, serializer, security
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse
+from urllib.parse import unquote, parse_qs
 from contextlib import suppress
 from pathlib import Path
 from app.models import tools as db_tools
@@ -75,14 +76,35 @@ async def read_root(request: Request):
     )
 
 
-@router.get("/tools", response_class=JSONResponse)
-async def get_tools(request: Request, session: db_tools.SessionDep):
-    tools = db_tools.get_tools(session)
-    content = render.list_item(request.scope.get("root_path"), tools)
+@router.post("/tools", response_class=JSONResponse)
+async def get_tools(
+    request: Request,
+    session: db_tools.SessionDep,
+    start: Optional[int] = Query(0, ge=0),
+    end: Optional[int] = Query(100, ge=0),
+):
+    if start > end:
+        raise HTTPException(status_code=400, detail="Invalid index range")
+
+    body = await request.body()
+    search_string = unquote(body.decode())
+    query_params = parse_qs(search_string)
+    tags = query_params.get("search", [""])[0].split()
+
+    if tags:
+        tools = db_tools.get_tools_by_tags(session, tags, start, end)
+    else:
+        tools = db_tools.get_tools_by_index(session, start, end)
+
+    if len(tools) < (end - start):
+        end = None
+
+    content = render.list_items(request.scope.get("root_path"), tools, end, tags)
+
     return HTMLResponse(content=content)
 
 
-@router.get("/user/tools", response_class=JSONResponse)
+@router.post("/user/tools", response_class=JSONResponse)
 async def get_user_tools(request: Request, session: db_tools.SessionDep):
     if "user" not in request.session:
         return HTMLResponse(status_code=404)

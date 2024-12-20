@@ -1,0 +1,12 @@
+<li
+	hx-post="{{ root_path }}/tools?start={{ start }}&end={{ end }}"
+	hx-trigger="revealed delay:500ms"
+	hx-swap="outerHTML"
+	hx-vals='{"search": "{{ tags }}" }'
+	class="my-4 rounded-md overflow-hidden">
+	<a 
+		href="#"
+		class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg">
+		Loading...
+	</a>
+</li>

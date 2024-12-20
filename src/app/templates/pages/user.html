@@ -19,7 +19,7 @@
             {% include 'components/upload_tool_item.html'%}
 
             <li
-                hx-get="{{ root_path }}/user/tools"
+                hx-post="{{ root_path }}/user/tools"
                 hx-trigger="load"
                 hx-swap="outerHTML"
                 class="my-4 rounded-md overflow-hidden">

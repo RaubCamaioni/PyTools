@@ -5,7 +5,6 @@ from pathlib import Path, PosixPath
 from jinja2 import Template
 from app import TEMPLATES
 from typing import Literal  # required for form type
-from fastapi import HTTPException
 
 
 def parser_literal(input: str):
@@ -109,21 +108,44 @@ def args_to_form(arguments: dict[str, tuple[str, str]]):
     return "\n".join(items)
 
 
-def list_item(base_url: str, tools: list[tuple[str, str]]):
+def list_items(
+    base_url: str,
+    tools: list[tuple[str, str]],
+    end: int = None,
+    tags: list[str] = None,
+):
+    tags = tags or []
+
     htmlx = []
+    template: Template = TEMPLATES.get_template("components/index_tool_item.html")
     for id, name in tools:
-        htmlx.append(f"""
-        <li class="my-4 rounded-md overflow-hidden">
-            <a href="{base_url}/tool/{id}" class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg text-gray-300 rounded-md">
-                {name}
-            </a>
-        </li>
-        """)
+        form = template.render(
+            {
+                "name": name,
+                "id": id,
+                "base_url": base_url,
+            },
+        )
+        htmlx.append(form)
+
+    if end is not None:
+        template: Template = TEMPLATES.get_template(
+            "components/tool_scroll_loader.html"
+        )
+        form = template.render(
+            {
+                "start": end,
+                "end": end + 1,
+                "tags": " ".join(tags),
+            },
+        )
+        htmlx.append(form)
+
     return "".join(htmlx)
 
 
 def list_item_user(root_path: str, tools: list[tuple[str, str]]):
-    template: Template = TEMPLATES.get_template("components/edit_tool_item.html")
+    template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     htmlx = []
 
     for id, name in tools:
