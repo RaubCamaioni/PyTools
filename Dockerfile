@@ -1,39 +1,48 @@
-FROM mambaorg/micromamba:2.0.2
-
-USER root
+FROM python:3.10-slim-bookworm AS isolate-builder
 
 RUN apt-get update && apt install -y \
-    libgl1-mesa-glx \
     libcap-dev \
     pkg-config \
     libsystemd-dev \ 
-    asciidoc-base \
+    asciidoc \
     build-essential \
     git
+
+RUN /usr/local/bin/pip install asciidoc
 
 RUN cd /tmp && \
     git clone https://github.com/ioi/isolate.git && \
     cd isolate && \
-    make && \
-    make install && \
-    cd / && rm -rf /tmp/isolate && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    make
 
-RUN mkdir /sandbox
-RUN chown $MAMBA_USER:$MAMBA_USER /sandbox
+# RUN cd /tmp && \
+#     git clone https://github.com/ioi/isolate.git && \
+#     cd isolate && \
+#     make && \
+#     make install && \
+#     cd / && rm -rf /tmp/isolate && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-USER $MAMBA_USER
-    
-COPY --chown=$MAMBA_USER:$MAMBA_USER sandbox/sandbox.yaml /tmp/sandbox.yaml
-RUN micromamba create -y --prefix /sandbox/venv python=3.12 && \
-    micromamba install -y --prefix /sandbox/venv -f /tmp/sandbox.yaml
+FROM python:3.10-slim-bookworm
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER sandbox/app.yaml /tmp/app.yaml
-RUN micromamba install -y -n base -f /tmp/app.yaml && \
-    micromamba clean --all --yes
+RUN apt-get update && apt install -y \
+    libgl1-mesa-glx \
+    make \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER /sandbox/sandbox /sandbox
-COPY --chown=$MAMBA_USER:$MAMBA_USER /src /app
+COPY --from=isolate-builder /tmp/isolate /tmp/isolate
+RUN cd /tmp/isolate && make install && rm -rf /tmp/isolate
+
+RUN python3 -m venv /app/venv
+COPY sandbox/app_requirements.txt /tmp/
+RUN /app/venv/bin/pip install -r /tmp/app_requirements.txt
+
+RUN python3 -m venv /sandbox/venv
+COPY sandbox/sandbox_requirements.txt /tmp/
+RUN /sandbox/venv/bin/pip install -r /tmp/sandbox_requirements.txt
+
+COPY /sandbox/sandbox /sandbox
+COPY /src /app
     
 WORKDIR /app
-ENTRYPOINT ["/usr/local/bin/_entrypoint.sh", "python", "main.py"]
+ENTRYPOINT ["/app/venv/bin/python", "main.py"]

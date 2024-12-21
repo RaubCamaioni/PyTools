@@ -5,6 +5,7 @@ import random
 import os
 import shutil
 
+
 def docker_run(image: str, tool: Path, workdir: Path):
     command = [
         "docker",
@@ -60,7 +61,7 @@ class IsolationWorkers:
                     "--wall-time=30",
                     "--run",
                     "--",
-                    "/sandbox/venv/bin/python3.12",
+                    "/sandbox/venv/bin/python",
                     "/sandbox/runner.py",
                     "--file",
                     f"/box/{tool.name}",
