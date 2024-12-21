@@ -16,9 +16,6 @@ from sqlmodel import (
     Relationship,
     JSON,
     Column,
-    or_,
-    and_,
-    func,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -46,13 +43,36 @@ class Tool(SQLModel, table=True):
     code: str
     arguments: dict[str, tuple[str, str]] = Field(default={}, sa_column=Column(JSON))
     tags: list[str] = Field(default={}, sa_column=Column(JSON))
-    upvotes: int = Field(default=0)
-    downvotes: int = Field(default=0)
+    up_votes: list["UpVote"] = Relationship(back_populates="tool")
+    down_votes: list["DownVote"] = Relationship(back_populates="tool")
+    reports: list["Report"] = Relationship(back_populates="tool")
     usage: int = Field(default=0)
     public: bool = Field(default=False)
     annonymous: bool = Field(default=True)
     user_id: int = Field(default=None, foreign_key="user.id")
     user: User = Relationship(back_populates="tools")
+
+
+class UpVote(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    tool_id: int = Field(foreign_key="tool.id")
+    tool: Tool = Relationship(back_populates="up_votes")
+
+
+class DownVote(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    tool_id: int = Field(foreign_key="tool.id")
+    tool: Tool = Relationship(back_populates="down_votes")
+
+
+class Report(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    tool_id: int = Field(foreign_key="tool.id")
+    tool: Tool = Relationship(back_populates="reports")
+    reason: str
 
 
 def get_user(session: Session, id: int) -> User:
@@ -86,15 +106,7 @@ def get_tools_by_tags(
     end: int,
 ) -> list[Tool]:
     with session:
-        # conditions = [Tool.tags.contains(tag) for tag in tags]
-        # statement = (
-        #     select(Tool.id, Tool.name)
-        #     .where(or_(*conditions))
-        #     .offset(start)
-        #     .limit(end - start)
-        # )
-
-        # TODO: this is probably very slow?
+        # TODO: check speed
         conditions = [Tool.tags.like(f'%"{tag}"%') for tag in tags]
         statement = (
             select(Tool.id, Tool.name)
@@ -138,7 +150,7 @@ def get_tool_by_id(session: Session, tool_id: int) -> Tool | None:
         return result
 
 
-sqlite_file_name = "database.db"
+sqlite_file_name = "/data/database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
 connect_args = {"check_same_thread": False}

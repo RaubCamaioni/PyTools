@@ -10,16 +10,14 @@ Retured Path types can be downloaded.
 
 # TODO
 
--tailwind transition: done  
--tool database storage: done  
--function upload: done  
+User Page  
+-update user attributes  
+-update tool attributes  
+-scrollable user tools page  
 
--user page for changing user data  
--- change display name  
--- upload tool  
--- view all user uploaded tools  
--- delete uploaded tool  
--- change tool public/private  
+Tool Page  
+-up vote / down vote  
+-report  
+-GPT malicious code check
+-Split donation button
 
--function up vote, down vote, report  
--user banning  
