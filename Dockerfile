@@ -25,7 +25,9 @@ RUN apt-get update && apt install -y \
 COPY --from=isolate-builder /tmp/isolate /tmp/isolate
 RUN cd /tmp/isolate && make install && rm -rf /tmp/isolate
 
-RUN useradd -ms /bin/bash -u 1001 -g 1001 app
+RUN groupadd -g 1001 app && \
+    useradd -ms /bin/bash -u 1001 -g 1001 app
+    
 RUN mkdir /app && chown app:app /app
 RUN mkdir /sandbox && chown app:app /sandbox
 
