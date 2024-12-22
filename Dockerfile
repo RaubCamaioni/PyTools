@@ -15,14 +15,6 @@ RUN cd /tmp && \
     cd isolate && \
     make
 
-# RUN cd /tmp && \
-#     git clone https://github.com/ioi/isolate.git && \
-#     cd isolate && \
-#     make && \
-#     make install && \
-#     cd / && rm -rf /tmp/isolate && \
-#     apt-get clean && rm -rf /var/lib/apt/lists/*
-
 FROM python:3.10-slim-bookworm
 
 RUN apt-get update && apt install -y \
