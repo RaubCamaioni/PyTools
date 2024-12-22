@@ -213,10 +213,10 @@ async def download_file(file_str: str):
 @router.get("/terms-of-service", response_class=FileResponse)
 async def terms_of_service(request: Request):
     kwargs = {"request": request}
-    return TEMPLATES.TemplateResponse("terms_of_service.html", kwargs)
+    return TEMPLATES.TemplateResponse("page/terms_of_service.html", kwargs)
 
 
 @router.get("/privacy-policy", response_class=FileResponse)
 async def privacy_policy(request: Request):
     kwargs = {"request": request}
-    return TEMPLATES.TemplateResponse("privacy_policy.html", kwargs)
+    return TEMPLATES.TemplateResponse("page/privacy_policy.html", kwargs)

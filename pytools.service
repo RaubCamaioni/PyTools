@@ -1,0 +1,20 @@
+[Unit]
+Description=Docker Container for PyTools
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker stop pytools
+ExecStartPre=-/usr/bin/docker rm pytools
+ExecStart=/usr/bin/docker run --rm \
+  --name pytools \
+  --privileged \
+  --env-file <secrets_file> \
+  -p 8080:8080 \
+  -v <data_folder>:/data \
+  pytools:isolate
+ExecStop=/usr/bin/docker stop pytools
+
+[Install]
+WantedBy=multi-user.target
