@@ -1,0 +1,8 @@
+cadquery
+pandas 
+numpy<2.0.0
+scipy 
+pymupdf
+opencv-python
+pyav
+ezdxf>=1.3.4

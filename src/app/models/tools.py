@@ -118,10 +118,9 @@ def get_tools_by_tags(
 
 
 def get_user_tools(session: Session, user: User) -> list[tuple[int, str]]:
-    with Session(engine) as session:
-        statement = select(Tool.id, Tool.name).where(Tool.user_id == user.id)
-        result = session.exec(statement).all()
-        return list(result)
+    statement = select(Tool.id, Tool.name).where(Tool.user_id == user.id)
+    result = session.exec(statement).all()
+    return list(result)
 
 
 def add_tool(session: Session, tool: Tool):
@@ -144,10 +143,9 @@ def del_tool(session: Session, tool: Tool):
 
 
 def get_tool_by_id(session: Session, tool_id: int) -> Tool | None:
-    with Session(engine) as session:
-        statement = select(Tool).where(Tool.id == tool_id)
-        result = session.exec(statement).first()
-        return result
+    statement = select(Tool).where(Tool.id == tool_id)
+    result = session.exec(statement).first()
+    return result
 
 
 sqlite_file_name = "/data/database.db"

@@ -11,6 +11,8 @@ from contextlib import suppress
 from pathlib import Path
 from app.models import tools as db_tools
 from app.routes.auth import User
+from zipfile import ZipFile
+from io import BytesIO
 import asyncio
 import secrets
 import logging
@@ -119,7 +121,7 @@ async def get_user_tools(request: Request, session: db_tools.SessionDep):
 async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
 
-    if tool is None:
+    if tool is None:  # or not tool.public:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
     return TEMPLATES.TemplateResponse(
@@ -135,6 +137,53 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "time": time.time(),
         },
     )
+
+
+@router.get("/download/tool/{id}", response_class=HTMLResponse)
+async def download_tool(request: Request, id: int, session: db_tools.SessionDep):
+    tool = db_tools.get_tool_by_id(session, id)
+
+    if tool is None:  # or not tool.public:
+        raise HTTPException(status_code=404, detail="Tool Not Found")
+
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, "w") as zip_file:
+        zip_file.writestr(f"{tool.name}.py", tool.code)
+        zip_file.write("runner.py", "/files/runner.py")
+        zip_file.write("requirements.txt", "/files/requirements.txt")
+
+    zip_buffer.seek(0)
+
+    return FileResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename=tool_{id}.zip"},
+    )
+
+
+@router.get("/public/tool/{id}", response_class=HTMLResponse)
+async def public_tool(
+    request: Request,
+    id: int,
+    session: db_tools.SessionDep,
+    public: bool = False,
+):
+    if "user" not in request.session:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    user: User = User.model_validate_json(request.session.get("user"))
+    tool = db_tools.get_tool_by_id(session, id)
+
+    if user.id != tool.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if tool is None:
+        raise HTTPException(status_code=404, detail="Tool Not Found")
+
+    tool.public = public
+    session.commit()
+
+    return HTMLResponse(status_code=200)
 
 
 @router.post("/tool/{id}", response_class=HTMLResponse)

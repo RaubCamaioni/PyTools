@@ -41,6 +41,7 @@ RUN python3 -m venv /sandbox/venv
 COPY --chown=app:app sandbox/sandbox_requirements.txt /tmp/
 RUN /sandbox/venv/bin/pip install -r /tmp/sandbox_requirements.txt
 
+COPY --chown=app:app /files /files
 COPY --chown=app:app /sandbox/sandbox /sandbox
 COPY --chown=app:app /src /app
     
