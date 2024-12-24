@@ -5,7 +5,7 @@ from app.utility import sandbox, render, serializer, security
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from urllib.parse import unquote, parse_qs
 from contextlib import suppress
 from pathlib import Path
@@ -129,6 +129,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
         {
             "header_title": tool.name,
             "tool": tool.name,
+            "tool_id": tool.id,
             "request": request,
             "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.id}",
@@ -149,15 +150,15 @@ async def download_tool(request: Request, id: int, session: db_tools.SessionDep)
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, "w") as zip_file:
         zip_file.writestr(f"{tool.name}.py", tool.code)
-        zip_file.write("runner.py", "/files/runner.py")
-        zip_file.write("requirements.txt", "/files/requirements.txt")
+        zip_file.write("/files/runner.py", "runner.py")
+        zip_file.write("/files/requirements.txt", "requirements.txt")
 
     zip_buffer.seek(0)
 
-    return FileResponse(
+    return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename=tool_{id}.zip"},
+        headers={"Content-Disposition": f"attachment; filename={tool.name}.zip"},
     )
 
 
@@ -208,7 +209,8 @@ async def run_isolated(
         f.write(tool.code)
 
     for key, value in form_data.items():
-        python_type = ast.literal_eval(tool.arguments[key][0])
+        # TODO: saftey check: tools arguments have been parsed at this point (maybe pre cast them?)
+        python_type = eval(tool.arguments[key][0])
 
         if isinstance(value, StarUploadFile):
             upload_path = temp_dir / value.filename

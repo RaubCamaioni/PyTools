@@ -34,7 +34,7 @@
         {% include 'components/header.html'%}
 
         <div class="outer-container w-4/5 mx-auto flex flex-col items-center gap-0 p-0 bg-gray-900">
-
+            
             <div class="container-title w-full text-left font-bold mt-6 mb-2 text-white pl-4">{{ tool }}</div>
             <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md overflow-x-auto">
                 <div class="content flex flex-row gap-4 w-full">
@@ -44,6 +44,9 @@
                     <form class="master-form w-1/4 flex flex-col mt-0 gap-0" enctype="multipart/form-data" hx-post="{{ endpoint }}" hx-target="#return" hx-swap="innerHTML">
                         {{ form_groups | safe }}
                         <input type="submit" value="Submit" class="w-full mt-2 h-10 px-4 border border-gray-300 rounded-md bg-gray-700 text-white hover:bg-gray-600">
+                        <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="download-button">  
+                            <i class="fas fa-download mr-2"></i> Download Runner
+                        </a>
                     </form>
                 </div>
             </div>

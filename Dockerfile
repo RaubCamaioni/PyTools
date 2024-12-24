@@ -19,6 +19,7 @@ FROM python:3.10-slim-bookworm
 
 RUN apt-get update && apt install -y \
     libgl1-mesa-glx \
+    libxrender1 \
     make \
     && rm -rf /var/lib/apt/lists/*
 
