@@ -33,5 +33,4 @@ if __name__ == "__main__":
     print(f"kwargs: {kwargs}")
     result = main(tool, kwargs)
 
-    for i in result:
-        print(repr(i))
+    print(repr(result))

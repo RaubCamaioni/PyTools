@@ -6,8 +6,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.routes import tools, auth, upload, user
 from app.models.tools import create_db_and_tables
 from contextlib import asynccontextmanager
-import os
 from app import logger
+import os
 
 SECRET_KEY = os.environ.get("SECRET_KEY") or None
 if SECRET_KEY is None:

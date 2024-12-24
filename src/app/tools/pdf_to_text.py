@@ -1,3 +1,5 @@
+# pdf
+
 from contextlib import closing, ExitStack
 from pathlib import Path
 import pymupdf

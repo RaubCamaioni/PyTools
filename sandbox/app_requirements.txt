@@ -4,3 +4,4 @@ itsdangerous
 requests
 pyparsing
 sqlmodel
+bleach
