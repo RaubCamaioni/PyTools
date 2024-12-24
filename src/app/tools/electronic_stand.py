@@ -8,7 +8,7 @@ import json
 
 
 def electronic_stand(
-    mounts: str = "[[0, 0], [0, 10], [10, 10], [10, 0]]",
+    mounts: str = "[[10, 10]]",
     angle: float = 60,
     screw_size: float = 2.4,
     edge_padding: float = 5,

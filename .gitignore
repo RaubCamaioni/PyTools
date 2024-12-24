@@ -6,3 +6,4 @@ uv.lock
 .env
 database.db
 .vscode/
+*.stl
