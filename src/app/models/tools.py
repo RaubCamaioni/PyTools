@@ -212,16 +212,21 @@ def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
     arguments = {}
 
     defaults = [None] * len(entry_node.args.args)
-    for i, default in enumerate(entry_node.args.defaults[::-1]):
-        defaults[-i - 1] = ast.unparse(default)
+    for i, node in enumerate(entry_node.args.defaults[::-1]):
+        # TODO: check code saftey, very close to user code execution
+        if isinstance(node, ast.Constant):
+            default = str(node.value)
+        else:
+            default = ast.unparse(node)
+        defaults[-i - 1] = default
 
-    for arg, default in zip(entry_node.args.args, defaults):
+    for arg, node in zip(entry_node.args.args, defaults):
         if not arg.annotation:
             logger.warning(f"{tool_name} arguments must be annotated")
             return None
         name = arg.arg
         type = ast.unparse(arg.annotation)
-        arguments[name] = (type, default)
+        arguments[name] = (type, node)
 
     tags = get_tags(tool_source.split("\n")[0])
 

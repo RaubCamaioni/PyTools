@@ -18,6 +18,7 @@ import shutil
 import string
 import time
 import stat
+import ast
 import os
 from app import TEMPLATES, ALLOWED_CHARACTERS, logger
 
@@ -158,7 +159,7 @@ async def run_isolated(
         f.write(tool.code)
 
     for key, value in form_data.items():
-        python_type = eval(tool.arguments[key][0])
+        python_type = ast.literal_eval(tool.arguments[key][0])
 
         if isinstance(value, StarUploadFile):
             upload_path = temp_dir / value.filename

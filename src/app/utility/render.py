@@ -3,8 +3,13 @@ from typing import Any, get_args
 from pprint import PrettyPrinter, pformat
 from pathlib import Path, PosixPath
 from jinja2 import Template
-from app import TEMPLATES
+from app import TEMPLATES, logger
 from typing import Literal  # required for form type
+import bleach
+
+
+def sanitize_html(text):
+    return bleach.clean(text, tags=[], attributes={}, protocols=[], strip=True)
 
 
 def parser_literal(input: str):
@@ -41,7 +46,7 @@ class MyPrettyPrinter(PrettyPrinter):
 
 
 def literal_to_label(name: str, type: str, default: str):
-    default = default or ""
+    default = sanitize_html(default) or ""
 
     values = get_args(eval(parser_literal(type)))
     options = [{"value": v, "label": v} for v in values]
@@ -58,7 +63,7 @@ def literal_to_label(name: str, type: str, default: str):
 
 
 def type_to_label(name: str, type: str, default: str):
-    default = default or ""
+    default = sanitize_html(default) or ""
 
     template: Template = TEMPLATES.get_template("components/form_type.html")
     form = template.render(
