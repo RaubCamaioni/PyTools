@@ -26,6 +26,7 @@ def container(
     fillet,
     angle,
     tolerance,
+    ridge,
 ):
     throw = depth * np.arctan(np.deg2rad(angle))
     height = height + throw / 2
@@ -42,16 +43,17 @@ def container(
     )
     box = outer.cut(inner)
 
-    side_cut = (
-        outer.faces(">X")
-        .workplane()
-        .moveTo(depth / 2, height)
-        .lineTo(-depth / 2, height - throw)
-        .lineTo(-depth / 2, height)
-        .close()
-        .extrude(-width, combine=False)
-    )
-    box = box.cut(side_cut)
+    if angle > 0:
+        side_cut = (
+            outer.faces(">X")
+            .workplane()
+            .moveTo(depth / 2, height)
+            .lineTo(-depth / 2, height - throw)
+            .lineTo(-depth / 2, height)
+            .close()
+            .extrude(-width, combine=False)
+        )
+        box = box.cut(side_cut)
 
     step_cut = box.faces(">Z").val()
     outer_wire = step_cut.outerWire()
@@ -72,10 +74,6 @@ def container(
     cut_solid = loft_faces(cut_face, cut_face.translate([0, 0, -ledge]))
     box = box.cut(cq.Workplane(obj=cut_solid)).edges("|Z").fillet(fillet)
 
-    # fillet bottom (harder to 3d print)
-    # box = box.cut(cq.Workplane(obj=cut_solid)).edges("<Z").fillet(fillet)
-
-    # fillet inner edge
     rad = np.deg2rad(angle)
     normal = cq.Vector(0, -np.sin(rad), np.cos(rad))
     box = (
@@ -86,53 +84,49 @@ def container(
         .fillet(thickness / 4)
     )
 
-    # add retention circle
-    edge: cq.Edge
-    for edge in offset_wire.edges():
-        if not edge.geomType() == "LINE":
-            continue
+    edge = next(iter(offset_wire.edges()))
 
-        tangent: cq.Vector = edge.Center() - offset_wire.Center()
-        tangent.z = 0
-        x_dir = edge.positionAt(0.45) - edge.positionAt(0.55)
+    tangent: cq.Vector = edge.Center() - offset_wire.Center()
+    tangent.z = 0
+    x_dir = edge.positionAt(0.45) - edge.positionAt(0.55)
 
-        # if exterior_ledge:
-        tangent *= -1
-        x_dir *= -1
+    upward_direction = cq.Vector(0, 0, 1)
+    cross_product = tangent.cross(upward_direction)
+    if not cross_product.dot(x_dir) < 0:
+        x_dir = -x_dir
 
-        plane = cq.Plane(
-            origin=edge.Center(),
-            xDir=x_dir,
-            normal=tangent,
-        )
+    plane = cq.Plane(
+        origin=edge.Center(),
+        xDir=x_dir,
+        normal=tangent,
+    )
 
-        a = thickness / 4
-        b = thickness / 4
+    plane2 = plane.rotated(cq.Vector(0, 1, 0) * -90)
 
-        arc = (
-            cq.Workplane(plane)
-            .moveTo(0, -b)
-            .ellipseArc(a, b, -90, 90, startAtCurrent=True)
-            .moveTo(0, b)
-            .close()
-        )
+    a = ridge
+    b = ledge / 8
 
-        # path = cq.Workplane(plane).moveTo(-0.5, 0).lineTo(0.5, 0)
-        # ellip_slit = arc.sweep(path)
+    arc = (
+        cq.Workplane(plane2)
+        .moveTo(-thickness / 4, -b)
+        .lineTo(0, -b)
+        .ellipseArc(a, b, -90, 90, startAtCurrent=True)
+        .lineTo(-thickness / 4, b)
+        .close()
+    )
 
-        ellip_edge = arc.revolve(360, (0, 0, 0), (0, 1, 0)).translate(
-            plane.yDir * ledge / 2
-        )
+    arc = arc.sweep(offset_wire.wires())
+    arc = arc.translate(-cq.Vector(0, 0, 1) * ledge / 2.0)
 
-        if exterior_ledge:
-            box = box.union(ellip_edge)
-        else:
-            box = box.cut(ellip_edge)
+    if exterior_ledge:
+        box = box.union(arc)
+    else:
+        box = box.cut(arc)
 
     return box.val()
 
 
-def container_with_lid(
+def container_with_lid_sweep(
     width: float = 20,
     depth: float = 20,
     height: float = 20,
@@ -142,16 +136,20 @@ def container_with_lid(
     angle: float = 5.0,
     tolerance: float = 0.1,
     top_ratio: float = 0.30,
-) -> Path:
+    ridge_factor_top: float = 2.2,
+    ridge_factor_bot: float = 2.2,
+) -> cq.Compound:
     width = width + thickness * 2
     depth = depth + thickness * 2
     height = height + thickness * 2 + ledge
-    lower_height = height * 0.70
-    upper_height = height * 0.30
+    lower_height = height * (1 - top_ratio)
+    upper_height = height * top_ratio
     ledge = ledge
     fillet = fillet
     angle = angle
     tolerance = tolerance
+    ridge_top = tolerance * ridge_factor_top
+    ridge_bot = tolerance * ridge_factor_bot
 
     lower = container(
         width,
@@ -163,6 +161,7 @@ def container_with_lid(
         fillet,
         angle,
         tolerance,
+        ridge_bot,
     )
 
     higher = (
@@ -176,6 +175,7 @@ def container_with_lid(
             fillet,
             angle,
             tolerance,
+            ridge_top,
         )
         .rotate([0, 0, 0], [0, 0, 1], 0)
         .translate([width * 1.2, 0, 0])
