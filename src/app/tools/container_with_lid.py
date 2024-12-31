@@ -25,7 +25,7 @@ def container(
     exterior_ledge,
     fillet,
     angle,
-    tolerance,
+    clearance,
     ridge,
 ):
     radians = np.deg2rad(angle)
@@ -42,7 +42,7 @@ def container(
     )
     box = outer.cut(inner)
 
-    # cut box angle
+    # cut angle
     if radians > 0:
         side_cut = (
             outer.faces(">X")
@@ -55,27 +55,26 @@ def container(
         )
         box = box.cut(side_cut)
 
-    step_cut = box.faces(">Z").val()
-    outer_wire = step_cut.outerWire()
-    inner_wire: cq.Wire = step_cut.innerWires()[0]
+    # cut ledge
+    ledge_face = box.faces(">Z").val()
+    outer_wire = ledge_face.outerWire()
+    inner_wire = ledge_face.innerWires()[0]
 
     if exterior_ledge:
-        tolerance_thickness = thickness - tolerance
-    else:
-        tolerance_thickness = thickness + tolerance
-
-    offset_wire = inner_wire.offset2D(tolerance_thickness / 2)[0]
-
-    if exterior_ledge:
+        tolerance_thickness = thickness - clearance
+        offset_wire = inner_wire.offset2D(tolerance_thickness / 2)[0]
         cut_face = occ_shapes.Face.makeFromWires(outer_wire, [offset_wire])
     else:
+        tolerance_thickness = thickness + clearance
+        offset_wire = inner_wire.offset2D(tolerance_thickness / 2)[0]
         cut_face = occ_shapes.Face.makeFromWires(offset_wire, [inner_wire])
-
     cut_solid = loft_faces(cut_face, cut_face.translate([0, 0, -ledge]))
+
+    # fillet vertical edges
     box = box.cut(cq.Workplane(obj=cut_solid)).edges("|Z").fillet(fillet)
 
+    # fillet mating edges
     normal = cq.Vector(0, -np.sin(radians), np.cos(radians))
-
     box = (
         box.cut(cq.Workplane(obj=cut_solid))
         .faces(cq.selectors.ParallelDirSelector(normal, tolerance=0.1))
@@ -84,6 +83,7 @@ def container(
         .fillet(thickness / 4)
     )
 
+    # extrude retention ridge
     edge: cq.Edge
     for edge in offset_wire.edges():
         if not edge.geomType() == "LINE":
@@ -128,19 +128,19 @@ def container(
     return box.val()
 
 
-def container_with_lid_extrude(
-    width: float = 20,
-    depth: float = 20,
-    height: float = 20,
-    thickness: float = 2.5,
-    ledge: float = 5,
-    fillet: float = 3,
+def container_with_lid(
+    width: float = 20.0,
+    depth: float = 20.0,
+    height: float = 20.0,
+    thickness: float = 2.0,
+    ledge: float = 5.0,
+    fillet: float = 2.0,
     angle: float = 5.0,
-    tolerance: float = 0.1,
-    top_ratio: float = 0.30,
-    ridge_factor_top: float = 2.2,
-    ridge_factor_bot: float = 2.2,
-) -> cq.Compound:
+    clearance: float = 0.1,
+    top_ratio: float = 0.3,
+    ridge_top: float = 2.0,
+    ridge_bot: float = 3.0,
+) -> Path:
     width = width + thickness * 2
     depth = depth + thickness * 2
     height = height + thickness * 2 + ledge
@@ -149,9 +149,9 @@ def container_with_lid_extrude(
     ledge = ledge
     fillet = fillet
     angle = angle
-    tolerance = tolerance
-    ridge_top = tolerance * ridge_factor_top
-    ridge_bot = tolerance * ridge_factor_bot
+    clearance = clearance
+    ridge_top = clearance * ridge_top
+    ridge_bot = clearance * ridge_bot
 
     lower = container(
         width,
@@ -162,7 +162,7 @@ def container_with_lid_extrude(
         True,
         fillet,
         angle,
-        tolerance,
+        clearance,
         ridge_bot,
     )
 
@@ -176,7 +176,7 @@ def container_with_lid_extrude(
             False,
             fillet,
             angle,
-            tolerance,
+            clearance,
             ridge_top,
         )
         .rotate([0, 0, 0], [0, 0, 1], 0)
