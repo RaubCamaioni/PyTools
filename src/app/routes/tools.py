@@ -3,7 +3,6 @@ from typing import Literal, get_origin, Annotated, Optional
 from starlette.datastructures import UploadFile as StarUploadFile
 from app.utility import sandbox, render, serializer, security
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse, StreamingResponse
 from urllib.parse import unquote, parse_qs
@@ -17,10 +16,8 @@ import asyncio
 import secrets
 import logging
 import shutil
-import string
 import time
 import stat
-import ast
 import os
 from app import TEMPLATES, ALLOWED_CHARACTERS, logger
 
@@ -209,7 +206,7 @@ async def run_isolated(
         f.write(tool.code)
 
     for key, value in form_data.items():
-        # TODO: saftey check: tools arguments have been parsed at this point (maybe pre cast them?)
+        # TODO: saftey check: tool arguments have been parsed at this point (maybe pre cast them?)
         python_type = eval(tool.arguments[key][0])
 
         if isinstance(value, StarUploadFile):
@@ -226,7 +223,7 @@ async def run_isolated(
         serializer.dump(kwargs, f)
 
     # !DANGER! user submitted code
-    isolate.run(temp_tool, temp_dir)
+    await isolate.run(temp_tool, temp_dir)
 
     results_file = temp_dir / "result.json"
     if not results_file.exists():

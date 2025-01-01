@@ -1,9 +1,10 @@
 import subprocess
 from pathlib import Path
 from threading import Lock
+from asyncio import create_subprocess_exec as async_exec
 import random
-import os
 import shutil
+from app import logger
 
 
 def docker_run(image: str, tool: Path, workdir: Path):
@@ -41,36 +42,39 @@ class IsolationWorkers:
         self.processors = processors
         self.worker_locks = [Lock() for i in range(self.processors)]
 
-    def run(self, tool: Path, dir: Path):
+    async def run(self, tool: Path, dir: Path):
         worker = random.randint(0, self.workers)
+        logger.info(f"worker {worker} running {tool.name}")
 
-        worker = 0
         with self.worker_locks[worker]:
-            subprocess.call(["isolate", "--init", f"--box-id={worker}"])
-            shutil.copy(tool, f"/var/local/lib/isolate/0/box/{tool.name}")
-            subprocess.call(
-                [
-                    "isolate",
-                    "--env",
-                    "HOME=/box",
-                    f"--box-id={worker}",
-                    f"--dir=/tmp=",
-                    f"--dir={dir}:rw",
-                    "--dir=/sandbox",
-                    f"--processes={self.processors}",
-                    "--wall-time=30",
-                    "--run",
-                    "--",
-                    "/sandbox/venv/bin/python",
-                    "/sandbox/runner.py",
-                    "--file",
-                    f"/box/{tool.name}",
-                    "--workdir",
-                    f"{dir}",
-                ]
-            )
-            subprocess.call(["isolate", "--cleanup", f"--box-id={worker}"])
+            p = await async_exec("isolate", "--init", f"--box-id={worker}")
+            await p.wait()
 
+            shutil.copy(tool, f"/var/local/lib/isolate/{worker}/box/{tool.name}")
 
-def isolate_run(tool: Path, workdir: Path):
-    pass
+            # isolate manual: https://www.ucw.cz/moe/isolate.1.html
+            cmd = [
+                "isolate",
+                "--env",
+                "HOME=/box",
+                f"--box-id={worker}",
+                "--dir=/tmp=",
+                f"--dir={dir}:rw",
+                "--dir=/sandbox",
+                f"--processes={self.processors}",
+                "--wall-time=30",
+                "--run",
+                "--",
+                "/sandbox/venv/bin/python",
+                "/sandbox/runner.py",
+                "--file",
+                f"/box/{tool.name}",
+                "--workdir",
+                f"{dir}",
+            ]
+
+            p = await async_exec(*cmd)
+            await p.wait()
+
+            p = await async_exec("isolate", "--cleanup", f"--box-id={worker}")
+            await p.wait()
