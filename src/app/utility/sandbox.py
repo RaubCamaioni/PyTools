@@ -56,6 +56,7 @@ class IsolationWorkers:
             cmd = [
                 "isolate",
                 "--cg",
+                "--cg-mem=104857600",
                 "--env",
                 "HOME=/box",
                 f"--box-id={worker}",

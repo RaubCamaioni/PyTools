@@ -10,11 +10,13 @@ RUN apt-get update && apt install -y \
 
 RUN /usr/local/bin/pip install asciidoc
 
+# requires cgroupv2: unable to get working inside docker
 # RUN cd /tmp && \
 #     git clone https://github.com/ioi/isolate.git && \
 #     cd isolate && \
 #     make
 
+# supports cgroupv1
 RUN cd /tmp && \
     git clone --branch v1.10 --single-branch https://github.com/ioi/isolate.git && \
     cd isolate && \
