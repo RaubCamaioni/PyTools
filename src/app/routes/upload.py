@@ -65,6 +65,8 @@ async def tool_upload_post(
 
     code = await file.read()
 
+    # check for bad stuff ....
+
     db_tool: tools.Tool = tools.get_tool(session, id)
 
     if db_tool is None:

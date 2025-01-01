@@ -10,6 +10,7 @@ ExecStartPre=-/usr/bin/docker rm pytools
 ExecStart=/usr/bin/docker run --rm \
   --name pytools \
   --privileged \
+  --network nginx-net \
   --env-file <secrets_file> \
   -p 8080:8080 \
   -v <data_folder>:/data \

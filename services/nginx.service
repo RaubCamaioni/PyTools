@@ -1,0 +1,22 @@
+[Unit]
+Description=Docker Container for NGINX
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker stop nginx
+ExecStartPre=-/usr/bin/docker rm nginx
+ExecStart=/usr/bin/docker run --rm \
+  --name nginx \
+  --network nginx-net \
+  -v <nginx_config> \
+  -v <certificate> \
+  -v <private_key> \
+  -p 80:80 \
+  -p 443:443 \
+  nginx:latest
+ExecStop=/usr/bin/docker stop nginx
+
+[Install]
+WantedBy=multi-user.target
