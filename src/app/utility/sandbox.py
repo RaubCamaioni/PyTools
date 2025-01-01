@@ -47,7 +47,7 @@ class IsolationWorkers:
         logger.info(f"worker {worker} running {tool.name}")
 
         with self.worker_locks[worker]:
-            p = await async_exec("isolate", "--init", f"--box-id={worker}")
+            p = await async_exec("isolate", "--init", "--cg", f"--box-id={worker}")
             await p.wait()
 
             shutil.copy(tool, f"/var/local/lib/isolate/{worker}/box/{tool.name}")
@@ -55,6 +55,7 @@ class IsolationWorkers:
             # isolate manual: https://www.ucw.cz/moe/isolate.1.html
             cmd = [
                 "isolate",
+                "--cg",
                 "--env",
                 "HOME=/box",
                 f"--box-id={worker}",
@@ -76,5 +77,5 @@ class IsolationWorkers:
             p = await async_exec(*cmd)
             await p.wait()
 
-            p = await async_exec("isolate", "--cleanup", f"--box-id={worker}")
+            p = await async_exec("isolate", "--cg", "--cleanup", f"--box-id={worker}")
             await p.wait()

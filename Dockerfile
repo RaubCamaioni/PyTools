@@ -10,8 +10,13 @@ RUN apt-get update && apt install -y \
 
 RUN /usr/local/bin/pip install asciidoc
 
+# RUN cd /tmp && \
+#     git clone https://github.com/ioi/isolate.git && \
+#     cd isolate && \
+#     make
+
 RUN cd /tmp && \
-    git clone https://github.com/ioi/isolate.git && \
+    git clone --branch v1.10 --single-branch https://github.com/ioi/isolate.git && \
     cd isolate && \
     make
 
