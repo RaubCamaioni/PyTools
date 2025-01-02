@@ -9,6 +9,8 @@
         <link href="/static/styles.css" rel="stylesheet">
         <script src="/scripts/htmx.min.js"></script>
         <script src="https://unpkg.com/vtk.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
         <style>
 
             ::-webkit-scrollbar {
@@ -33,15 +35,15 @@
 
         {% include 'components/header.html'%}
 
-        <div class="outer-container w-4/5 mx-auto flex flex-col items-center gap-0 p-0 bg-gray-900">
+        <div class="w-4/5 mx-auto flex flex-col items-center bg-gray-900">
             
-            <div class="container-title w-full text-left font-bold mt-6 mb-2 text-white pl-4">{{ tool }}</div>
+            <div class="w-full text-left font-bold mt-6 mb-2 text-white pl-4">{{ tool }}</div>
             <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md overflow-x-auto">
-                <div class="content flex flex-row gap-4 w-full">
-                    <div class="code-area max-h-[700px] w-3/4 bg-gray-700 rounded-md mb-2 overflow-x-auto">
+                <div class="flex flex-row gap-4 w-full">
+                    <div class="max-h-[700px] w-3/4 bg-gray-700 rounded-md mb-2 overflow-x-auto">
                         <pre><code class="language-python">{{ code }}</code></pre>
                     </div>
-                    <form class="master-form w-1/4 flex flex-col mt-0 gap-0" enctype="multipart/form-data" hx-post="{{ endpoint }}" hx-target="#return" hx-swap="innerHTML">
+                    <form class="w-1/4 flex flex-col mt-0 gap-0" enctype="multipart/form-data" hx-post="{{ endpoint }}" hx-target="#return" hx-swap="innerHTML">
                         {{ form_groups | safe }}
                         <input type="submit" value="Submit" class="w-full mt-2 h-10 px-4 border border-gray-300 rounded-md bg-gray-700 text-white hover:bg-gray-600">
                         <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="download-button">  
@@ -50,8 +52,8 @@
                     </form>
                 </div>
             </div>
-
-            <div class="container-title w-full text-left font-bold mt-6 mb-2 text-white pl-4">Results</div>
+            
+            <div class="w-full text-left font-bold mt-6 mb-2 text-white pl-4">Results</div>
             <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md" id="result">
                 <div class="return w-full mx-auto p-2 bg-gray-700 rounded-md" id="return">
                     <pre></pre>
@@ -59,9 +61,8 @@
             </div>
             
         </div>
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+        
+        <div style="height: 200px;"></div>
 
     </body>
 </html>

@@ -26,9 +26,15 @@ Tool Page
 -GPT malicious code check
 -Split donation button (dontation split between web hoster and tool writer)
 -Download offline code runners
+-Add processing animation to results field
 
 Admin Page
 -Banning users
 -Unbanning users
 -Viewing tool statistics
+
+# Dev Notes
+
+TODO: add to docker build  
+Regenerate tailwind static css command: ./tailwindcss -i styles.css -o ../src/app/static/styles.css --minify  
 

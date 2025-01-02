@@ -124,7 +124,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
     return TEMPLATES.TemplateResponse(
         "pages/tool.html",
         {
-            "header_title": tool.name,
+            "header_title": "PyTools",
             "tool": tool.name,
             "tool_id": tool.id,
             "request": request,
@@ -261,11 +261,11 @@ async def download_file(file_str: str):
 
 @router.get("/terms-of-service", response_class=FileResponse)
 async def terms_of_service(request: Request):
-    kwargs = {"request": request}
-    return TEMPLATES.TemplateResponse("page/terms_of_service.html", kwargs)
+    kwargs = {"request": request, "header_title": "PyTools"}
+    return TEMPLATES.TemplateResponse("pages/terms_of_service.html", kwargs)
 
 
 @router.get("/privacy-policy", response_class=FileResponse)
 async def privacy_policy(request: Request):
-    kwargs = {"request": request}
-    return TEMPLATES.TemplateResponse("page/privacy_policy.html", kwargs)
+    kwargs = {"request": request, "header_title": "PyTools"}
+    return TEMPLATES.TemplateResponse("pages/privacy_policy.html", kwargs)

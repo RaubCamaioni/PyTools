@@ -6,30 +6,27 @@
     <title>Terms of Service</title>
     <link href="/static/styles.css" rel="stylesheet">
   </head>
-  <body class="bg-gray-900 text-gray-300 font-sans p-4">
+  <body class="bg-gray-900 text-gray-300 font-sans">
 
     {% include 'components/header.html'%}
 
-    <h1 class="text-3xl font-bold mb-4">Terms of Service</h1>
+    <div class="w-4/5 mx-auto flex flex-col items-center bg-gray-900">
+      
+      <div class="font-bold text-white">Terms of Service</div>
 
-    <div>
-      <p class="whitespace-pre-line max-w-2xl mx-auto">
-        PyTools allows users to upload arbitrary python code.
-        This code could contain language or ideas not supported by PyTools.
-        Various pre-filters are applied to catch egregious offenders.
+      <div class="whitespace-pre-line">
+          PyTools allows users to upload arbitrary python code.
+          This code could contain language or ideas not supported by PyTools.
+          Various pre-filters are applied to catch egregious offenders.
 
-        PyTools reserves the right to remove any python code that violates the
-        following TOS.
-        Under severe violations, the account will be banned.
+          PyTools reserves the right to remove any python code that violates the following TOS.
+          Under severe violations, the account will be banned.
 
-        1) No Profanity: An official listing of "profanity" can be found at
-        https://github.com/coffee-and-fun/google-profanity-words
-        2) No Politics: Comments will not contain political statements.
-        3) Use Common Sense: This is a web application to share helpful tools
-        with the community.
-        Don't upload code/comments unaligned with that environment. There are
-        better places for that.
-      </p>
+          <strong>No Profanity:</strong> Don't upload code with profanity
+          <strong>No Politics:</strong> Comments will not contain political statements.
+          <strong>Use Common Sense:</strong> This is a web application to share helpful tools with the community.
+          Don't upload code/comments unaligned with that environment. There are better places for that.
+      </div>
     </div>
 
   </body>

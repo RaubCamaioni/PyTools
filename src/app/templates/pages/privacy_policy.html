@@ -6,14 +6,15 @@
     <title>Privacy Policy</title>
     <link href="/static/styles.css" rel="stylesheet">
   </head>
-  <body class="bg-gray-900 text-gray-300 font-sans p-4">
+  <body class="bg-gray-900 text-gray-300 font-sans">
 
     {% include 'components/header.html'%}
 
-    <h1 class="text-3xl font-bold mb-4">Privacy Policy</h1>
+    <div class="w-4/5 mx-auto flex flex-col items-center bg-gray-900">
+      
+      <div class="font-bold text-white">Privacy Policy</div>
 
-    <div>
-      <p class="whitespace-pre-line max-w-2xl mx-auto">
+      <div class="whitespace-pre-line">
         PyTools requires user data for the following reasons:
         - Attributing uploaded code to users
         - Allowing users to delete their uploaded code
@@ -21,7 +22,7 @@
 
         PyTools utilizes user data for internal purposes only.
         User data is not given/sold/shared for any purposes.
-      </p>
+      </div>
     </div>
 
   </body>
