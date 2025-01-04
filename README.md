@@ -35,6 +35,6 @@ Admin Page
 
 # Dev Notes
 
-TODO: add to docker build  
+TODO: add to docker build 
 Regenerate tailwind static css command: ./tailwindcss -i styles.css -o ../src/app/static/styles.css --minify  
 

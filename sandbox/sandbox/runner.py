@@ -3,6 +3,8 @@ from functools import partial
 from pathlib import Path
 import importlib.util
 import serializer
+import traceback
+import sys
 import os
 
 
@@ -22,7 +24,14 @@ def main(file: Path, workdir: Path) -> Any:
 
     func: Callable[[Any], Any] = getattr(module, module_name, None)
 
-    results = partial(func, **args)()
+    try:
+        results = partial(func, **args)()
+    except Exception as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        line_number = traceback.extract_tb(exc_traceback)[-1].lineno
+        results = f"Runtime Exception: {type(e).__name__} line: {line_number} tool: ({file.stem})"
+        print(results)
+
     with open("result.json", "w") as f:
         serializer.dump(results, f)
 

@@ -5,17 +5,20 @@ import importlib.util
 
 
 def main(tool: Path, kwargs) -> Any:
-    module_name = tool.stem
-    spec = importlib.util.spec_from_file_location(module_name, tool)
+    function_name = tool.stem
+    spec = importlib.util.spec_from_file_location(function_name, tool)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    if not hasattr(module, module_name):
-        raise ValueError(f"no function named: {module_name}")
+    if not hasattr(module, function_name):
+        raise ValueError(f"no function named: {function_name}")
 
-    func: Callable[[Any], Any] = getattr(module, module_name, None)
+    func: Callable[[Any], Any] = getattr(module, function_name, None)
 
-    return partial(func, **kwargs)()
+    try:
+        return partial(func, **kwargs)()
+    except Exception as e:
+        return f"Runtime Exception: {e}"
 
 
 if __name__ == "__main__":
