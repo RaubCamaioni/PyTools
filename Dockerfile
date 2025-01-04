@@ -10,13 +10,7 @@ RUN apt-get update && apt install -y \
 
 RUN /usr/local/bin/pip install asciidoc
 
-# requires cgroupv2: unable to get working inside docker
-# RUN cd /tmp && \
-#     git clone https://github.com/ioi/isolate.git && \
-#     cd isolate && \
-#     make
-
-# supports cgroupv1
+# isolate 1.10 supports cgroupv1
 RUN cd /tmp && \
     git clone --branch v1.10 --single-branch https://github.com/ioi/isolate.git && \
     cd isolate && \
@@ -28,6 +22,11 @@ RUN apt-get update && apt install -y \
     libgl1-mesa-glx \
     libxrender1 \
     libglib2.0-0 \
+    gcc \
+    gfortran \
+    python3-dev \
+    libopenblas-dev \
+    liblapack-dev \
     make \
     && rm -rf /var/lib/apt/lists/*
 

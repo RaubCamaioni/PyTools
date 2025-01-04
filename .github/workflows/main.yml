@@ -37,3 +37,5 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: true
           sbom: true
+          cache-from: type=gha,scope=repo
+          cache-to: type=gha,scope=repo
