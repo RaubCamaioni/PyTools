@@ -127,6 +127,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "header_title": "PyTools",
             "tool": tool.name,
             "tool_id": tool.id,
+            "runs": tool.usage,
             "request": request,
             "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.id}",
@@ -221,6 +222,9 @@ async def run_isolated(
 
     with open(temp_dir / "args.json", "w") as f:
         serializer.dump(kwargs, f)
+
+    tool.usage = tool.usage + 1
+    session.commit()
 
     # !DANGER! user submitted code
     await isolate.run(temp_tool, temp_dir)

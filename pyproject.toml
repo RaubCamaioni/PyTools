@@ -17,6 +17,7 @@ dependencies = [
     "ocp-tessellate>=3.0.8",
     "ocp-vscode>=2.6.1",
     "opencv-python>=4.10.0.84",
+    "profanityfilter>=2.1.0",
     "pyav>=13.1.0",
     "pyjwt>=2.9.0",
     "pymupdf>=1.24.13",

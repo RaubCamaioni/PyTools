@@ -1,6 +1,7 @@
 from typing import Annotated, Optional, Any
 from fastapi import Depends, FastAPI, HTTPException, Query
 from typing import List, Dict, Type, Literal, get_origin, Annotated, Any
+from profanityfilter import ProfanityFilter
 import pyparsing as pp
 import hashlib
 import ast
@@ -47,6 +48,7 @@ class Tool(SQLModel, table=True):
     down_votes: list["DownVote"] = Relationship(back_populates="tool")
     reports: list["Report"] = Relationship(back_populates="tool")
     usage: int = Field(default=0)
+    # fails: int = Field(default=0)
     public: bool = Field(default=False)
     annonymous: bool = Field(default=True)
     user_id: int = Field(default=None, foreign_key="user.id")
@@ -164,7 +166,13 @@ def get_session():
         yield session
 
 
+def get_filter():
+    pf = ProfanityFilter()
+    yield pf
+
+
 SessionDep = Annotated[Session, Depends(get_session)]
+FilterDep = Annotated[ProfanityFilter, Depends(get_filter)]
 
 
 class FunctionVisitor(ast.NodeVisitor):

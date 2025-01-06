@@ -55,17 +55,26 @@
                         hx-target="#return"
                         hx-indicator="#load-context"
                         hx-swap="innerHTML">
+
                         {{ form_groups | safe }}
+
                         <input 
                             class="w-full mt-2 h-10 px-4 border border-gray-300 rounded-md bg-gray-700 text-white hover:bg-gray-600"
                             type="submit"
                             value="Submit"/>
+
                         <a
                             href="{{ root_path }}/download/tool/{{ tool_id }}"
                             class="download-button">
                                 <i class="fas fa-download mr-2"></i>
                                 Download Runner
                         </a>
+
+                        <div id="spacer" class="flex-grow"></div>
+
+                        <div>
+                            runs: {{ runs }}
+                        </div>
                     </form>
                 </div>
             </div>

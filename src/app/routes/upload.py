@@ -1,7 +1,7 @@
 from fastapi import Request, APIRouter, UploadFile
 from fastapi.responses import HTMLResponse
 from app.models import tools
-from app.models.tools import SessionDep, User
+from app.models.tools import SessionDep, User, FilterDep
 from pathlib import Path
 from app import TEMPLATES, logger
 
@@ -52,20 +52,23 @@ async def tool_upload_post(
     request: Request,
     file: UploadFile,
     session: SessionDep,
+    filter: FilterDep,
     id: int = None,
 ):
     if "user" not in request.session:
-        return HTMLResponse(status_code=404)
+        return HTMLResponse(status_code=404, content="Login Required")
 
     user: User = User.model_validate_json(request.session["user"])
 
     name = file.filename
     if name is None:
-        return HTMLResponse(status_code=404)
+        return HTMLResponse(status_code=400, content="Filename Required")
 
     code = await file.read()
 
-    # check for bad stuff ....
+    clean = filter.is_clean(code.decode())
+    if not clean:
+        return HTMLResponse(status_code=400, content="Profanity Filter")
 
     db_tool: tools.Tool = tools.get_tool(session, id)
 
