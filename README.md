@@ -1,10 +1,10 @@
-# PyTools
+## PyTools
 
 PyTools is a web hosting platform for python scripts.  
 The entrypoint arguments and return values are automatically  
 converter to a web compatable format.   
 
-# Uploading Scripts
+## Uploading Scripts
 
 Only individual python files (.py) are currently supported.  
 The entrypoint function must be the same name as the uploaded file.  
@@ -19,14 +19,35 @@ Unsupported types can be represented as strings and parsed inside the entrypoint
 Path arguments are converted to file upload form items.  
 Path returns are converted to file download links.  
 
-# Demo Website
+## Script Tags
+
+Add tags to the top of the script.  
+This tags are matched against in the index.html search bar.  
+
+## Example Script
+Example: lower_case_text.py
+``` python
+# text, converter
+
+from pathlib import Path
+
+def lower_case_text(input: Path) -> Path:
+	with open(input, 'r') as f:
+		text = f.read()
+	output = Path(output.txt)
+	with open(output, 'w') as f:
+		f.write(text.lower())
+	return output
+```
+
+## Demo Website
 
 The application is hosted at https://pywebtools.com.  
 Currently hosted under Linode server, lowest resources.  
 Heavy load scripts will take longer to return.  
 Website responsiveness will be impacted by multiple clients.  
 
-# Roadmap
+## Roadmap
 
 User Page:  
 -update user attributes  
