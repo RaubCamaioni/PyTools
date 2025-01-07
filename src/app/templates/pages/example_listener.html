@@ -11,6 +11,22 @@
         <script src="https://unpkg.com/vtk.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+        <script>
+            document.addEventListener('htmx:afterRequest', function(evt) {
+                if(evt.detail.xhr.status == 404){
+                    return alert("Error: Could Not Find Resource");
+                } 
+                if (evt.detail.successful != true) {
+                    alert("Unexpected Error");
+                    return console.error(evt);
+                }
+                if (evt.detail.target.id == 'link-container') {
+                    const linkContainer = document.getElementById('link-container');
+                    const newContent = linkContainer.textContent; 
+                    navigator.clipboard.writeText(newContent)
+                }
+            });
+        </script>
         <style>
             ::-webkit-scrollbar { width: 10px; }
             ::-webkit-scrollbar-track { background: #2d3748; }
@@ -62,26 +78,32 @@
                         <input 
                             class="w-full mt-2 h-10 px-4 border border-gray-300 rounded-md bg-gray-700 text-white hover:bg-gray-600"
                             type="submit"
-                            style="cursor: pointer;"
                             form="argument-form"
                             value="Submit"/>
 
-                        <div class="flex gap-2 mt-2 w-full">
-                            <a
-                                href="{{ root_path }}/download/tool/{{ tool_id }}"
-                                class="hover:text-white"> 
-                                    <i class="fas fa-download mr-2"></i>
-                                    Offline Runner
-                            </a>
-                            <div id="spacer" class="flex-grow"></div>
-                            <button 
-                                id="share-link-button"
-                                class="hover:text-white">
-                                <i class="fas fa-share-alt mr-2"></i> Share Link 
-                            </button>
-                        </div>
+                        <a
+                            href="{{ root_path }}/download/tool/{{ tool_id }}"
+                            class="download-button">
+                                <i class="fas fa-download mr-2"></i>
+                                Download Runner
+                        </a>
 
                         <div id="spacer" class="flex-grow"></div>
+
+                        <button
+                            id="clipboard-link"
+                            hx-get="/tool/{{ tool_id }}/link" 
+                            hx-include="#argument-form"
+                            hx-trigger="click" 
+                            hx-target="#link-container" 
+                            hx-swap="innerHTML">
+                            Share Link
+                        </button>
+                        
+                        <div 
+                            id="link-container"
+                            style="display:none;">
+                        </div>
 
                         <div>
                             runs: {{ runs }}
@@ -109,17 +131,5 @@
         
         <div style="height: 200px;"></div>
 
-    <script>
-        function copy_form_to_clipboard() {
-            event.preventDefault(); // prevent form submission
-            const form = document.getElementById('argument-form');
-            const formData = new FormData(form);
-            const queryString = new URLSearchParams(formData).toString();
-            const currentUrl = new URL(window.location.href); 
-            currentUrl.search = queryString;
-            navigator.clipboard.writeText(currentUrl.toString())
-        }
-        document.getElementById("share-link-button").addEventListener("click", copy_form_to_clipboard);
-    </script>
     </body>
 </html>

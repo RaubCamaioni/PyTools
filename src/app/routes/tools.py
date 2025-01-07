@@ -1,25 +1,36 @@
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    StreamingResponse,
+    FileResponse,
+)
+from urllib.parse import (
+    unquote,
+    parse_qs,
+    quote_plus,
+    urlparse,
+    ParseResultBytes,
+    urljoin,
+    urlencode,
+)
 from fastapi import FastAPI, HTTPException, Request, APIRouter, Depends, Query
-from typing import Literal, get_origin, Annotated, Optional
 from starlette.datastructures import UploadFile as StarUploadFile
-from app.utility import sandbox, render, serializer, security
-from fastapi.responses import HTMLResponse, JSONResponse
-from contextlib import asynccontextmanager
-from fastapi.responses import FileResponse, StreamingResponse
-from urllib.parse import unquote, parse_qs
-from contextlib import suppress
-from pathlib import Path
-from app.models import tools as db_tools
-from app.routes.auth import User
+from typing import Literal, get_origin, Annotated, Optional
+from contextlib import asynccontextmanager, suppress
 from zipfile import ZipFile
+from pathlib import Path
 from io import BytesIO
 import asyncio
 import secrets
-import logging
 import shutil
 import time
 import stat
 import os
+
+from app.utility import sandbox, render, serializer, security
 from app import TEMPLATES, ALLOWED_CHARACTERS, logger
+from app.models import tools as db_tools
+from app.routes.auth import User
 
 
 @asynccontextmanager
@@ -114,12 +125,45 @@ async def get_user_tools(request: Request, session: db_tools.SessionDep):
     return HTMLResponse(content=content)
 
 
+@router.get("/tool/{id}/link", response_class=HTMLResponse)
+async def tool_link(request: Request, id: int, session: db_tools.SessionDep):
+    tool = db_tools.get_tool_by_id(session, id)
+
+    if tool is None:  # or not tool.public:
+        raise HTTPException(status_code=404, detail="Tool Not Found")
+
+    form_data = {}
+    if len(tool.arguments):
+        form_data = await request.form()
+
+    parsed_url: ParseResultBytes = urlparse(str(request.url))
+    root_path = request.scope.get("root_path")
+
+    url = urljoin(
+        f"{parsed_url.scheme}://{parsed_url.netloc}",
+        f"{root_path}/tool/{id}",
+    )
+
+    query_string = urlencode(form_data)
+    content = f"{url}?{query_string}"
+    return HTMLResponse(content=content)
+
+
 @router.get("/tool/{id}", response_class=HTMLResponse)
 async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
 
     if tool is None:  # or not tool.public:
         raise HTTPException(status_code=404, detail="Tool Not Found")
+
+    query = dict(request.query_params)
+    arguments = tool.arguments
+
+    for name, default in query.items():
+        if name not in arguments:
+            continue
+        t, d = arguments[name]
+        arguments[name] = (t, default)
 
     return TEMPLATES.TemplateResponse(
         "pages/tool.html",
@@ -200,6 +244,10 @@ async def run_isolated(
     form_data = {}
     if len(tool.arguments):
         form_data = await request.form()
+
+    # overwrite form params with query params
+    # query_params = dict(request.query_params)
+    # form_data.update(query_params)
 
     kwargs = {}
     temp_tool = (temp_dir / tool.name).with_suffix(".py")
