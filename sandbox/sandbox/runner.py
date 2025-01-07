@@ -27,9 +27,15 @@ def main(file: Path, workdir: Path) -> Any:
     try:
         results = partial(func, **args)()
     except Exception as e:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        line_number = traceback.extract_tb(exc_traceback)[-1].lineno
-        results = f"Runtime Exception: {type(e).__name__} line: {line_number} tool: ({file.stem})"
+        _, _, exc_traceback = sys.exc_info()
+        frames = traceback.extract_tb(exc_traceback)
+
+        trace = []
+        for frame in frames:
+            trace.append(f"  {frame.name}: {frame.lineno}")
+        trace = "\n".join(trace)
+        results = f"Runtime Error: {file.stem} {type(e).__name__}\n{trace}"
+
         print(results)
 
     with open("result.json", "w") as f:

@@ -4,13 +4,16 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{{ tool }}</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-        <link href="/static/shades-of-purple.css" rel="stylesheet">
+        <link href="/static/all.min.css" rel="stylesheet">
         <link href="/static/styles.css" rel="stylesheet">
+        <link href="/static/shades-of-purple.css" rel="stylesheet">
+        <link href="/static/prism-line-numbers.min.css" rel="stylesheet">
         <script src="/scripts/htmx.min.js"></script>
-        <script src="https://unpkg.com/vtk.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+        <script src="/scripts/prism.min.js"></script>
+        <script src="/scripts/prism-python.min.js"></script>
+        <script src="/scripts/prism-line-numbers.min.js"></script>
+
+        
         <style>
             ::-webkit-scrollbar { width: 10px; }
             ::-webkit-scrollbar-track { background: #2d3748; }
@@ -42,12 +45,14 @@
 
         <div class="w-4/5 mx-auto flex flex-col items-center bg-gray-900">
             
-            <div class="w-full text-left font-bold mt-6 -mb2 text-white pl-4">{{ tool }}</div>
+            <div class="w-full text-left font-bold mt-6 mb-2 text-white pl-4">{{ tool }}</div>
             <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md overflow-x-auto">
                 <div class="flex flex-row gap-4 w-full">
+                    
                     <div class="max-h-[700px] w-3/4 bg-gray-700 rounded-md overflow-x-auto">
-                        <pre><code class="language-python">{{ code }}</code></pre>
+                        <pre class="line-numbers"><code class="language-python">{{ code }}</code></pre>
                     </div>
+
                     <form
                         id="argument-form"
                         class="w-1/4 flex flex-col mt-0 gap-0 rounded-md bg-gray-700 p-2" 
@@ -100,7 +105,7 @@
                     <div class="loader"></div>
                 </div>
 
-                <div class="return w-full mx-auto p-2 bg-gray-700 rounded-md" id="return">
+                <div class="w-full mx-auto p-2 bg-gray-700 rounded-md" id="return">
                     <pre></pre>
                 </div>
             </div>
