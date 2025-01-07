@@ -8,8 +8,10 @@ from typing import Literal  # required for form type
 import bleach
 
 
-def sanitize_html(text, tags=[]):
-    return bleach.clean(text, tags=tags, attributes={}, protocols=[], strip=True)
+def sanitize_html(text, tags=[], attributes={}):
+    return bleach.clean(
+        text, tags=tags, attributes=attributes, protocols=[], strip=True
+    )
 
 
 def parser_literal(input: str):
@@ -170,6 +172,15 @@ pretty_printer = MyPrettyPrinter(indent=4, width=10**5)
 
 def render(results: Any):
     # TODO: determine why pretty print returns new line as two characters
-    return_string = pretty_printer.pformat(results)
-    return_string = sanitize_html(return_string).replace("\\n", "<br>")
+    return_string = pretty_printer.pformat(results).replace("\\n", "<br>")
+
+    # TODO: sanatize return values
+    # print(return_string)
+    # return_string = sanitize_html(
+    #     return_string,
+    #     tags=["a"],
+    #     attributes={"a": ["href", "style"]},
+    # ).replace("\\n", "<br>")
+    # print(return_string)
+
     return f"<pre>{return_string}</pre>"
