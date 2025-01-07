@@ -6,6 +6,8 @@ import io
 
 class JsonEncoder(json.JSONEncoder):
     def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
         if isinstance(obj, (Path, PosixPath)):
             return {"__path__": str(obj.absolute())}
         return super().default(obj)
@@ -30,7 +32,7 @@ def loads(serial: str) -> Any:
 
 
 def dump(objects: Any, file: io.FileIO) -> str:
-    return json.dump(objects, file, cls=JsonEncoder)
+    json.dump(objects, file, cls=JsonEncoder)
 
 
 def load(file: io.FileIO) -> Any:

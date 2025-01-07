@@ -31,12 +31,15 @@ class MyPrettyPrinter(PrettyPrinter):
                 True,
                 False,
             )
-        if isinstance(object, list) and level == 0:  # Split lists only at the top level
-            return (
-                "[" + ",\n".join(pformat(item, width=10000) for item in object) + "]",
-                True,
-                False,
-            )
+
+        # TODO: custom list, dict, iterable display
+        # if isinstance(object, list):
+        #     items = [
+        #         self.format(item, context, maxlevels, level + 1)[0] for item in object
+        #     ]
+
+        #     spaces = " " * level
+        #     return (f"{spaces},\n".join(items), True, False)
 
         return super().format(object, context, maxlevels, level)
 
@@ -161,16 +164,22 @@ def list_item_user(root_path: str, tools: list[tuple[str, str]]):
     return "".join(htmlx)
 
 
-pretty_printer = MyPrettyPrinter(indent=4, width=10**5)
+pretty_printer = MyPrettyPrinter(indent=4, width=50)
 
 
 def render(results: Any):
     return_string = pretty_printer.pformat(results)
 
-    sanatized = sanitize_html(
-        return_string,
-        tags={"a"},
-        attributes={"a": {"href", "style"}},
-    ).replace("\\n", "<br>")
+    print(return_string)
+
+    sanatized = (
+        sanitize_html(
+            return_string,
+            tags={"a"},
+            attributes={"a": {"href", "style"}},
+        )
+        .replace("\\n", "<br>")
+        .replace("\n", "<br>")
+    )
 
     return f"<pre>{sanatized}</pre>"
