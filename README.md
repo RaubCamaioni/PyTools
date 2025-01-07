@@ -1,40 +1,53 @@
 # PyTools
 
-PyTools is a hosting platform for python functions.  
-The python functions are hosted as web apps.  
-Python function arguments are converter to html forms.  
-Return types are auto converted for web display.  
+PyTools is a web hosting platform for python scripts.  
+The entrypoint arguments and return values are automatically  
+converter to a web compatable format.   
 
-Using the Path type allows for files to be uploaded.  
-Retured Path types can be downloaded.  
+# Uploading Scripts
+
+Only individual python files (.py) are currently supported.  
+The entrypoint function must be the same name as the uploaded file.  
+
+To upload a script, log into the webpage by clicking login (top right).  
+Then go to profile (top right), click upload code, browes to file and upload.  
+
+All entrypoint arguments are converted to equivalent web form values.  
+The currently supported arguments are: str, int, float, literal, Path   
+Unsupported types can be represented as strings and parsed inside the entrypoint function.  
+
+Path arguments are converted to file upload form items.  
+Path returns are converted to file download links.  
 
 # Demo Website
 
 The application is hosted at https://pywebtools.com.  
-You can upload a python web app by logging in under a google account, clicking profile, uploading code.  
+Currently hosted under Linode server, lowest resources.  
+Heavy load scripts will take longer to return.  
+Website responsiveness will be impacted by multiple clients.  
 
-# TODO
+# Roadmap
 
-User Page  
+User Page:  
 -update user attributes  
 -update tool attributes  
--scrollable user tools page  
 
-Tool Page  
+Tool Page:  
 -up vote / down vote  
 -report  
--GPT malicious code check
--Split donation button (dontation split between web hoster and tool writer)
--Download offline code runners
--Add processing animation to results field
+-GPT malicious code check (infinite while loops, ect)  
+-Split donation button (dontation split between web hoster and tool writer)  
 
-Admin Page
--Banning users
--Unbanning users
--Viewing tool statistics
+Admin Page:  
+-vanning users  
+-unbanning users  
+-tool statistics  
 
-# Dev Notes
+Cadquery:  
+-embedded VTK model renderer
+-show model in index.html
 
-TODO: add to docker build 
-Regenerate tailwind static css command: ./tailwindcss -i styles.css -o ../src/app/static/styles.css --minify  
-
+Index Page:  
+-improve search/index capabilites  
+-organize by up/down vote  
+-show votes on item  
