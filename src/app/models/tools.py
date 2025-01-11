@@ -110,12 +110,7 @@ def get_tools_by_tags(
     with session:
         # TODO: check speed
         conditions = [Tool.tags.like(f'%"{tag}"%') for tag in tags]
-        statement = (
-            select(Tool.id, Tool.name)
-            .where(*conditions)
-            .offset(start)
-            .limit(end - start)
-        )
+        statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
         return session.exec(statement).all()
 
 
@@ -199,49 +194,33 @@ def get_tags(tool_source: str) -> list[str]:
         return []
 
 
-def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
+def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
     try:
         tree = ast.parse(tool_source)
     except SyntaxError:
-        logger.info("Upload Code: Syntax Error")
-        return None
+        raise HTTPException(status_code=400, detail="python syntax error")
 
-    entry_node = None
-    for node in FunctionVisitor(tree):
-        if tool_name == node.name:
-            entry_node = node
-
-    if entry_node is None:
-        logger.warning(f"no entrypoint found in: {tool_name}")
-        return None
-
-    arguments = {}
+    try:
+        entry_node = next(filter(lambda n: n.name == tool_name, FunctionVisitor(tree)))
+    except StopIteration:
+        raise HTTPException(status_code=400, detail="entrypoint not found")
 
     defaults = [None] * len(entry_node.args.args)
     for i, node in enumerate(entry_node.args.defaults[::-1]):
-        # TODO: check code saftey, very close to user code execution
-        if isinstance(node, ast.Constant):
-            default = str(node.value)
-        else:
-            default = ast.unparse(node)
-        defaults[-i - 1] = default
+        defaults[-(i + 1)] = ast.unparse(node)
 
-    for arg, node in zip(entry_node.args.args, defaults):
+    arguments = {}
+    for arg, default in zip(entry_node.args.args, defaults):
         if not arg.annotation:
-            logger.warning(f"{tool_name} arguments must be annotated")
-            return None
-        name = arg.arg
-        type = ast.unparse(arg.annotation)
-        arguments[name] = (type, node)
+            raise HTTPException(status_code=400, detail="annotated are required")
+        arguments[arg.arg] = (ast.unparse(arg.annotation), default)
 
+    return arguments
+
+
+def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
     tags = get_tags(tool_source.split("\n")[0])
-
-    # debug
-    # tool_arg_string = []
-    # for name, (type, default) in arguments.items():
-    #     tool_arg_string.append(f"  {name}: {type}")
-    # tool_arg_string = "\n".join(tool_arg_string)
-    # logger.info(f"Loading Tool: {tool_name}\n{tool_arg_string}")
+    arguments = get_arguments(tool_name, tool_source)
 
     return Tool(
         name=tool_name,

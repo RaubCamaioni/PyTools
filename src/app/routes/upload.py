@@ -81,6 +81,8 @@ async def tool_upload_post(
 
     else:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
+        if tool is None:
+            return HTMLResponse(status_code=404)
         db_tool.name = tool.name
         db_tool.code = tool.code
         db_tool.arguments = tool.arguments

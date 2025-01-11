@@ -9,19 +9,23 @@ from nh3 import clean as sanitize_html
 
 
 def parser_literal(input: str):
-    LITERAL = pp.Literal("Literal")
-    OPEN_BRACKET = pp.Literal("[")
-    CLOSE_BRACKET = pp.Literal("]")
-    literal_type = pp.Word(pp.alphas + "_.", pp.alphanums + "_.")
-    double_quote = '"' + literal_type + '"'
-    single_quote = "'" + literal_type + "'"
-    field = double_quote ^ single_quote
-    literal_values = pp.ZeroOrMore(field + pp.Optional(","))
+    LITERAL = pp.Suppress(pp.Literal("Literal"))
+    OPEN_BRACKET = pp.Suppress(pp.Literal("["))
+    CLOSE_BRACKET = pp.Suppress(pp.Literal("]"))
+    string_type = pp.Word(pp.alphanums + "_", pp.alphanums + "_.")
+    num_type = pp.Combine(pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Word(pp.nums)))
+    empty_quote = string_type | num_type
+    single = pp.Suppress("'")
+    doube = pp.Suppress('"')
+    double_quote = pp.Group(doube + empty_quote + doube).addParseAction(lambda t: "".join(t[0]))
+    single_quote = pp.Group(single + empty_quote + single).addParseAction(lambda t: "".join(t[0]))
+    field = double_quote | single_quote | num_type
+    literal_values = pp.ZeroOrMore(field + pp.Suppress(pp.Optional(",")))
     literal_expr = LITERAL + OPEN_BRACKET + literal_values + CLOSE_BRACKET
-    return "".join(literal_expr.parseString(input))
+    return literal_expr.parseString(input)
 
 
-# TODO: improve string representation of objects
+# TODO: customize web display for more objects
 class MyPrettyPrinter(PrettyPrinter):
     def format(self, object, context, maxlevels, level):
         if isinstance(object, (Path, PosixPath)):
@@ -31,23 +35,12 @@ class MyPrettyPrinter(PrettyPrinter):
                 True,
                 False,
             )
-
-        # TODO: custom list, dict, iterable display
-        # if isinstance(object, list):
-        #     items = [
-        #         self.format(item, context, maxlevels, level + 1)[0] for item in object
-        #     ]
-
-        #     spaces = " " * level
-        #     return (f"{spaces},\n".join(items), True, False)
-
         return super().format(object, context, maxlevels, level)
 
 
 def literal_to_label(name: str, type: str, default: str):
     default = sanitize_html(default) or ""
-
-    values = get_args(eval(parser_literal(type)))
+    values = parser_literal(type)
     options = [{"value": v, "label": v} for v in values]
 
     template: Template = TEMPLATES.get_template("components/form_literal.html")
@@ -133,9 +126,7 @@ def list_items(
         htmlx.append(form)
 
     if end is not None:
-        template: Template = TEMPLATES.get_template(
-            "components/tool_scroll_loader.html"
-        )
+        template: Template = TEMPLATES.get_template("components/tool_scroll_loader.html")
         form = template.render(
             {
                 "start": end,
