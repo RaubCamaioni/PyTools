@@ -10,7 +10,7 @@ Only individual python files (.py) are currently supported.
 The entrypoint function must be the same name as the uploaded file.  
 
 To upload a script, log into the webpage by clicking login (top right).  
-Then go to profile (top right), click upload code, browes to file and upload.  
+Then go to profile (top right), click upload code, browse to file and upload.  
 
 All entrypoint arguments are converted to equivalent web form values.  
 The currently supported arguments are: str, int, float, literal, Path   
@@ -19,14 +19,13 @@ Unsupported types can be represented as strings and parsed inside the entrypoint
 Path arguments are converted to file upload form items.  
 Path returns are converted to file download links.  
 
-
 ## Script Tags
 
 Add tags to the top of the script.  
-This tags are matched against in the index.html search bar.  
+Filter by tags using the homepage search bar.  
 
 ## Example Script
-Example: lower_case_text.py
+**lower_case_text.py**
 ``` python
 # text, converter
 
@@ -55,25 +54,24 @@ Website responsiveness will be impacted by multiple clients.
 ## Roadmap
 
 User Page:  
--update user attributes  
--update tool attributes  
+- update user attributes  
+- update tool attributes  
 
 Tool Page:  
--up vote / down vote  
--report  
--GPT malicious code check (infinite while loops, ect)  
--Split donation button (dontation split between web hoster and tool writer)  
+- up vote / down vote  
+- report  
+- GPT malicious code check (infinite while loops, ect)  
+- split donation button (dontation split between web hoster and tool writer)  
 
 Admin Page:  
--vanning users  
--unbanning users  
--tool statistics  
+- banning users  
+- tool statistics  
 
-Cadquery:  
--embedded VTK model renderer
--show model in index.html
+CadQuery:  
+- embedded VTK model renderer  
+- show model in index.html  
 
 Index Page:  
--improve search/index capabilites  
--organize by up/down vote  
--show votes on item  
+- improve search/index capabilites  
+- organize by up/down vote  
+- show votes on item  
