@@ -12,8 +12,6 @@
         <script src="/scripts/prism.min.js"></script>
         <script src="/scripts/prism-python.min.js"></script>
         <script src="/scripts/prism-line-numbers.min.js"></script>
-
-        
         <style>
             ::-webkit-scrollbar { width: 10px; }
             ::-webkit-scrollbar-track { background: #2d3748; }
@@ -24,19 +22,42 @@
             ::-webkit-scrollbar-thumb:hover { background-color: #718096; }
 
             .loader {
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #3498db;
-                border-radius: 50%;
-                width: 30px;
-                height: 30px;
-                animation: spin 1s linear infinite;
+                width: 100px;
+                height: 10px;
+                background-color: #f3f3f3;
+                position: relative;
+                overflow: hidden;
+                border-radius: 5px;
             }
 
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+            .loader::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 50%;
+                height: 100%;
+                background-color: #3498db;
+                animation: slide 1.5s linear infinite;
             }
 
+            @keyframes slide {
+                0% {
+                    left: -100%;
+                }
+                50% {
+                    left: 100%;
+                }
+                100% {
+                    left: -100%;
+                }
+            }
+
+            stl-viewer {
+                display: block;
+                width: 100%;
+                height: 500px;
+            }
         </style>
     </head>
     <body class="bg-gray-900 text-gray-300 font-sans">
@@ -95,36 +116,34 @@
                 </div>
             </div>
             
-            <div class="w-full text-left font-bold mt-6 mb-2 text-white pl-4">Results</div>
-
-            <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md" id="result">
-                
-                <div
-                    class="htmx-indicator" 
-                    id="load-context">
+            <div class="container flex flex-row items-center max-w-full">
+                <div class="text-left font-bold mt-6 mb-2 mr-2 text-white pl-4">Results</div>
+                <div class="htmx-indicator mt-6 mb-2" id="load-context">
                     <div class="loader"></div>
                 </div>
+                <div class="flex-grow"></div>
+            </div>
 
+            <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md" id="result">
                 <div class="w-full mx-auto p-2 bg-gray-700 rounded-md" id="return">
                     <pre></pre>
                 </div>
             </div>
             
         </div>
-        
         <div style="height: 200px;"></div>
-
-    <script>
-        function copy_form_to_clipboard() {
-            event.preventDefault(); // prevent form submission
-            const form = document.getElementById('argument-form');
-            const formData = new FormData(form);
-            const queryString = new URLSearchParams(formData).toString();
-            const currentUrl = new URL(window.location.href); 
-            currentUrl.search = queryString;
-            navigator.clipboard.writeText(currentUrl.toString())
-        }
-        document.getElementById("share-link-button").addEventListener("click", copy_form_to_clipboard);
-    </script>
+        <script>
+            function copy_form_to_clipboard() {
+                event.preventDefault(); // prevent form submission
+                const form = document.getElementById('argument-form');
+                const formData = new FormData(form);
+                const queryString = new URLSearchParams(formData).toString();
+                const currentUrl = new URL(window.location.href); 
+                currentUrl.search = queryString;
+                navigator.clipboard.writeText(currentUrl.toString())
+            }
+            document.getElementById("share-link-button").addEventListener("click", copy_form_to_clipboard);
+        </script>
+        <script type="module" src="/scripts/stl-viewer.js"></script> 
     </body>
 </html>

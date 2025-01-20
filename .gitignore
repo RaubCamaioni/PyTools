@@ -1,6 +1,6 @@
 __pycache__/
 local/
-tailwind/
+tailwindcss
 uv.lock
 .secrets
 .env

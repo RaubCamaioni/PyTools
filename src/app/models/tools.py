@@ -1,13 +1,7 @@
+from fastapi import Depends, HTTPException
 from typing import Annotated, Optional, Any
-from fastapi import Depends, FastAPI, HTTPException, Query
-from typing import List, Dict, Type, Literal, get_origin, Annotated, Any
 from profanityfilter import ProfanityFilter
 import pyparsing as pp
-import hashlib
-import ast
-from pathlib import Path
-import logging
-from app.utility import render
 from sqlmodel import (
     Field,
     Session,
@@ -18,8 +12,17 @@ from sqlmodel import (
     JSON,
     Column,
 )
+import hashlib
+import logging
+import ast
+
+from app import DATABASE
 
 logger = logging.getLogger("uvicorn.error")
+
+sqlite_url = f"sqlite:///{DATABASE}"
+connect_args = {"check_same_thread": False}
+engine = create_engine(sqlite_url, connect_args=connect_args)
 
 
 def hash_id(id: str) -> int:
@@ -145,13 +148,6 @@ def get_tool_by_id(session: Session, tool_id: int) -> Tool | None:
     return result
 
 
-sqlite_file_name = "/data/database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
-
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
-
-
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
@@ -207,7 +203,13 @@ def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
 
     defaults = [None] * len(entry_node.args.args)
     for i, node in enumerate(entry_node.args.defaults[::-1]):
-        defaults[-(i + 1)] = ast.unparse(node)
+        default = ast.unparse(node)
+
+        if default[0] in ['"', "'"] and len(default) >= 2:
+            default = default[1:-1]
+
+        print(f"default: ({type(default)},{default})")
+        defaults[-(i + 1)] = default
 
     arguments = {}
     for arg, default in zip(entry_node.args.args, defaults):

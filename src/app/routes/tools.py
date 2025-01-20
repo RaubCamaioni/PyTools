@@ -87,6 +87,20 @@ async def read_root(request: Request):
     )
 
 
+@router.get("/cube", response_class=HTMLResponse)
+async def get_cube(
+    request: Request,
+):
+    return TEMPLATES.TemplateResponse(
+        "pages/cube.html",
+        {
+            "header_title": "PyTools",
+            "request": request,
+            "root_path": request.scope.get("root_path"),
+        },
+    )
+
+
 @router.post("/tools", response_class=JSONResponse)
 async def get_tools(
     request: Request,
