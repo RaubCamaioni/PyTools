@@ -53,6 +53,9 @@ Website responsiveness will be impacted by multiple clients.
 
 ## Roadmap
 
+Usability:
+- error message return as toast
+
 User Page:  
 - update user attributes  
 - update tool attributes  
@@ -62,6 +65,7 @@ Tool Page:
 - report  
 - GPT malicious code check (infinite while loops, ect)  
 - split donation button (dontation split between web hoster and tool writer)  
+- Remix of query parameters for specific tasks
 
 Admin Page:  
 - banning users  

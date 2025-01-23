@@ -193,13 +193,15 @@ def get_tags(tool_source: str) -> list[str]:
 def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
     try:
         tree = ast.parse(tool_source)
-    except SyntaxError:
-        raise HTTPException(status_code=400, detail="python syntax error")
+    except SyntaxError as e:
+        detail = f"Python Syntax Error: line {e.lineno}"
+        raise HTTPException(status_code=400, detail=detail)
 
     try:
         entry_node = next(filter(lambda n: n.name == tool_name, FunctionVisitor(tree)))
     except StopIteration:
-        raise HTTPException(status_code=400, detail="entrypoint not found")
+        detail = "Entrypoint Not Found: entrypoint function matching file name missing"
+        raise HTTPException(status_code=400, detail=detail)
 
     defaults = [None] * len(entry_node.args.args)
     for i, node in enumerate(entry_node.args.defaults[::-1]):
@@ -208,13 +210,13 @@ def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
         if default[0] in ['"', "'"] and len(default) >= 2:
             default = default[1:-1]
 
-        print(f"default: ({type(default)},{default})")
         defaults[-(i + 1)] = default
 
     arguments = {}
     for arg, default in zip(entry_node.args.args, defaults):
         if not arg.annotation:
-            raise HTTPException(status_code=400, detail="annotated are required")
+            detail = "Annotation Error: arguments to entrypoint function must have annotations"
+            raise HTTPException(status_code=400, detail=detail)
         arguments[arg.arg] = (ast.unparse(arg.annotation), default)
 
     return arguments
