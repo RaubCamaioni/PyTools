@@ -31,6 +31,15 @@ from app.utility import sandbox, render, serializer, security
 from app import TEMPLATES, ALLOWED_CHARACTERS, logger
 from app.models import tools as db_tools
 from app.routes.auth import User
+import json
+from pathlib import PosixPath
+
+
+class PathEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, PosixPath):
+            return str(obj)
+        return super().default(obj)
 
 
 @asynccontextmanager
@@ -87,20 +96,6 @@ async def read_root(request: Request):
     )
 
 
-@router.get("/cube", response_class=HTMLResponse)
-async def get_cube(
-    request: Request,
-):
-    return TEMPLATES.TemplateResponse(
-        "pages/cube.html",
-        {
-            "header_title": "PyTools",
-            "request": request,
-            "root_path": request.scope.get("root_path"),
-        },
-    )
-
-
 @router.post("/tools", response_class=JSONResponse)
 async def get_tools(
     request: Request,
@@ -132,7 +127,7 @@ async def get_tools(
 @router.post("/user/tools", response_class=JSONResponse)
 async def get_user_tools(request: Request, session: db_tools.SessionDep):
     if "user" not in request.session:
-        return HTMLResponse(status_code=404)
+        return HTMLResponse(content="")
     user: User = User.model_validate_json(request.session["user"])
     tools = db_tools.get_user_tools(session, user)
     content = render.list_item_user(request.scope.get("root_path"), tools)
@@ -298,7 +293,10 @@ async def run_isolated(
     with open(results_file, "r") as f:
         results = serializer.load(f)
 
-    return HTMLResponse(content=render.render(results))
+    if request.headers.get("HX-Request") == "true":
+        return HTMLResponse(content=render.render(results))
+    else:
+        return json.dumps(results, cls=PathEncoder)
 
 
 @security.constant_time_with_random_delay(0.2, 1)

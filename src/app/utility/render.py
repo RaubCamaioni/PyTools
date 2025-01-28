@@ -164,8 +164,6 @@ pretty_printer = MyPrettyPrinter(indent=4, width=50)
 def render(results: Any):
     return_string = pretty_printer.pformat(results)
 
-    print(return_string)
-
     sanatized = (
         sanitize_html(
             return_string,

@@ -112,7 +112,7 @@ def get_tools_by_tags(
 ) -> list[Tool]:
     with session:
         # TODO: check speed
-        conditions = [Tool.tags.like(f'%"{tag}"%') for tag in tags]
+        conditions = [Tool.tags.ilike(f"%{tag}%") for tag in tags]
         statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
         return session.exec(statement).all()
 
@@ -224,6 +224,7 @@ def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
 
 def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
     tags = get_tags(tool_source.split("\n")[0])
+    tags.append(tool_name)
     arguments = get_arguments(tool_name, tool_source)
 
     return Tool(

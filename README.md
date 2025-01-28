@@ -53,12 +53,13 @@ Website responsiveness will be impacted by multiple clients.
 
 ## Roadmap
 
-Usability:
-- error message return as toast
+Usability:  
+- error message return as toast  
 
 User Page:  
 - update user attributes  
 - update tool attributes  
+- allow image upload with code (hard to make safe), generate image from stl?  
 
 Tool Page:  
 - up vote / down vote  
@@ -79,3 +80,4 @@ Index Page:
 - improve search/index capabilites  
 - organize by up/down vote  
 - show votes on item  
+- add catagories button to index page

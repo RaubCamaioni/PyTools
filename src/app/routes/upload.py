@@ -1,5 +1,6 @@
 from fastapi import Request, APIRouter, UploadFile
 from fastapi.responses import HTMLResponse
+from fastapi.exceptions import HTTPException
 from app.models import tools
 from app.models.tools import SessionDep, User, FilterDep
 from pathlib import Path
@@ -56,33 +57,33 @@ async def tool_upload_post(
     id: int = None,
 ):
     if "user" not in request.session:
-        return HTMLResponse(status_code=404, content="Login Required")
+        raise HTTPException(status_code=404, detail="Uploading code requires login.")
 
     user: User = User.model_validate_json(request.session["user"])
 
     name = file.filename
     if name is None:
-        return HTMLResponse(status_code=400, content="Filename Required")
+        raise HTTPException(status_code=400, detail="Upload filename required.")
 
     code = await file.read()
 
     clean = filter.is_clean(code.decode())
     if not clean:
-        return HTMLResponse(status_code=400, content="Profanity Filter")
+        raise HTTPException(status_code=400, detail="Blocked by profanity filter.")
 
     db_tool: tools.Tool = tools.get_tool(session, id)
 
     if db_tool is None:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
         if tool is None:
-            return HTMLResponse(status_code=404)
+            raise HTTPException(status_code=404, detail="Error creating tool.")
         session.add(tool)
         session.commit()
 
     else:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
         if tool is None:
-            return HTMLResponse(status_code=404)
+            return HTTPException(status_code=404, detail="Error updating tool.")
         db_tool.name = tool.name
         db_tool.code = tool.code
         db_tool.arguments = tool.arguments

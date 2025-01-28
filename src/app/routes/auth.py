@@ -19,9 +19,7 @@ async def login_button(request: Request):
         user: User = User.model_validate_json(request.session.get("user"))
         name = user.alias
         kwargs = {"request": request, "name": name}
-        button_html = TEMPLATES.TemplateResponse(
-            "components/logout_button.html", kwargs
-        )
+        button_html = TEMPLATES.TemplateResponse("components/logout_button.html", kwargs)
     else:
         kwargs = {"request": request, "url": LOGIN_URL}
         button_html = TEMPLATES.TemplateResponse(
@@ -53,7 +51,7 @@ async def auth_google(request: Request, code: str, session: SessionDep):
     response = requests.post(token_url, data=data)
 
     if response.status_code != 200:
-        return HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="Access denied")
 
     access_token = response.json().get("access_token")
     user_info = requests.get(
