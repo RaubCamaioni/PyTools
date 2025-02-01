@@ -5,25 +5,44 @@
         {% set title = 'User Profile' %}
         {% include 'components/head.html' %}
     </head>
-    
+
     <body class="bg-gray-900 text-gray-300 font-sans">
 
         {% include 'components/header.html'%}
 
-        <ul id="tool-list" class="max-w-2xl mx-auto">
-            <div class="container-title max-w-2xl text-center font-bold mt-6 mb-2 text-white pl-4">User's Tools</div>
+        <div class="mx-auto flex flex-col items-center bg-gray-900">
 
-            {% include 'components/upload_tool_item.html'%}
+            <div class="text-center font-bold text-white m-2" >User Settings</div>
+            
+            <div class="flex flex-row items-center">
+                <label class="mr-2">Anonymous Name:</label>
+                <input
+                    type="checkbox"
+                    {{ checked }}
+                    _="
+                    on change
+                        toggle @checked on me
+                        fetch `{{ root_path }}/manage/user/settings/{{ id }}?anonymous=${@checked is not null}` with method:'POST'
+                    end"/>
+            </div>
 
-            <li
-                hx-post="{{ root_path }}/user/tools"
-                hx-trigger="load"
-                hx-swap="outerHTML"
-                class="my-4 rounded-md overflow-hidden">
-                <a href="#"
-                    class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg">
-                </a>
-            </li>
-        </ul>
+
+
+            <ul id="tool-list" class="mx-auto">
+                <div class="text-center font-bold text-white m-2">User Tools</div>
+
+                {% include 'components/upload_tool_item.html'%}
+
+                <li
+                    hx-post="{{ root_path }}/user/tools"
+                    hx-trigger="load"
+                    hx-swap="outerHTML"
+                    class="my-4 rounded-md overflow-hidden">
+                    <a href="#"
+                        class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg">
+                    </a>
+                </li>
+            </ul>
+        </div>
     </body>
 </html>

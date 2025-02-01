@@ -93,6 +93,18 @@ async def tool_upload_post(
     return HTMLResponse(status_code=200)
 
 
+@router.post("/manage/user/settings/{id}", response_class=HTMLResponse)
+async def tool_set_public(
+    request: Request,
+    session: SessionDep,
+    id: int,
+    anonymous: bool = None,
+):
+    if "user" not in request.session:
+        raise HTTPException(status_code=404, detail="Requires Login.")
+    user: User = User.model_validate_json(request.session["user"])
+
+
 @router.post("/manage/tool/settings/{id}", response_class=HTMLResponse)
 async def tool_set_public(
     request: Request,
@@ -101,7 +113,7 @@ async def tool_set_public(
     public: bool = None,
 ):
     if "user" not in request.session:
-        raise HTTPException(status_code=404, detail="Uploading code requires login.")
+        raise HTTPException(status_code=404, detail="Requires login.")
     user: User = User.model_validate_json(request.session["user"])
 
     db_tool: tools.Tool = tools.get_tool(session, id)
