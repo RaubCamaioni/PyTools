@@ -8,8 +8,18 @@
 
         <div class="flex-grow"></div>
 
-        <div class="flex space-x-2">
+        <div class="flex items-center space-x-2">
             
+            <label>Public:</label>
+            <input
+                type="checkbox"
+                {{ checked }}
+                _="
+                on change
+                    toggle @checked on me
+                    fetch `{{ root_path }}/manage/tool/settings/{{ id }}?public=${@checked is not null}` with method:'POST'
+                end"/>
+
             <input
                 id="tool-update-{{ id }}"
                 type="file" 

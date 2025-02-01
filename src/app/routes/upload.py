@@ -1,11 +1,11 @@
-from fastapi import Request, APIRouter, UploadFile
+from fastapi import Request, APIRouter, UploadFile, Query
 from fastapi.responses import HTMLResponse
 from fastapi.exceptions import HTTPException
 from app.models import tools
 from app.models.tools import SessionDep, User, FilterDep
 from pathlib import Path
 from app import TEMPLATES, logger
-
+from typing import Optional
 
 router = APIRouter()
 
@@ -89,5 +89,32 @@ async def tool_upload_post(
         db_tool.arguments = tool.arguments
         db_tool.tags = tool.tags
         session.commit()
+
+    return HTMLResponse(status_code=200)
+
+
+@router.post("/manage/tool/settings/{id}", response_class=HTMLResponse)
+async def tool_set_public(
+    request: Request,
+    session: SessionDep,
+    id: int,
+    public: bool = None,
+):
+    if "user" not in request.session:
+        raise HTTPException(status_code=404, detail="Uploading code requires login.")
+    user: User = User.model_validate_json(request.session["user"])
+
+    db_tool: tools.Tool = tools.get_tool(session, id)
+
+    if db_tool is None:
+        raise HTTPException(status_code=404, detail="Tool does not exist.")
+
+    if db_tool.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Tool owner does not match user.")
+
+    if public is not None:
+        db_tool.public = public
+
+    session.commit()
 
     return HTMLResponse(status_code=200)

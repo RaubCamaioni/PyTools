@@ -133,13 +133,20 @@ async def get_user_tools(request: Request, session: db_tools.SessionDep):
     content = render.list_item_user(request.scope.get("root_path"), tools)
     return HTMLResponse(content=content)
 
-
+# currently unused
 @router.get("/tool/{id}/link", response_class=HTMLResponse)
 async def tool_link(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
 
-    if tool is None:  # or not tool.public:
+    if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
+
+    if not tool.public:
+        if "user" not in request.session:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
+        user: User = User.model_validate_json(request.session["user"])
+        if tool.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
 
     form_data = {}
     if len(tool.arguments):
@@ -155,6 +162,7 @@ async def tool_link(request: Request, id: int, session: db_tools.SessionDep):
 
     query_string = urlencode(form_data)
     content = f"{url}?{query_string}"
+
     return HTMLResponse(content=content)
 
 
@@ -162,9 +170,16 @@ async def tool_link(request: Request, id: int, session: db_tools.SessionDep):
 async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
 
-    if tool is None:  # or not tool.public:
+    if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
+    if not tool.public:
+        if "user" not in request.session:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
+        user: User = User.model_validate_json(request.session["user"])
+        if tool.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
+        
     query = dict(request.query_params)
     arguments = tool.arguments
 
@@ -195,8 +210,15 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
 async def download_tool(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
 
-    if tool is None:  # or not tool.public:
+    if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
+    
+    if not tool.public:
+        if "user" not in request.session:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
+        user: User = User.model_validate_json(request.session["user"])
+        if tool.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
 
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, "w") as zip_file:
@@ -250,6 +272,13 @@ async def run_isolated(
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
+    if not tool.public:
+        if "user" not in request.session:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
+        user: User = User.model_validate_json(request.session["user"])
+        if tool.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Tool Not Found")
+        
     form_data = {}
     if len(tool.arguments):
         form_data = await request.form()

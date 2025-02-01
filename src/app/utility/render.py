@@ -6,6 +6,7 @@ from jinja2 import Template
 from app import TEMPLATES, logger
 from typing import Literal  # required for form type
 from nh3 import clean as sanitize_html
+from app.models.tools import Tool
 
 
 def parser_literal(input: str):
@@ -142,16 +143,17 @@ def list_items(
     return "".join(htmlx)
 
 
-def list_item_user(root_path: str, tools: list[tuple[str, str]]):
+def list_item_user(root_path: str, tools: list[Tool]):
     template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     htmlx = []
 
-    for id, name in tools:
+    for tool in tools:
         htmlx.append(
             template.render(
                 root_path=root_path,
-                id=id,
-                name=name,
+                id=tool.id,
+                name=tool.name,
+                checked="checked" if tool.public else "",
             )
         )
 

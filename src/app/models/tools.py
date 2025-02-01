@@ -98,9 +98,13 @@ def get_tools_by_index(
     session: Session,
     start: int,
     end: int,
+    only_public: bool = True,
 ) -> list[tuple[int, str]]:
     with session:
-        statement = select(Tool.id, Tool.name).offset(start).limit(end - start)
+        conditions = []
+        if only_public:
+            conditions = [Tool.public == True]
+        statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
         return session.exec(statement).all()
 
 
@@ -109,16 +113,18 @@ def get_tools_by_tags(
     tags: list[str],
     start: int,
     end: int,
+    only_public: bool = True,
 ) -> list[Tool]:
     with session:
-        # TODO: check speed
         conditions = [Tool.tags.ilike(f"%{tag}%") for tag in tags]
+        if only_public:
+            conditions.append(Tool.public == True)
         statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
         return session.exec(statement).all()
 
 
-def get_user_tools(session: Session, user: User) -> list[tuple[int, str]]:
-    statement = select(Tool.id, Tool.name).where(Tool.user_id == user.id)
+def get_user_tools(session: Session, user: User) -> list[Tool]:
+    statement = select(Tool).where(Tool.user_id == user.id)
     result = session.exec(statement).all()
     return list(result)
 
@@ -143,7 +149,8 @@ def del_tool(session: Session, tool: Tool):
 
 
 def get_tool_by_id(session: Session, tool_id: int) -> Tool | None:
-    statement = select(Tool).where(Tool.id == tool_id)
+    conditions = [Tool.id == tool_id]
+    statement = select(Tool).where(*conditions)
     result = session.exec(statement).first()
     return result
 
