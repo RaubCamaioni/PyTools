@@ -10,7 +10,7 @@ router = APIRouter()
 async def user_page(request: Request):
     name = "Unknown"
 
-    if "user" not in request.session:
+    if "user" in request.session:
         user: User = User.model_validate_json(request.session["user"])
         name = user.alias
 

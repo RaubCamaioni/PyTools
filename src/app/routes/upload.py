@@ -59,7 +59,6 @@ async def tool_upload_post(
 ):
     if "user" not in request.session:
         raise HTTPException(status_code=404, detail="Uploading code requires login.")
-
     user: User = User.model_validate_json(request.session["user"])
 
     name = file.filename
