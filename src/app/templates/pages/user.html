@@ -12,6 +12,24 @@
 
         <div class="mx-auto flex flex-col items-center bg-gray-900">
 
+            <div class="text-center font-bold text-white m-2">User Settings</div>
+            <form 
+                hx-post="/manage/user/settings"
+                hx-swap="none"
+                onsubmit="event.preventDefault();"
+                class="mx-auto items-center flex flex-row gap-2">
+               <label>Alias:</label>
+               <input 
+                class="rounded-md bg-gray-700 px-2"
+                type="text"
+                name="alias"
+                value="{{ alias }}">
+                <button
+                    class="rounded-md bg-gray-700 text-white hover:bg-gray-500 px-2">
+                    Submit
+                </button>
+            </form>
+
             <ul id="tool-list" class="mx-auto">
                 <div class="text-center font-bold text-white m-2">User Tools</div>
 

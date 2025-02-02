@@ -19,7 +19,9 @@ async def login_button(request: Request):
         user: User = User.model_validate_json(request.session.get("user"))
         name = user.alias
         kwargs = {"request": request, "name": name}
-        button_html = TEMPLATES.TemplateResponse("components/logout_button.html", kwargs)
+        button_html = TEMPLATES.TemplateResponse(
+            "components/logout_button.html", kwargs
+        )
     else:
         kwargs = {"request": request, "url": LOGIN_URL}
         button_html = TEMPLATES.TemplateResponse(
@@ -61,7 +63,7 @@ async def auth_google(request: Request, code: str, session: SessionDep):
 
     user_info_json = user_info.json()
     id = hash_id(user_info_json["id"])
-    request.session["user"] = get_user(session, id).model_dump_json()
+    request.session["user_id"] = id
 
     return RedirectResponse(url="/")
 

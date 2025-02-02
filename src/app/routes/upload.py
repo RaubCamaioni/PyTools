@@ -2,7 +2,7 @@ from fastapi import Request, APIRouter, UploadFile, Query
 from fastapi.responses import HTMLResponse
 from fastapi.exceptions import HTTPException
 from app.models import tools
-from app.models.tools import SessionDep, User, FilterDep
+from app.models.tools import SessionDep, User, FilterDep, get_user
 from pathlib import Path
 from app import TEMPLATES, logger
 from typing import Optional
@@ -93,16 +93,26 @@ async def tool_upload_post(
     return HTMLResponse(status_code=200)
 
 
-# @router.post("/manage/user/settings", response_class=HTMLResponse)
+@router.post("/manage/user/settings", response_class=HTMLResponse)
 async def user_settings(
     request: Request,
     session: SessionDep,
-    anonymous: Optional[bool] = None,
 ):
     if "user" not in request.session:
         raise HTTPException(status_code=404, detail="Requires Login.")
     user: User = User.model_validate_json(request.session["user"])
+    user: User = get_user(session, user.id)
+
+    form_data = await request.form()
+
+    if "alias" in form_data:
+        user.alias = str(form_data["alias"])
+
+    # update session and database
+    request.session["user"] = user.model_dump_json()
     session.commit()
+
+    return HTMLResponse(status_code=200)
 
 
 @router.post("/manage/tool/settings/{id}", response_class=HTMLResponse)

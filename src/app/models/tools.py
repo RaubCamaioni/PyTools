@@ -37,7 +37,6 @@ class User(SQLModel, table=True):
     def __init__(self, **data: Any):
         if "id" in data and isinstance(data["id"], str):
             data["id"] = hash_id(data["id"])
-
         super().__init__(**data)
 
 

@@ -146,6 +146,7 @@ async def tool_link(request: Request, id: int, session: db_tools.SessionDep):
         if "user" not in request.session:
             raise HTTPException(status_code=404, detail="Tool Not Found")
         user: User = User.model_validate_json(request.session["user"])
+
         if tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool Not Found")
 
