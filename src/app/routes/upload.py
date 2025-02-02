@@ -6,6 +6,7 @@ from app.models.tools import SessionDep, User, FilterDep
 from pathlib import Path
 from app import TEMPLATES, logger
 from typing import Optional
+from urllib.parse import parse_qsl
 
 router = APIRouter()
 
@@ -54,7 +55,7 @@ async def tool_upload_post(
     file: UploadFile,
     session: SessionDep,
     filter: FilterDep,
-    id: int = None,
+    id: Optional[int] = None,
 ):
     if "user" not in request.session:
         raise HTTPException(status_code=404, detail="Uploading code requires login.")
@@ -71,7 +72,7 @@ async def tool_upload_post(
     if not clean:
         raise HTTPException(status_code=400, detail="Blocked by profanity filter.")
 
-    db_tool: tools.Tool = tools.get_tool(session, id)
+    db_tool: Optional[tools.Tool] = tools.get_tool(session, id)
 
     if db_tool is None:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
@@ -93,16 +94,16 @@ async def tool_upload_post(
     return HTMLResponse(status_code=200)
 
 
-@router.post("/manage/user/settings/{id}", response_class=HTMLResponse)
-async def tool_set_public(
+# @router.post("/manage/user/settings", response_class=HTMLResponse)
+async def user_settings(
     request: Request,
     session: SessionDep,
-    id: int,
-    anonymous: bool = None,
+    anonymous: Optional[bool] = None,
 ):
     if "user" not in request.session:
         raise HTTPException(status_code=404, detail="Requires Login.")
     user: User = User.model_validate_json(request.session["user"])
+    session.commit()
 
 
 @router.post("/manage/tool/settings/{id}", response_class=HTMLResponse)
@@ -110,13 +111,14 @@ async def tool_set_public(
     request: Request,
     session: SessionDep,
     id: int,
-    public: bool = None,
+    public: Optional[bool] = None,
+    anonymous: Optional[bool] = None,
 ):
     if "user" not in request.session:
         raise HTTPException(status_code=404, detail="Requires login.")
     user: User = User.model_validate_json(request.session["user"])
 
-    db_tool: tools.Tool = tools.get_tool(session, id)
+    db_tool: Optional[tools.Tool] = tools.get_tool(session, id)
 
     if db_tool is None:
         raise HTTPException(status_code=404, detail="Tool does not exist.")
@@ -127,6 +129,8 @@ async def tool_set_public(
     if public is not None:
         db_tool.public = public
 
-    session.commit()
+    if anonymous is not None:
+        db_tool.annonymous = anonymous
 
+    session.commit()
     return HTMLResponse(status_code=200)

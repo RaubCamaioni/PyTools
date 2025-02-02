@@ -60,14 +60,15 @@ class IsolationWorkers:
                 "--env",
                 "HOME=/box",
                 f"--box-id={worker}",
-                "--dir=/tmp=",
-                f"--dir={dir}:rw",
-                "--dir=/sandbox",
+                "--dir=/tmp=",  # clear default tmp mount
+                f"--dir={dir}:rw",  # mount tmp workdir
+                "--dir=/sandbox",  # mount sandbox utils
+                "--dir=/venvs/sandbox",  # mount sandbox env
                 f"--processes={self.processors}",
                 "--wall-time=30",
                 "--run",
                 "--",
-                "/sandbox/venv/bin/python",
+                "/venvs/sandbox/bin/python",
                 "/sandbox/runner.py",
                 "--file",
                 f"/box/{tool.name}",

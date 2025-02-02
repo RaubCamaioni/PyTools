@@ -9,11 +9,21 @@
         <div class="flex-grow"></div>
 
         <div class="flex items-center space-x-2">
-            
+
+            <label>Anonymous:</label>
+            <input
+                type="checkbox"
+                {{ anonymous }}
+                _="
+                on change
+                    toggle @checked on me
+                    fetch `{{ root_path }}/manage/tool/settings/{{ id }}?anonymous=${@checked is not null}` with method:'POST'
+                end"/>
+
             <label>Public:</label>
             <input
                 type="checkbox"
-                {{ checked }}
+                {{ public }}
                 _="
                 on change
                     toggle @checked on me

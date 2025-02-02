@@ -4,7 +4,7 @@ from pprint import PrettyPrinter, pformat
 from pathlib import Path, PosixPath
 from jinja2 import Template
 from app import TEMPLATES, logger
-from typing import Literal  # required for form type
+from typing import Literal, Optional  # required for form type
 from nh3 import clean as sanitize_html
 from app.models.tools import Tool
 
@@ -14,12 +14,18 @@ def parser_literal(input: str):
     OPEN_BRACKET = pp.Suppress(pp.Literal("["))
     CLOSE_BRACKET = pp.Suppress(pp.Literal("]"))
     string_type = pp.Word(pp.alphanums + "_", pp.alphanums + "_.")
-    num_type = pp.Combine(pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Word(pp.nums)))
+    num_type = pp.Combine(
+        pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Word(pp.nums))
+    )
     empty_quote = string_type | num_type
     single = pp.Suppress("'")
     doube = pp.Suppress('"')
-    double_quote = pp.Group(doube + empty_quote + doube).addParseAction(lambda t: "".join(t[0]))
-    single_quote = pp.Group(single + empty_quote + single).addParseAction(lambda t: "".join(t[0]))
+    double_quote = pp.Group(doube + empty_quote + doube).addParseAction(
+        lambda t: "".join(t[0])
+    )
+    single_quote = pp.Group(single + empty_quote + single).addParseAction(
+        lambda t: "".join(t[0])
+    )
     field = double_quote | single_quote | num_type
     literal_values = pp.ZeroOrMore(field + pp.Suppress(pp.Optional(",")))
     literal_expr = LITERAL + OPEN_BRACKET + literal_values + CLOSE_BRACKET
@@ -112,8 +118,8 @@ def args_to_form(arguments: dict[str, tuple[str, str]]):
 def list_items(
     base_url: str,
     tools: list[tuple[str, str]],
-    end: int = None,
-    tags: list[str] = None,
+    end: Optional[int] = None,
+    tags: Optional[list[str]] = None,
 ):
     tags = tags or []
 
@@ -130,7 +136,9 @@ def list_items(
         htmlx.append(form)
 
     if end is not None:
-        template: Template = TEMPLATES.get_template("components/tool_scroll_loader.html")
+        template: Template = TEMPLATES.get_template(
+            "components/tool_scroll_loader.html"
+        )
         form = template.render(
             {
                 "start": end,
@@ -153,7 +161,8 @@ def list_item_user(root_path: str, tools: list[Tool]):
                 root_path=root_path,
                 id=tool.id,
                 name=tool.name,
-                checked="checked" if tool.public else "",
+                public="checked" if tool.public else "",
+                anonymous="checked" if tool.annonymous else "",
             )
         )
 

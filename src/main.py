@@ -1,5 +1,3 @@
-import os
-import sys
 import uvicorn
 from app.app import app
 

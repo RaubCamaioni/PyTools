@@ -100,8 +100,8 @@ async def read_root(request: Request):
 async def get_tools(
     request: Request,
     session: db_tools.SessionDep,
-    start: Optional[int] = Query(0, ge=0),
-    end: Optional[int] = Query(100, ge=0),
+    start: int = Query(0, ge=0),
+    end: int = Query(100, ge=0),
 ):
     if start > end:
         raise HTTPException(status_code=400, detail="Invalid index range")
@@ -132,6 +132,7 @@ async def get_user_tools(request: Request, session: db_tools.SessionDep):
     tools = db_tools.get_user_tools(session, user)
     content = render.list_item_user(request.scope.get("root_path"), tools)
     return HTMLResponse(content=content)
+
 
 # currently unused
 @router.get("/tool/{id}/link", response_class=HTMLResponse)
@@ -179,7 +180,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
         user: User = User.model_validate_json(request.session["user"])
         if tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool Not Found")
-        
+
     query = dict(request.query_params)
     arguments = tool.arguments
 
@@ -212,7 +213,7 @@ async def download_tool(request: Request, id: int, session: db_tools.SessionDep)
 
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
-    
+
     if not tool.public:
         if "user" not in request.session:
             raise HTTPException(status_code=404, detail="Tool Not Found")
@@ -278,7 +279,7 @@ async def run_isolated(
         user: User = User.model_validate_json(request.session["user"])
         if tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool Not Found")
-        
+
     form_data = {}
     if len(tool.arguments):
         form_data = await request.form()

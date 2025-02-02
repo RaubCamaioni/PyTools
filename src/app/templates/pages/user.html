@@ -12,22 +12,6 @@
 
         <div class="mx-auto flex flex-col items-center bg-gray-900">
 
-            <div class="text-center font-bold text-white m-2" >User Settings</div>
-            
-            <div class="flex flex-row items-center">
-                <label class="mr-2">Anonymous Name:</label>
-                <input
-                    type="checkbox"
-                    {{ checked }}
-                    _="
-                    on change
-                        toggle @checked on me
-                        fetch `{{ root_path }}/manage/user/settings/{{ id }}?anonymous=${@checked is not null}` with method:'POST'
-                    end"/>
-            </div>
-
-
-
             <ul id="tool-list" class="mx-auto">
                 <div class="text-center font-bold text-white m-2">User Tools</div>
 

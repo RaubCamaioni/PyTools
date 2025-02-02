@@ -5,6 +5,5 @@ uv.lock
 .secrets
 .env
 database.db
-local_runner.sh
 .vscode/
 *.stl
