@@ -5,25 +5,46 @@
         {% set title = 'User Profile' %}
         {% include 'components/head.html' %}
     </head>
-    
+
     <body class="bg-gray-900 text-gray-300 font-sans">
 
         {% include 'components/header.html'%}
 
-        <ul id="tool-list" class="max-w-2xl mx-auto">
-            <div class="container-title max-w-2xl text-center font-bold mt-6 mb-2 text-white pl-4">User's Tools</div>
+        <div class="mx-auto flex flex-col items-center bg-gray-900">
 
-            {% include 'components/upload_tool_item.html'%}
+            <div class="text-center font-bold text-white m-2">User Settings</div>
+            <form 
+                hx-post="/manage/user/settings"
+                hx-swap="none"
+                onsubmit="event.preventDefault();"
+                class="mx-auto items-center flex flex-row gap-2">
+               <label>Alias:</label>
+               <input 
+                class="rounded-md bg-gray-700 px-2"
+                type="text"
+                name="alias"
+                value="{{ alias }}">
+                <button
+                    class="rounded-md bg-gray-700 text-white hover:bg-gray-500 px-2">
+                    Submit
+                </button>
+            </form>
 
-            <li
-                hx-post="{{ root_path }}/user/tools"
-                hx-trigger="load"
-                hx-swap="outerHTML"
-                class="my-4 rounded-md overflow-hidden">
-                <a href="#"
-                    class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg">
-                </a>
-            </li>
-        </ul>
+            <ul id="tool-list" class="mx-auto">
+                <div class="text-center font-bold text-white m-2">User Tools</div>
+
+                {% include 'components/upload_tool_item.html'%}
+
+                <li
+                    hx-post="{{ root_path }}/user/tools"
+                    hx-trigger="load"
+                    hx-swap="outerHTML"
+                    class="my-4 rounded-md overflow-hidden">
+                    <a href="#"
+                        class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg">
+                    </a>
+                </li>
+            </ul>
+        </div>
     </body>
 </html>

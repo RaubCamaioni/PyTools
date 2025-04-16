@@ -37,7 +37,6 @@ class User(SQLModel, table=True):
     def __init__(self, **data: Any):
         if "id" in data and isinstance(data["id"], str):
             data["id"] = hash_id(data["id"])
-
         super().__init__(**data)
 
 
@@ -104,7 +103,12 @@ def get_tools_by_index(
         conditions = []
         if only_public:
             conditions = [Tool.public == True]
-        statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
+        statement = (
+            select(Tool.id, Tool.name)
+            .where(*conditions)
+            .offset(start)
+            .limit(end - start)
+        )
         return session.exec(statement).all()
 
 
@@ -119,7 +123,12 @@ def get_tools_by_tags(
         conditions = [Tool.tags.ilike(f"%{tag}%") for tag in tags]
         if only_public:
             conditions.append(Tool.public == True)
-        statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
+        statement = (
+            select(Tool.id, Tool.name)
+            .where(*conditions)
+            .offset(start)
+            .limit(end - start)
+        )
         return session.exec(statement).all()
 
 
@@ -134,7 +143,7 @@ def add_tool(session: Session, tool: Tool):
     session.commit()
 
 
-def get_tool(session: Session, id: int):
+def get_tool(session: Session, id: Optional[int]):
     statement = select(Tool).where(Tool.id == id)
     result = session.exec(statement)
     return result.first()
