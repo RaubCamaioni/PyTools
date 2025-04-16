@@ -2,6 +2,7 @@ __pycache__/
 local/
 tailwindcss
 uv.lock
+.venv
 .secrets
 .env
 database.db

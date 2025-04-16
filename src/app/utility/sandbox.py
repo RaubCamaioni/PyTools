@@ -55,6 +55,8 @@ class IsolationWorkers:
             # isolate manual: https://www.ucw.cz/moe/isolate.1.html
             cmd = [
                 "isolate",
+                "--share-net",
+                "--dir=/etc/",
                 "--cg",
                 "--cg-mem=104857600",
                 "--env",

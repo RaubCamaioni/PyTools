@@ -51,6 +51,10 @@ Currently hosted under Linode server, lowest resources.
 Heavy load scripts will take longer to return.  
 Website responsiveness will be impacted by multiple clients.  
 
+## Building Instructions
+
+TODO
+
 ## Roadmap
 
 Usability:  
