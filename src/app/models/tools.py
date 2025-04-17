@@ -16,13 +16,12 @@ import hashlib
 import logging
 import ast
 
-from app import DATABASE
+from app import ENVIRONMENT
 
 logger = logging.getLogger("uvicorn.error")
 
-sqlite_url = f"sqlite:///{DATABASE}"
 connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
+engine = create_engine(ENVIRONMENT.DATABASE, connect_args=connect_args)
 
 
 def hash_id(id: str) -> int:
@@ -103,12 +102,7 @@ def get_tools_by_index(
         conditions = []
         if only_public:
             conditions = [Tool.public == True]
-        statement = (
-            select(Tool.id, Tool.name)
-            .where(*conditions)
-            .offset(start)
-            .limit(end - start)
-        )
+        statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
         return session.exec(statement).all()
 
 
@@ -123,12 +117,7 @@ def get_tools_by_tags(
         conditions = [Tool.tags.ilike(f"%{tag}%") for tag in tags]
         if only_public:
             conditions.append(Tool.public == True)
-        statement = (
-            select(Tool.id, Tool.name)
-            .where(*conditions)
-            .offset(start)
-            .limit(end - start)
-        )
+        statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
         return session.exec(statement).all()
 
 

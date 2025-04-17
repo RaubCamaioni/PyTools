@@ -3,18 +3,32 @@ from pathlib import Path
 import string
 import logging
 import os
+from dataclasses import dataclass
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI")
-DATABASE = os.environ.get("DATABASE")
-LOGIN_URL = f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=online"
 
-if None in [SECRET_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, DATABASE]:
-    raise Exception("Missing environment variable")
+@dataclass
+class _ENVIRONMENT:
+    SESSION_KEY: str = os.environ.get("SESSION_KEY")
+    GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET: str = os.environ.get("GOOGLE_CLIENT_SECRET")
+    GOOGLE_REDIRECT_URI: str = os.environ.get("GOOGLE_REDIRECT_URI")
+    DATABASE: str = os.environ.get("DATABASE")
+    SANDBOX: str = os.environ.get("SANDBOX")
+
+    def __post_init__(self):
+        for name, value in self.__dict__.items():
+            if value is None:
+                raise ValueError(f"Missing environment variable: {name}")
+
+    @property
+    def LOGIN_URL(self):
+        return f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={self.GOOGLE_CLIENT_ID}&redirect_uri={self.GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=online"
+
+
+ENVIRONMENT = _ENVIRONMENT()
 
 ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
 APP_DIRECTORY = Path(__file__).parent
-TEMPLATES = Jinja2Templates(directory="app/templates")
+TEMPLATES = Jinja2Templates(directory=APP_DIRECTORY / "webapp" / "templates")
+
 logger = logging.getLogger("uvicorn.error")

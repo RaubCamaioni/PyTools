@@ -1,8 +1,0 @@
-fastapi[standard]
-jwt
-itsdangerous
-requests
-pyparsing
-sqlmodel
-nh3
-profanityfilter

@@ -53,7 +53,15 @@ Website responsiveness will be impacted by multiple clients.
 
 ## Building Instructions
 
-TODO
+Required Secrets:
+``` bash
+GOOGLE_CLIENT_ID=<google_client_id_url>
+GOOGLE_CLIENT_SECRET=<google_client_secret>
+GOOGLE_REDIRECT_URI=<redirect_fastapi_auth_endpoint>
+SESSION_SECRET=<session_secret>
+ROOT_PATH=<root_url_path_when_behind_proxy>
+DATABASE=<valid_sqlmodel_uri>
+```
 
 ## Roadmap
 

@@ -1,14 +1,15 @@
+from sandbox import serializer
+
 from typing import Any, Callable
 from functools import partial
 from pathlib import Path
 import importlib.util
-import serializer
 import traceback
 import sys
 import os
 
 
-def main(file: Path, workdir: Path) -> Any:
+def runner(file: Path, workdir: Path) -> Any:
     os.chdir(workdir)
 
     with open("args.json", "r") as f:
@@ -42,7 +43,7 @@ def main(file: Path, workdir: Path) -> Any:
         serializer.dump(results, f)
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -53,4 +54,8 @@ if __name__ == "__main__":
     file = Path(args.file)
     workdir = Path(args.workdir)
 
-    main(file, workdir)
+    runner(file, workdir)
+
+
+if __name__ == "__main__":
+    main()

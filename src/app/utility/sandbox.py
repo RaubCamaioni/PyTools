@@ -4,7 +4,7 @@ from threading import Lock
 from asyncio import create_subprocess_exec as async_exec
 import random
 import shutil
-from app import logger
+from app import logger, ENVIRONMENT
 
 
 def docker_run(image: str, tool: Path, workdir: Path):
@@ -55,27 +55,25 @@ class IsolationWorkers:
             # isolate manual: https://www.ucw.cz/moe/isolate.1.html
             cmd = [
                 "isolate",
-                "--share-net",
-                "--dir=/etc/",
+                "--share-net",  # internet
+                "--dir=/etc/",  # resolve.conf
                 "--cg",
                 "--cg-mem=104857600",
                 "--env",
                 "HOME=/box",
                 f"--box-id={worker}",
-                "--dir=/tmp=",  # clear default tmp mount
-                f"--dir={dir}:rw",  # mount tmp workdir
-                "--dir=/sandbox",  # mount sandbox utils
-                "--dir=/venvs/sandbox",  # mount sandbox env
+                "--dir=/tmp=",
+                f"--dir={dir}=/workdir:rw",
+                f"--dir={ENVIRONMENT.SANDBOX}=/sandbox",
                 f"--processes={self.processors}",
                 "--wall-time=30",
                 "--run",
                 "--",
-                "/venvs/sandbox/bin/python",
-                "/sandbox/runner.py",
+                "/sandbox/bin/sandbox",
                 "--file",
                 f"/box/{tool.name}",
                 "--workdir",
-                f"{dir}",
+                "/workdir",
             ]
 
             p = await async_exec(*cmd)

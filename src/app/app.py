@@ -7,7 +7,7 @@ from pathlib import Path
 
 from app.models.tools import create_db_and_tables
 from app.routes import tools, auth, upload, user
-from app import logger, SECRET_KEY
+from app import logger, ENVIRONMENT
 
 
 @asynccontextmanager
@@ -17,15 +17,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-APP_DIRECTORY = Path(__file__).parent
+APP_DIRECTORY = Path(__file__).parent / "webapp"
 app.mount("/static", StaticFiles(directory=APP_DIRECTORY / "static"), name="static")
 app.mount("/scripts", StaticFiles(directory=APP_DIRECTORY / "scripts"), name="scripts")
 app.mount("/webfonts", StaticFiles(directory=APP_DIRECTORY / "webfonts"), name="webfonts")
+
 app.include_router(upload.router)
 app.include_router(auth.router)
 app.include_router(tools.router)
 app.include_router(user.router)
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+app.add_middleware(SessionMiddleware, secret_key=ENVIRONMENT.SESSION_KEY)
 
 
 for route in app.routes:

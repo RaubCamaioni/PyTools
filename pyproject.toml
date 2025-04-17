@@ -1,31 +1,28 @@
 [project]
 name = "pytools"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python script execution web wrapper."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "authlib>=1.3.2",
-    "build123d>=0.8.0",
-    "cadquery==2.3.0",
-    "cryptography>=43.0.3",
-    "fastapi[standard]>=0.115.4",
-    "google-auth>=2.36.0",
-    "ipykernel>=6.29.5",
+    "fastapi[standard]>=0.115.12",
     "itsdangerous>=2.2.0",
-    "jupyter>=1.1.1",
-    "nh3>=0.2.20",
-    "ocp-tessellate>=3.0.8",
-    "ocp-vscode>=2.6.1",
-    "opencv-python>=4.10.0.84",
+    "jwt>=1.3.1",
+    "nh3>=0.2.21",
     "profanityfilter>=2.1.0",
-    "pyav>=13.1.0",
-    "pyjwt>=2.9.0",
-    "pymupdf>=1.24.13",
-    "pyparsing>=3.2.0",
-    "restrictedpython>=7.4",
-    "sqlmodel>=0.0.22",
+    "pyparsing>=3.2.3",
+    "requests>=2.32.3",
+    "sqlmodel>=0.0.24",
 ]
 
 [tool.uv.workspace]
-members = ["local/my_module"]
+members = [
+    "local/my_module",
+ "sandbox",
+]
+
+[tool.ruff]
+line-length = 120
+
+[project.scripts]
+pywebtool = "app.runner:runner"
