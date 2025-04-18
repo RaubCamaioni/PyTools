@@ -50,8 +50,6 @@ class IsolationWorkers:
             p = await async_exec("isolate", "--init", "--cg", f"--box-id={worker}")
             await p.wait()
 
-            shutil.copy(tool, f"/var/local/lib/isolate/{worker}/box/{tool.name}")
-
             # isolate manual: https://www.ucw.cz/moe/isolate.1.html
             cmd = [
                 "isolate",
@@ -63,17 +61,19 @@ class IsolationWorkers:
                 "HOME=/box",
                 f"--box-id={worker}",
                 "--dir=/tmp=",
-                f"--dir={dir}=/workdir:rw",
-                f"--dir={ENVIRONMENT.SANDBOX}=/sandbox",
+                f"--dir={dir}:rw",
+                f"--dir=/sandbox={ENVIRONMENT.SANDBOX}",
                 f"--processes={self.processors}",
                 "--wall-time=30",
                 "--run",
                 "--",
+                "/sandbox/bin/python",
+                "-B",
                 "/sandbox/bin/sandbox",
                 "--file",
-                f"/box/{tool.name}",
+                f"{dir}/{tool.name}",
                 "--workdir",
-                "/workdir",
+                f"{dir}",
             ]
 
             p = await async_exec(*cmd)
