@@ -39,6 +39,7 @@ RUN apt-get update && apt install -y \
   libglib2.0-0 \
   libopenblas-dev \
   liblapack-dev \
+  make \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /venvs /venvs
@@ -50,4 +51,4 @@ RUN mkdir /pytools
 RUN mkdir /sandbox
 
 WORKDIR /pytools
-ENTRYPOINT ["/venvs/server/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+ENTRYPOINT ["/venvs/server/bin/pywebtool"]
