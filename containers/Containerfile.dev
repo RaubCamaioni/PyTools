@@ -1,0 +1,53 @@
+FROM python:3.10-slim-bookworm AS builder
+
+RUN apt-get update && apt install -y \
+  libcap-dev \
+  pkg-config \
+  libsystemd-dev \ 
+  asciidoc \
+  build-essential \
+  git \
+  libavformat-dev \
+  libavcodec-dev \
+  libavdevice-dev \
+  libavutil-dev \
+  libswscale-dev \
+  libswresample-dev
+
+RUN /usr/local/bin/pip install asciidoc
+
+RUN mkdir /venvs
+
+RUN python3 -m venv /venvs/server
+COPY server /tmp/server
+RUN /venvs/server/bin/pip install /tmp/server/
+
+RUN python3 -m venv /venvs/sandbox
+COPY sandbox /tmp/sandbox
+RUN /venvs/sandbox/bin/pip install /tmp/sandbox/
+
+RUN cd /tmp && \
+  git clone https://github.com/ioi/isolate.git && \
+  cd isolate && \
+  make
+
+FROM python:3.10-slim-bookworm
+
+RUN apt-get update && apt install -y \
+  libgl1-mesa-glx \
+  libxrender1 \
+  libglib2.0-0 \
+  libopenblas-dev \
+  liblapack-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /venvs /venvs
+
+COPY --from=builder /tmp/isolate /tmp/isolate
+RUN cd /tmp/isolate && make install && rm -rf /tmp/isolate
+
+RUN mkdir /pytools
+RUN mkdir /sandbox
+
+WORKDIR /pytools
+ENTRYPOINT ["/venvs/server/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]

@@ -1,6 +1,6 @@
 module.exports = {
   content: [
-    './src/**/*.{html,js}',
+    './server/src/**/*.{html,js}',
     './tailwind/styles.css',
   ],
   theme: {

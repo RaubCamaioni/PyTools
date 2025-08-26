@@ -3,7 +3,7 @@ name = "pytools"
 version = "0.1.0"
 description = "Python script execution web wrapper."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi[standard]>=0.115.12",
     "itsdangerous>=2.2.0",
