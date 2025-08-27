@@ -1,54 +1,34 @@
-FROM python:3.10-slim-bookworm AS builder
+FROM registry.access.redhat.com/ubi9/ubi-init
 
-RUN apt-get update && apt install -y \
-  libcap-dev \
+RUN dnf update -y && dnf install -y \
+  libcap-devel \
   pkg-config \
-  libsystemd-dev \ 
-  asciidoc \
-  build-essential \
+  systemd-devel \
   git \
-  libavformat-dev \
-  libavcodec-dev \
-  libavdevice-dev \
-  libavutil-dev \
-  libswscale-dev \
-  libswresample-dev
-
-RUN /usr/local/bin/pip install asciidoc
-
-RUN mkdir /venvs
-
-RUN python3 -m venv /venvs/server
-COPY server /tmp/server
-RUN /venvs/server/bin/pip install /tmp/server/
-
-RUN python3 -m venv /venvs/sandbox
-COPY sandbox /tmp/sandbox
-RUN /venvs/sandbox/bin/pip install /tmp/sandbox/
+  make \
+  gcc
 
 RUN cd /tmp && \
   git clone https://github.com/ioi/isolate.git && \
   cd isolate && \
-  make
+  make isolate && \
+  make install
 
-FROM python:3.10-slim-bookworm
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN apt-get update && apt install -y \
-  libgl1-mesa-glx \
-  libxrender1 \
-  libglib2.0-0 \
-  libopenblas-dev \
-  liblapack-dev \
-  make \
-  && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /venvs /venvs
-
-COPY --from=builder /tmp/isolate /tmp/isolate
-RUN cd /tmp/isolate && make install && rm -rf /tmp/isolate
+RUN mkdir /venvs
+COPY server /tmp/server
+COPY sandbox /tmp/sandbox
+RUN uv venv /venvs/server --python 3.11
+RUN uv venv /venvs/sandbox --python 3.11
+RUN uv pip install /tmp/server/ --python /venvs/server/bin/python
+RUN uv pip install /tmp/sandbox/ --python /venvs/sandbox/bin/python
 
 RUN mkdir /pytools
 RUN mkdir /sandbox
 
-WORKDIR /pytools
-ENTRYPOINT ["/venvs/server/bin/pywebtool"]
+COPY services/server.service /etc/systemd/system/server.service
+RUN systemctl enable server.service
+RUn systemctl enable isolate.service
+
+ENTRYPOINT ["/sbin/init"]

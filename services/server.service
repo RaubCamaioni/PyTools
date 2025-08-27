@@ -1,0 +1,12 @@
+[Unit]
+Description=Pytools
+After=network.target
+
+[Service]
+Restart=always
+ExecStart=/venvs/server/bin/pywebtool
+WorkingDirectory=/pytools
+EnvironmentFile=/root/.secrets
+
+[Install]
+WantedBy=multi-user.target
