@@ -86,3 +86,19 @@ Index Page:
 - organize by up/down vote  
 - show votes on item  
 - add catagories button to index page
+
+## Debugging Nested Cgroups
+Keywords delegation slice, cgroup, systemd  
+```bash
+# enable delegation for users
+# /etc/systemd/system/user@.service.d/delegate.conf 
+[Service]
+Delegate=cpu cpuset io memory pids
+```
+Check for cgroup.subtree_control permissions.  
+This shows the specific user permissions.  
+Ensure permissions are allowed through the tree.  
+Check if podman nesting works in root vs non-root.
+```bash
+cat /sys/fs/cgroup/user.slice/user-1000.slice/cgroup.subtree_control
+```
