@@ -29,6 +29,4 @@ RUN mkdir /sandbox
 
 COPY services/server.service /etc/systemd/system/server.service
 RUN systemctl enable server.service
-RUn systemctl enable isolate.service
-
-ENTRYPOINT ["/sbin/init"]
+RUN systemctl enable isolate.service
