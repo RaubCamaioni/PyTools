@@ -1,8 +1,9 @@
 #!/bin/bash
 podman run --rm -it \
-    --systemd=always \
-    --cgroupns=private \
+    --cap-add=CAP_SYS_ADMIN \
+    --cap-add=CAP_NET_ADMIN \
     -p 8080:8080 \
+    -v /tmp/data:/data \
     -v .secrets:/root/.secrets:z \
     --name pytools \
     pywebtools:dev

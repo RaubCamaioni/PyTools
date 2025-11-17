@@ -1,0 +1,12 @@
+[Unit]
+Description=Make mount shareable
+DefaultDependencies=no
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/mount --make-rshared /
+
+[Install]
+WantedBy=local-fs.target

@@ -76,6 +76,8 @@ class IsolationWorkers:
                 f"{dir}",
             ]
 
+            print(" ".join(cmd))
+
             p = await async_exec(*cmd)
             await p.wait()
 

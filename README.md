@@ -22,7 +22,6 @@ Add tags to the top of the script.
 Filter by tags using the homepage search bar.  
 
 ## Example Script
-**lower_case_text.py**
 ``` python
 # text, converter
 
@@ -53,9 +52,12 @@ GOOGLE_CLIENT_ID=<google_client_id_url>
 GOOGLE_CLIENT_SECRET=<google_client_secret>
 GOOGLE_REDIRECT_URI=<redirect_fastapi_auth_endpoint>
 SESSION_SECRET=<session_secret>
-ROOT_PATH=<root_url_path_when_behind_proxy>
-DATABASE=<valid_sqlmodel_uri>
+ROOT_PATH=localhost
+DATABASE=/data/database.db
+SANDBOX=/venvs/sandbox/
 ```
+
+## Dvelopment
 
 ## Roadmap
 Usability:  
@@ -95,10 +97,26 @@ Keywords delegation slice, cgroup, systemd
 [Service]
 Delegate=cpu cpuset io memory pids
 ```
+
 Check for cgroup.subtree_control permissions.  
 This shows the specific user permissions.  
 Ensure permissions are allowed through the tree.  
 Check if podman nesting works in root vs non-root.
 ```bash
 cat /sys/fs/cgroup/user.slice/user-1000.slice/cgroup.subtree_control
+```
+
+## Setup Tailwind
+Download latest binary from: https://github.com/tailwindlabs/tailwindcss/releases  
+``` bash
+wget https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.17/tailwindcss-linux-x64
+chmod +x tailwindcss-linux-x64
+sudo mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
+tailwindcss --output ./server/src/app/static/styles.css --watch
+```
+
+## Rootless Podman in Podman
+``` bash
+https://www.redhat.com/en/blog/podman-inside-container
+podman run --security-opt label=disable --user podman --device /dev/fuse quay.io/podman/stable podman run alpine echo hello
 ```

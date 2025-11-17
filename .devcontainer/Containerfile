@@ -1,0 +1,16 @@
+FROM registry.access.redhat.com/ubi9/ubi-init
+
+RUN dnf update -y && dnf install -y \
+  libcap-devel \
+  pkg-config \
+  systemd-devel \
+  git \
+  make \
+  gcc \
+  python3.12
+
+RUN cd /tmp && \
+  git clone https://github.com/ioi/isolate.git && \
+  cd isolate && \
+  make isolate && \
+  make install

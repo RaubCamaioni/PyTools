@@ -1,0 +1,24 @@
+{
+    "name": "UBI9 Python 3.12 Development",
+	"dockerComposeFile": "./docker-compose.yml",
+    "service": "app",
+    "overrideCommand": false,
+    "features": {
+    },
+    "remoteEnv": {
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/bin/python3.12"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/bin/python3.12",
+                "python.linting.enabled": true,
+                "python.formatting.provider": "none"
+            },
+            "extensions": [
+                "ms-python.python"
+            ]
+        }
+    },
+    "workspaceFolder": "/workspace"
+}

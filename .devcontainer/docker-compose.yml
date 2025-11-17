@@ -1,0 +1,8 @@
+services:
+  app:
+    image: localhost/isolate:latest
+    volumes:
+      - ..:/workspace:cached
+    entrypoint: ["/sbin/init"]
+    ports:
+      - "8080:8080"

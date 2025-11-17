@@ -6,7 +6,8 @@ RUN dnf update -y && dnf install -y \
   systemd-devel \
   git \
   make \
-  gcc
+  gcc \
+  python3.12
 
 RUN cd /tmp && \
   git clone https://github.com/ioi/isolate.git && \
@@ -14,15 +15,13 @@ RUN cd /tmp && \
   make isolate && \
   make install
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
 RUN mkdir /venvs
 COPY server /tmp/server
 COPY sandbox /tmp/sandbox
-RUN uv venv /venvs/server --python 3.11
-RUN uv venv /venvs/sandbox --python 3.11
-RUN uv pip install /tmp/server/ --python /venvs/server/bin/python
-RUN uv pip install /tmp/sandbox/ --python /venvs/sandbox/bin/python
+RUN python3.12 -m venv /venvs/server
+RUN python3.12 -m venv /venvs/sandbox
+RUN /venvs/server/bin/pip3 install /tmp/server/
+RUN /venvs/sandbox/bin/pip3 install /tmp/sandbox/
 
 RUN mkdir /pytools
 RUN mkdir /sandbox
