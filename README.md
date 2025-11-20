@@ -120,3 +120,8 @@ tailwindcss --output ./server/src/app/static/styles.css --watch
 https://www.redhat.com/en/blog/podman-inside-container
 podman run --security-opt label=disable --user podman --device /dev/fuse quay.io/podman/stable podman run alpine echo hello
 ```
+
+## Front End Development
+The front end can be developed without having a functional isolate binary.  
+The backend is fastapi.  
+The frontend is htmx and hyperscript.  
