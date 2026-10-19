@@ -127,7 +127,14 @@ class PodmanRunner:
 
     async def _wait_ready(self) -> bool:
         for _ in range(READINESS_SECONDS):
-            rc, _, _ = await self._exec("podman", "info")
+            try:
+                rc, _, _ = await self._exec("podman", "info")
+            except FileNotFoundError:
+                logger.error("podman binary not found; sandbox disabled")
+                return False
+            except OSError as e:
+                logger.warning(f"podman info failed: {e}")
+                rc = 1
             if rc == 0:
                 return True
             await self._sleep(1)

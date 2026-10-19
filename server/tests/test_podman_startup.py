@@ -55,6 +55,16 @@ async def test_pull_failure_without_local_image_is_unavailable():
     assert not runner.available and "image" in runner.unavailable_reason
 
 
+async def test_start_without_podman_binary_is_unavailable():
+    async def no_podman(*argv, timeout=None):
+        raise FileNotFoundError("podman")
+
+    runner = PodmanRunner(cfg(), exec=no_podman, sleep=no_sleep)
+    await runner.start()
+    await runner.stop()
+    assert not runner.available and "not ready" in runner.unavailable_reason
+
+
 async def test_pull_failure_with_local_image_continues():
     fake = ScriptedPodman(
         {"pull": (125, "", "offline"), "image": (0, "sha256:abc", "")},
