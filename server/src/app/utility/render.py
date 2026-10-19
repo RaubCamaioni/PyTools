@@ -163,8 +163,10 @@ def list_item_user(root_path: str, tools: list[Tool]):
                 name=tool.name,
                 public="checked" if tool.public else "",
                 anonymous="checked" if tool.annonymous else "",
-                # tree listing glyphs (box-drawing): last row gets the corner, the others a tee
-                glyph="└──" if i == len(tools) - 1 else "├──",
+                # tree listing (box-drawing): the last file gets the corner, the others a tee;
+                # its child lines continue the trunk only when more files follow
+                branch="└── " if i == len(tools) - 1 else "├── ",
+                indent="    " if i == len(tools) - 1 else "│   ",
             )
         )
 

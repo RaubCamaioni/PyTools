@@ -29,7 +29,8 @@
             </form>
 
             <section>
-                <div class="prompt font-bold mb-1">ls ~/tools/</div>
+                <div class="prompt font-bold">tree tools</div>
+                <div class="px-1">tools</div>
                 <ul id="tool-list">
                     {% include 'components/upload_tool_item.html'%}
 
@@ -37,7 +38,7 @@
                         hx-post="{{ root_path }}/user/tools"
                         hx-trigger="load"
                         hx-swap="outerHTML"
-                        class="px-1 text-dim">...</li>
+                        class="px-1 text-dim"><span class="whitespace-pre select-none">└── </span>...</li>
                 </ul>
             </section>
         </div>
