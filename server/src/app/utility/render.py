@@ -155,7 +155,7 @@ def list_item_user(root_path: str, tools: list[Tool]):
     template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     htmlx = []
 
-    for tool in tools:
+    for i, tool in enumerate(tools):
         htmlx.append(
             template.render(
                 root_path=root_path,
@@ -163,6 +163,8 @@ def list_item_user(root_path: str, tools: list[Tool]):
                 name=tool.name,
                 public="checked" if tool.public else "",
                 anonymous="checked" if tool.annonymous else "",
+                # tree listing glyphs (box-drawing): last row gets the corner, the others a tee
+                glyph="└──" if i == len(tools) - 1 else "├──",
             )
         )
 
