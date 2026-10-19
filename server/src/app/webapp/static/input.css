@@ -75,9 +75,9 @@
     content: "> ";
     color: var(--color-dim);
   }
-  /* bordered text buttons that invert on hover */
+  /* [bracket] buttons: plain text that inverts on hover, no box */
   .btn {
-    @apply inline-flex items-center justify-center border border-paper px-3 py-1 no-underline cursor-pointer select-none whitespace-nowrap;
+    @apply inline-flex items-center px-1 no-underline cursor-pointer select-none whitespace-nowrap;
   }
   .btn:hover,
   .btn:focus-visible {
