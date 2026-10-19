@@ -97,4 +97,26 @@
   .htmx-request.htmx-indicator {
     @apply opacity-100;
   }
+  /* indeterminate loading bar; htmx adds .htmx-request to the hx-indicator element while a request runs */
+  .loadbar {
+    @apply relative hidden h-0.5 w-full overflow-hidden bg-faint;
+  }
+  .loadbar.htmx-request {
+    @apply block;
+  }
+  .loadbar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: var(--color-paper);
+    animation: loadbar 1.2s linear infinite;
+  }
+  @keyframes loadbar {
+    to {
+      left: 100%;
+    }
+  }
 }
