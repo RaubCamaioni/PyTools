@@ -20,3 +20,11 @@ line-length = 120
 
 [project.scripts]
 pywebtool = "app.runner:runner"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = ["integration: needs a real inner podman and the sandbox image"]
+testpaths = ["tests"]

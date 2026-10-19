@@ -3,7 +3,9 @@ from pathlib import Path
 import string
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from app.utility.sandbox_config import SandboxConfig
 
 
 @dataclass
@@ -13,7 +15,8 @@ class _ENVIRONMENT:
     GOOGLE_CLIENT_SECRET: str = os.environ.get("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI: str = os.environ.get("GOOGLE_REDIRECT_URI")
     DATABASE: str = os.environ.get("DATABASE")
-    SANDBOX: str = os.environ.get("SANDBOX")
+    # SANDBOX_* variables all have defaults; see SandboxConfig
+    sandbox: SandboxConfig = field(default_factory=lambda: SandboxConfig.from_environment(os.environ))
 
     def __post_init__(self):
         for name, value in self.__dict__.items():
