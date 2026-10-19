@@ -1,5 +1,5 @@
 {% if url %}
-<a href="{{ url }}" class="btn">login</a>
+<a href="{{ url }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[login]</a>
 {% else %}
-<span class="text-dim" title="GitHub login is not configured on this server">login unavailable</span>
+<span class="text-dim px-1" title="GitHub login is not configured on this server">[login unavailable]</span>
 {% endif %}
