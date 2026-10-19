@@ -24,6 +24,15 @@ STDERR_TAIL_LINES = 20
 TIMEOUT_TOLERANCE = 0.5
 # the app gives `podman run --timeout` this much extra before killing the container itself
 SAFETY_NET_SECONDS = 2.0
+READINESS_SECONDS = 60
+PULL_RETRY_SECONDS = 60
+REFRESH_SECONDS = 600
+# startup self-test: a run that must be OOM-killed and a run that must be killed by --timeout
+SELFTEST_MEMORY = "64m"
+SELFTEST_MEMORY_CODE = "bytearray(200*1024*1024)"
+SELFTEST_TIMEOUT = 2
+SELFTEST_TIMEOUT_CODE = "import time; time.sleep(30)"
+KILLED_EXIT_CODES = (137, 143)
 
 
 class SandboxBusy(Exception):
@@ -63,11 +72,117 @@ class RunResult:
 
 
 class PodmanRunner:
-    def __init__(self, config: SandboxConfig, exec: Optional[Exec] = None):
+    def __init__(
+        self,
+        config: SandboxConfig,
+        exec: Optional[Exec] = None,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+    ):
         self.config = config
         self._exec: Exec = exec or run_podman
+        self._sleep = sleep
         self._slots = asyncio.Semaphore(config.max_concurrent)
         self._unavailable_reason: Optional[str] = None
+        self._tasks: list[asyncio.Task] = []
+
+    # --- startup -----------------------------------------------------------------
+
+    async def start(self):
+        """Readiness, leftover cleanup, image pull and the fail-closed self-test."""
+        if not await self._wait_ready():
+            self.mark_unavailable("inner podman not ready")
+        else:
+            await self._remove_leftovers()
+            await self._prepare()
+        self._tasks.append(asyncio.create_task(self._refresh_loop()))
+        if not self.available:
+            self._tasks.append(asyncio.create_task(self._retry_loop()))
+
+    async def stop(self):
+        for task in self._tasks:
+            task.cancel()
+        await asyncio.gather(*self._tasks, return_exceptions=True)
+        self._tasks.clear()
+
+    async def self_test(self) -> Optional[str]:
+        """Return why limits are not enforced, or None when both checks pass."""
+        rc = await self._selftest_run(
+            {"--memory": SELFTEST_MEMORY, "--memory-swap": SELFTEST_MEMORY}, SELFTEST_MEMORY_CODE
+        )
+        if rc not in KILLED_EXIT_CODES:
+            return "memory limit not enforced"
+        rc = await self._selftest_run({"--timeout": str(SELFTEST_TIMEOUT)}, SELFTEST_TIMEOUT_CODE)
+        if rc not in KILLED_EXIT_CODES:
+            return "timeout not enforced"
+        return None
+
+    async def _selftest_run(self, overrides: dict[str, str], code: str) -> int:
+        flags = []
+        for flag in self._limit_flags():
+            key = flag.split("=")[0]
+            flags.append(f"{key}={overrides[key]}" if key in overrides else flag)
+        argv = ["podman", "run", "--rm", *flags, "--entrypoint", "python3", self.config.image, "-c", code]
+        rc, _, _ = await self._exec(*argv, timeout=SELFTEST_TIMEOUT + 30)
+        return rc
+
+    async def _wait_ready(self) -> bool:
+        for _ in range(READINESS_SECONDS):
+            rc, _, _ = await self._exec("podman", "info")
+            if rc == 0:
+                return True
+            await self._sleep(1)
+        return False
+
+    async def _remove_leftovers(self):
+        rc, out, _ = await self._exec("podman", "ps", "-a", "--filter", "name=^run-", "--format", "{{.Names}}")
+        if rc != 0:
+            return
+        for name in out.split():
+            logger.warning(f"removing leftover sandbox container {name}")
+            await self._exec("podman", "rm", "-f", name)
+
+    async def _prepare(self):
+        if not await self._ensure_image():
+            return
+        reason = await self.self_test()
+        if reason:
+            self.mark_unavailable(reason)
+        else:
+            self.mark_available()
+            logger.info("sandbox self-test passed; sandbox ready")
+
+    async def _ensure_image(self) -> bool:
+        image = self.config.image
+        rc, _, err = await self._exec("podman", "pull", image)
+        if rc == 0:
+            return True
+        rc, _, _ = await self._exec("podman", "image", "exists", image)
+        if rc == 0:
+            logger.warning(f"pull of {image} failed ({err.strip()}); using the local copy")
+            return True
+        self.mark_unavailable(f"sandbox image unavailable: {err.strip()}")
+        return False
+
+    async def _retry_loop(self):
+        while not self.available:
+            await self._sleep(PULL_RETRY_SECONDS)
+            try:
+                await self._prepare()
+            except Exception as e:
+                logger.warning(f"sandbox retry failed: {e}")
+
+    async def _refresh_loop(self):
+        # sandbox-only releases are picked up without an app restart: new runs use the new local image
+        while True:
+            await self._sleep(REFRESH_SECONDS)
+            try:
+                rc, _, err = await self._exec("podman", "pull", self.config.image)
+                if rc != 0:
+                    logger.warning(f"sandbox image refresh failed: {err.strip()}")
+            except Exception as e:
+                logger.warning(f"sandbox image refresh raised: {e}")
+
+    # --- one run -----------------------------------------------------------------
 
     @property
     def available(self) -> bool:
@@ -152,13 +267,9 @@ class PodmanRunner:
         # the fixed prefix keeps the name valid even when the directory name starts with - or _
         return f"run-{run_dir.name}"
 
-    def command(self, name: str, tool: Path, run_dir: Path) -> list[str]:
+    def _limit_flags(self) -> list[str]:
         cfg = self.config
         return [
-            "podman",
-            "run",
-            "--name",
-            name,
             "--network=none",
             "--uts=host",
             "--userns=auto",
@@ -167,14 +278,26 @@ class PodmanRunner:
             f"--memory-swap={cfg.memory}",
             f"--pids-limit={cfg.pids}",
             "--read-only",
-            "--tmpfs",
-            "/tmp:rw,size=64m",
+            "--tmpfs=/tmp:rw,size=64m",
             "--cap-drop=ALL",
             "--security-opt=no-new-privileges",
             f"--timeout={int(cfg.timeout_seconds)}",
+        ]
+
+    def command(self, name: str, tool: Path, run_dir: Path) -> list[str]:
+        flags = self._limit_flags()
+        # keep the "--tmpfs <spec>" form the tests and operators expect
+        i = flags.index("--tmpfs=/tmp:rw,size=64m")
+        flags[i : i + 1] = ["--tmpfs", "/tmp:rw,size=64m"]
+        return [
+            "podman",
+            "run",
+            "--name",
+            name,
+            *flags,
             "-v",
             f"{run_dir}:/box:U",
-            cfg.image,
+            self.config.image,
             "--file",
             f"/box/{tool.name}",
             "--workdir",
