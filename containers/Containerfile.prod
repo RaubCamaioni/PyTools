@@ -25,10 +25,13 @@ COPY --chown=podman:podman containers/app/storage.conf /home/podman/.config/cont
 # the inner image store is a named volume; podman gives a new volume this directory's ownership
 RUN mkdir -p /home/podman/.local/share/containers && chown -R podman:podman /home/podman/.local
 
-# server
-COPY server /tmp/server
+# server dependencies first (cached layer unless pyproject.toml changes), then the code itself
+COPY server/pyproject.toml /tmp/server/pyproject.toml
 RUN python3.12 -m venv /venvs/server && \
   /venvs/server/bin/pip install --no-cache-dir /tmp/server && \
+  /venvs/server/bin/pip uninstall -y pytools
+COPY server /tmp/server
+RUN /venvs/server/bin/pip install --no-cache-dir --no-deps /tmp/server && \
   rm -rf /tmp/server
 
 # the app as a systemd user service of `podman`
