@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy</title>
-    <link href="/static/styles.css" rel="stylesheet">
+    {% set title = 'Privacy Policy' %}
+    {% include 'components/head.html' %}
   </head>
   <body class="bg-ink text-paper font-mono">
 
@@ -12,9 +10,9 @@
 
     <div class="max-w-3xl mx-auto px-4 flex flex-col">
       
-      <div class="prompt font-bold mb-2">Privacy Policy</div>
+      <div class="prompt font-bold mb-2">cat privacy_policy.txt</div>
 
-      <div class="whitespace-pre-line">
+      <div class="panel p-4 whitespace-pre-line leading-relaxed">
         PyTools requires user data for the following reasons:
         - Attributing uploaded code to users
         - Allowing users to delete their uploaded code
