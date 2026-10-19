@@ -45,7 +45,8 @@ class PathEncoder(json.JSONEncoder):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await runner.start()
+    # pages are served immediately; tool runs return 503 until the sandbox self-test passes
+    runner.start_in_background()
     yield
     delete_tasks = []
     for task in asyncio.all_tasks():

@@ -5,6 +5,9 @@ Design: docs/superpowers/specs/2026-10-19-podman-sandbox-runner-design.md
 
 import asyncio
 import logging
+import os
+import shutil
+import stat
 import time
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -20,10 +23,17 @@ logger = logging.getLogger("uvicorn.error")
 Exec = Callable[..., Awaitable[tuple[int, str, str]]]
 
 STDERR_TAIL_LINES = 20
+# captured output is a ring buffer: a tool that floods stdout/stderr cannot grow the app's memory
+OUTPUT_CAP_BYTES = 64 * 1024
+# result.json is written by untrusted code: only a modest regular file is accepted
+RESULT_MAX_BYTES = 16 * 1024 * 1024
 # podman kills a timed-out container; a late exit within this margin still counts as the timeout
 TIMEOUT_TOLERANCE = 0.5
 # the app gives `podman run --timeout` this much extra before killing the container itself
 SAFETY_NET_SECONDS = 2.0
+# every other podman call gets a timeout so a stalled podman can never pin a sandbox slot
+PODMAN_CALL_TIMEOUT = 15.0
+PULL_TIMEOUT = 600.0
 READINESS_SECONDS = 60
 PULL_RETRY_SECONDS = 60
 REFRESH_SECONDS = 600
@@ -38,6 +48,7 @@ TIMEOUT_RUN_EXIT_CODE = 255
 TIMEOUT_INSPECT_EXIT_CODE = -1
 # uid of the `app` user created in containers/Containerfile.sandbox
 SANDBOX_UID = 1001
+STARTING = "starting"
 
 
 class SandboxBusy(Exception):
@@ -48,12 +59,29 @@ class SandboxUnavailable(Exception):
     """The sandbox failed its startup checks; tool runs are refused."""
 
 
+async def _read_tail(stream: asyncio.StreamReader) -> bytes:
+    tail = bytearray()
+    while True:
+        chunk = await stream.read(OUTPUT_CAP_BYTES)
+        if not chunk:
+            return bytes(tail)
+        tail += chunk
+        if len(tail) > OUTPUT_CAP_BYTES:
+            del tail[: len(tail) - OUTPUT_CAP_BYTES]
+
+
 async def run_podman(*argv: str, timeout: Optional[float] = None) -> tuple[int, str, str]:
     proc = await asyncio.create_subprocess_exec(
         *argv, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
     )
+
+    async def finish():
+        out, err = await asyncio.gather(_read_tail(proc.stdout), _read_tail(proc.stderr))
+        await proc.wait()
+        return out, err
+
     try:
-        out, err = await asyncio.wait_for(proc.communicate(), timeout)
+        out, err = await asyncio.wait_for(finish(), timeout)
     except asyncio.TimeoutError:
         proc.kill()
         await proc.wait()
@@ -76,6 +104,9 @@ class RunResult:
     stderr_tail: str = ""
 
 
+_INVALID = object()  # result.json exists but cannot be trusted
+
+
 class PodmanRunner:
     def __init__(
         self,
@@ -87,18 +118,41 @@ class PodmanRunner:
         self._exec: Exec = exec or run_podman
         self._sleep = sleep
         self._slots = asyncio.Semaphore(config.max_concurrent)
-        self._unavailable_reason: Optional[str] = None
+        self._unavailable_reason: Optional[str] = STARTING
         self._tasks: list[asyncio.Task] = []
+
+    @property
+    def available(self) -> bool:
+        return self._unavailable_reason is None
+
+    @property
+    def unavailable_reason(self) -> Optional[str]:
+        return self._unavailable_reason
+
+    def mark_unavailable(self, reason: str):
+        logger.error(f"sandbox unavailable: {reason}")
+        self._unavailable_reason = reason
+
+    def mark_available(self):
+        self._unavailable_reason = None
 
     # --- startup -----------------------------------------------------------------
 
+    def start_in_background(self):
+        """Serve pages right away; the sandbox reports 'starting' until start() finishes."""
+        self._tasks.append(asyncio.create_task(self.start(), name="sandbox-start"))
+
     async def start(self):
-        """Readiness, leftover cleanup, image pull and the fail-closed self-test."""
-        if not await self._wait_ready():
-            self.mark_unavailable("inner podman not ready")
-        else:
-            await self._remove_leftovers()
-            await self._prepare()
+        """Readiness, leftover cleanup, image pull and the fail-closed self-test. Never raises."""
+        try:
+            if not await self._wait_ready():
+                self.mark_unavailable("inner podman not ready")
+            else:
+                await self._remove_leftovers()
+                await self._prepare()
+        except Exception as e:
+            logger.exception("sandbox startup failed")
+            self.mark_unavailable(f"startup failed: {e}")
         self._tasks.append(asyncio.create_task(self._refresh_loop()))
         if not self.available:
             self._tasks.append(asyncio.create_task(self._retry_loop()))
@@ -133,11 +187,11 @@ class PodmanRunner:
     async def _wait_ready(self) -> bool:
         for _ in range(READINESS_SECONDS):
             try:
-                rc, _, _ = await self._exec("podman", "info")
+                rc, _, _ = await self._exec("podman", "info", timeout=PODMAN_CALL_TIMEOUT)
             except FileNotFoundError:
                 logger.error("podman binary not found; sandbox disabled")
                 return False
-            except OSError as e:
+            except (OSError, asyncio.TimeoutError) as e:
                 logger.warning(f"podman info failed: {e}")
                 rc = 1
             if rc == 0:
@@ -146,12 +200,14 @@ class PodmanRunner:
         return False
 
     async def _remove_leftovers(self):
-        rc, out, _ = await self._exec("podman", "ps", "-a", "--filter", "name=^run-", "--format", "{{.Names}}")
+        rc, out, _ = await self._exec(
+            "podman", "ps", "-a", "--filter", "name=^run-", "--format", "{{.Names}}", timeout=PODMAN_CALL_TIMEOUT
+        )
         if rc != 0:
             return
         for name in out.split():
             logger.warning(f"removing leftover sandbox container {name}")
-            await self._exec("podman", "rm", "-f", name)
+            await self._exec("podman", "rm", "-f", name, timeout=PODMAN_CALL_TIMEOUT)
 
     async def _prepare(self):
         if not await self._ensure_image():
@@ -165,10 +221,10 @@ class PodmanRunner:
 
     async def _ensure_image(self) -> bool:
         image = self.config.image
-        rc, _, err = await self._exec("podman", "pull", image)
+        rc, _, err = await self._exec("podman", "pull", image, timeout=PULL_TIMEOUT)
         if rc == 0:
             return True
-        rc, _, _ = await self._exec("podman", "image", "exists", image)
+        rc, _, _ = await self._exec("podman", "image", "exists", image, timeout=PODMAN_CALL_TIMEOUT)
         if rc == 0:
             logger.warning(f"pull of {image} failed ({err.strip()}); using the local copy")
             return True
@@ -188,91 +244,13 @@ class PodmanRunner:
         while True:
             await self._sleep(REFRESH_SECONDS)
             try:
-                rc, _, err = await self._exec("podman", "pull", self.config.image)
+                rc, _, err = await self._exec("podman", "pull", self.config.image, timeout=PULL_TIMEOUT)
                 if rc != 0:
                     logger.warning(f"sandbox image refresh failed: {err.strip()}")
             except Exception as e:
                 logger.warning(f"sandbox image refresh raised: {e}")
 
     # --- one run -----------------------------------------------------------------
-
-    @property
-    def available(self) -> bool:
-        return self._unavailable_reason is None
-
-    @property
-    def unavailable_reason(self) -> Optional[str]:
-        return self._unavailable_reason
-
-    def mark_unavailable(self, reason: str):
-        logger.error(f"sandbox unavailable: {reason}")
-        self._unavailable_reason = reason
-
-    def mark_available(self):
-        self._unavailable_reason = None
-
-    async def run(self, tool: Path, run_dir: Path) -> RunResult:
-        if not self.available:
-            raise SandboxUnavailable(self._unavailable_reason)
-        try:
-            await asyncio.wait_for(self._slots.acquire(), self.config.queue_seconds)
-        except asyncio.TimeoutError:
-            raise SandboxBusy()
-        try:
-            return await self._supervise(tool, run_dir)
-        finally:
-            self._slots.release()
-
-    async def _supervise(self, tool: Path, run_dir: Path) -> RunResult:
-        name = self.container_name(run_dir)
-        timed_out = False
-        stderr = ""
-        started = time.monotonic()
-        try:
-            try:
-                _, _, stderr = await self._exec(
-                    *self.command(name, tool, run_dir),
-                    timeout=self.config.timeout_seconds + SAFETY_NET_SECONDS,
-                )
-            except asyncio.TimeoutError:
-                timed_out = True
-                logger.warning(f"{name}: podman --timeout did not fire, killing container")
-                await self._exec("podman", "kill", name)
-            elapsed = time.monotonic() - started
-
-            exit_code, oom_killed = await self._inspect(name)
-            rc, out, err = await self._exec("podman", "logs", "--tail", str(STDERR_TAIL_LINES), name)
-            if not stderr and rc == 0:
-                stderr = err or out  # output of a killed run only survives in the container log
-            return self.classify(run_dir, exit_code, oom_killed, elapsed, stderr, timed_out)
-        finally:
-            await self._cleanup(name, run_dir)
-
-    async def _inspect(self, name: str) -> tuple[Optional[int], bool]:
-        rc, out, _ = await self._exec(
-            "podman", "inspect", "--format", "{{.State.ExitCode}} {{.State.OOMKilled}}", name
-        )
-        try:
-            if rc != 0:
-                raise ValueError(out)
-            exit_code, oom = out.split()
-            return int(exit_code), oom == "true"
-        except ValueError:
-            logger.warning(f"{name}: could not inspect container state")
-            return None, False
-
-    async def _cleanup(self, name: str, run_dir: Path):
-        # the sandbox owned its files through --userns=auto; hand them back to the app user
-        for argv in (
-            ("podman", "rm", "-f", name),
-            ("podman", "unshare", "chown", "-R", "0:0", str(run_dir)),
-        ):
-            try:
-                rc, _, err = await self._exec(*argv)
-                if rc != 0:
-                    logger.warning(f"{' '.join(argv)} failed: {err.strip()}")
-            except Exception as e:  # cleanup must never mask the run's result
-                logger.warning(f"{' '.join(argv)} raised: {e}")
 
     @staticmethod
     def container_name(run_dir: Path) -> str:
@@ -295,6 +273,8 @@ class PodmanRunner:
             "--tmpfs=/tmp:rw,size=64m",
             "--cap-drop=ALL",
             "--security-opt=no-new-privileges",
+            # the container log lives in the inner image store; a chatty tool must not fill it
+            "--log-opt=max-size=1mb",
             f"--timeout={int(cfg.timeout_seconds)}",
         ]
 
@@ -320,6 +300,74 @@ class PodmanRunner:
             str(run_dir),
         ]
 
+    async def run(self, tool: Path, run_dir: Path) -> RunResult:
+        if not self.available:
+            raise SandboxUnavailable(self._unavailable_reason)
+        try:
+            await asyncio.wait_for(self._slots.acquire(), self.config.queue_seconds)
+        except asyncio.TimeoutError:
+            raise SandboxBusy()
+        try:
+            return await self._supervise(tool, run_dir)
+        finally:
+            self._slots.release()
+
+    async def _supervise(self, tool: Path, run_dir: Path) -> RunResult:
+        name = self.container_name(run_dir)
+        timed_out = False
+        stderr = ""
+        exit_code: Optional[int] = None
+        oom_killed = False
+        started = time.monotonic()
+        try:
+            try:
+                _, _, stderr = await self._exec(
+                    *self.command(name, tool, run_dir),
+                    timeout=self.config.timeout_seconds + SAFETY_NET_SECONDS,
+                )
+            except asyncio.TimeoutError:
+                timed_out = True
+                logger.warning(f"{name}: podman --timeout did not fire, killing container")
+                await self._podman("kill", name)
+            except Exception as e:
+                logger.exception(f"{name}: podman run failed")
+                stderr = f"{type(e).__name__}: {e}"
+            exit_code, oom_killed = await self._inspect(name)
+            if not stderr:
+                rc, out, err = await self._podman("logs", "--tail", str(STDERR_TAIL_LINES), name)
+                if rc == 0:
+                    stderr = err or out  # output of a killed run only survives in the container log
+        finally:
+            elapsed = time.monotonic() - started
+            # the sandbox owned its files; hand them back to the app user before anything reads or deletes them
+            await self._podman("rm", "-f", name)
+            await self._podman("unshare", "chown", "-R", "0:0", str(run_dir))
+        return self.classify(run_dir, exit_code, oom_killed, elapsed, stderr, timed_out)
+
+    async def _podman(self, *args: str) -> tuple[int, str, str]:
+        """A bounded, never-raising podman call for the post-run bookkeeping."""
+        try:
+            rc, out, err = await self._exec("podman", *args, timeout=PODMAN_CALL_TIMEOUT)
+            if rc != 0:
+                logger.warning(f"podman {' '.join(args)} failed: {err.strip()}")
+            return rc, out, err
+        except Exception as e:  # bookkeeping must never mask the run's result
+            logger.warning(f"podman {' '.join(args)} raised: {e}")
+            return 1, "", str(e)
+
+    async def _inspect(self, name: str) -> tuple[Optional[int], bool]:
+        rc, out, _ = await self._podman("inspect", "--format", "{{.State.ExitCode}} {{.State.OOMKilled}}", name)
+        try:
+            if rc != 0:
+                raise ValueError(out)
+            exit_code, oom = out.split()
+            return int(exit_code), oom == "true"
+        except ValueError:
+            logger.warning(f"{name}: could not inspect container state")
+            return None, False
+
+    # --- outcome -----------------------------------------------------------------
+
     def classify(
         self,
         run_dir: Path,
@@ -332,16 +380,60 @@ class PodmanRunner:
         cfg = self.config
         tail = "\n".join(stderr.splitlines()[-STDERR_TAIL_LINES:])
 
-        results_file = run_dir / "result.json"
-        if results_file.exists():
-            try:
-                with open(results_file, "r") as f:
-                    return RunResult(Outcome.OK, results=serializer.load(f), stderr_tail=tail)
-            except ValueError:
-                pass  # unreadable result: treated as a crash below
+        if _dir_size(run_dir) > cfg.max_output_mb * 1024 * 1024:
+            _empty_dir(run_dir)
+            return RunResult(Outcome.CRASHED, message=f"Tool output exceeded the {cfg.max_output_mb} MB limit", stderr_tail=tail)
+
+        results = _read_results(run_dir / "result.json")
+        if results is not _INVALID and results is not None:
+            return RunResult(Outcome.OK, results=results[0], stderr_tail=tail)
 
         if oom_killed:
             return RunResult(Outcome.OOM, message=f"Tool exceeded the {cfg.memory_label} memory limit", stderr_tail=tail)
         if timed_out or exit_code == TIMEOUT_INSPECT_EXIT_CODE or elapsed >= cfg.timeout_seconds - TIMEOUT_TOLERANCE:
             return RunResult(Outcome.TIMEOUT, message=f"Tool exceeded the {cfg.timeout_seconds:g} second limit", stderr_tail=tail)
         return RunResult(Outcome.CRASHED, message="Tool failed to run", stderr_tail=tail)
+
+
+def _read_results(path: Path):
+    """None when absent, _INVALID when present but untrusted, else a 1-tuple with the value."""
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    except FileNotFoundError:
+        return None
+    except OSError as e:  # symlink (ELOOP), permissions, ...
+        logger.warning(f"result.json rejected: {e}")
+        return _INVALID
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode) or st.st_size > RESULT_MAX_BYTES:
+            logger.warning("result.json rejected: not a regular file or too large")
+            os.close(fd)
+            return _INVALID
+        with os.fdopen(fd, "r") as f:
+            return (serializer.load(f),)
+    except (OSError, ValueError) as e:
+        logger.warning(f"result.json rejected: {e}")
+        return _INVALID
+
+
+def _dir_size(run_dir: Path) -> int:
+    total = 0
+    for root, _, files in os.walk(run_dir):
+        for name in files:
+            try:
+                total += os.lstat(os.path.join(root, name)).st_size
+            except OSError:
+                pass
+    return total
+
+
+def _empty_dir(run_dir: Path):
+    for child in run_dir.iterdir():
+        try:
+            if child.is_dir() and not child.is_symlink():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
+        except OSError as e:
+            logger.warning(f"could not remove {child}: {e}")

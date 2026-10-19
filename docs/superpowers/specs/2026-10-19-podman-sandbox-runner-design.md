@@ -31,7 +31,7 @@ established what nesting needs for *enforced* limits:
 | Inner storage: overlay with `mount_program = fuse-overlayfs` | Native overlay is unavailable to the inner podman. |
 | Outer run flag `--security-opt unmask=ALL` | The kernel refuses a fresh `/proc` mount while podman's default masked paths cover parts of the outer `/proc`. Inherent to nesting with private namespaces. |
 | Sandboxes run with `--uts=host` | The host seccomp profile denies `sethostname` without `CAP_SYS_ADMIN`. Sharing the app container's UTS namespace avoids the call; a sandbox cannot change the hostname (verified). The outer container keeps the default seccomp profile. |
-| Sandboxes run as the image's unprivileged user (`--user=1001`) with the run directory mounted `:U` | Container uid 1001 maps to a sub-UID of the inner `podman` user (outer UID 3000), so a sandbox shares no UID with the app: a breakout cannot read the app's secrets or database. `:U` re-owns the run directory to the sandbox before the run; the app re-owns it afterwards with `podman unshare chown -R 0:0`. **Not `--userns=auto`:** it was probed successfully with a 50 MB image, but with the real 2.66 GB sandbox image the inner podman (fuse-overlayfs, no idmapped mounts) must create a re-owned copy of every layer per UID mapping; the self-test failed with `creating /etc/mtab symlink: cannot allocate memory` and production runs would pay minutes and ~2.7 GB of disk per concurrent sandbox. Sandboxes therefore share one UID among themselves; they still cannot reach each other's files, because each sees only its own `/box` in its own mount and PID namespaces. |
+| Sandboxes run as the image's unprivileged user (`--user=1001`) with the run directory mounted `:U` | Container uid 1001 maps to a sub-UID of the inner `podman` user (outer UID 3000), so a sandbox shares no UID with the app: a breakout cannot read the app's secrets or database. `:U` re-owns the run directory to the sandbox before the run; the app re-owns it afterwards with `podman unshare chown -R 0:0`. **Not `--userns=auto`:** it was probed successfully with a 50 MB image, but with the real 2.66 GB sandbox image the inner podman (fuse-overlayfs, no idmapped mounts) must create a re-owned copy of every layer per UID mapping; the self-test failed with `creating /etc/mtab symlink: cannot allocate memory` and production runs would pay minutes and ~2.7 GB of disk per concurrent sandbox. Sandboxes therefore share one UID among themselves; they still cannot reach each other's files, because each sees only its own run directory in its own mount and PID namespaces. |
 
 Measured with that recipe: `--memory=64m` OOM-killed a 200 MB allocation (exit 137),
 `--cpus=0.5` gave 1.02 CPU-seconds in 2 s, `--pids-limit=16` refused the 17th fork,
@@ -147,12 +147,20 @@ the app itself; 2 × 0.5 CPU leaves one vCPU for the app, nginx and the OS.
    UID 3000), with no capabilities. It shares no UID with the app; `:U` gives it
    ownership of its run directory.
 4. The app waits with a 12-second safety net; if podman's own `--timeout` did not
-   end the run, it runs `podman kill run-<id>` and logs a warning.
+   end the run, it runs `podman kill run-<id>` and logs a warning. Output captured
+   from `podman run` is a 64 KB ring buffer per stream, and the container log is
+   capped (`--log-opt max-size=1mb`), so a tool that floods stdout cannot grow the
+   app's memory or the inner image store.
 5. It reads `podman inspect --format '{{.State.ExitCode}} {{.State.OOMKilled}}'`
    and `podman logs --tail 20`, then `podman rm -f run-<id>`, then
    `podman unshare chown -R 0:0 <dir>` so the app owns the results again (the
-   `podman` user is root over its sub-UID range inside `podman unshare`). The
-   existing delayed-delete task can then remove the directory normally.
+   `podman` user is root over its sub-UID range inside `podman unshare`). Every
+   post-run podman call has a 15 s timeout and never raises, so a stalled podman
+   cannot pin a slot. Only then is the outcome classified: if the run directory
+   exceeds `SANDBOX_MAX_OUTPUT_MB` (default 64) its contents are deleted and the
+   run fails with `Tool output exceeded the 64 MB limit`; `result.json` is accepted
+   only as a regular, non-symlinked file of at most 16 MB (anything else counts as
+   a crash). The existing delayed-delete task removes the directory afterwards.
 6. Outcome mapping:
 
    | State | Response |
@@ -168,9 +176,12 @@ the app itself; 2 × 0.5 CPU leaves one vCPU for the app, nginx and the OS.
 
 ### Startup and health
 
-On app start, `PodmanRunner.start()`:
+On app start, `PodmanRunner.start()` runs as a background task so pages are served
+immediately; `/healthz` reports `starting` until it finishes, and any exception
+inside it marks the sandbox unavailable (with the retry loop) instead of crashing
+the app. It:
 
-1. Waits until `podman info` succeeds (inner podman ready; up to 60 s).
+1. Waits until `podman info` succeeds (inner podman ready; up to 60 s, 15 s per call).
 2. Removes leftover `run-*` containers from a previous crash.
 3. Pulls `SANDBOX_IMAGE`; if the pull fails but a local copy exists, continues with
    it; otherwise marks the sandbox unavailable and retries every 60 s.
@@ -230,5 +241,8 @@ network overrides.
 - The nested recipe depends on podman, crun, systemd and kernel behaviour that can
   change under updates. Mitigation: the fail-closed startup self-test and the
   integration suite after each deploy.
-- `/tmp` in a systemd container is a tmpfs, so run directories count against the
-  app's memory. Upload limit is 10 MB and directories are deleted after the run.
+- `/tmp` in a systemd container is a tmpfs, so run directories (uploads *and* tool
+  output) count against the app's memory. The host unit mounts a dedicated tmpfs at
+  `/tmp/pywebtools-runs` capped at 512 MB (`--tmpfs /tmp/pywebtools-runs:rw,size=512m,mode=1777`),
+  a run's output above 64 MB is discarded immediately, and directories are deleted
+  10 minutes after the run.

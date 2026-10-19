@@ -1,3 +1,4 @@
+import asyncio
 import dataclasses
 import json
 
@@ -18,6 +19,9 @@ class StubRunner:
 
     async def start(self):
         pass
+
+    def start_in_background(self):
+        asyncio.create_task(self.start())
 
     async def stop(self):
         pass
@@ -80,6 +84,20 @@ def test_run_tool_unavailable_returns_503_without_slot(monkeypatch, public_tool)
     r = client(monkeypatch, stub).post("/tool/8")
     assert r.status_code == 503 and r.json()["detail"] == "Sandbox unavailable"
     assert stub.calls == []  # route checks runner.available before writing files or running
+
+
+def test_lifespan_does_not_wait_for_runner_start(monkeypatch):
+    import time
+
+    class SlowStartRunner(StubRunner):
+        async def start(self):
+            await asyncio.sleep(3)
+
+    monkeypatch.setattr(tools_routes, "runner", SlowStartRunner(available=False))
+    started = time.monotonic()
+    with TestClient(app) as c:
+        assert c.get("/healthz").status_code == 503
+    assert time.monotonic() - started < 2  # pages are served while the sandbox is still starting
 
 
 def test_healthz(monkeypatch):
