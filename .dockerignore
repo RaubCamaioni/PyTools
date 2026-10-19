@@ -2,7 +2,7 @@
 .github/
 .devcontainer/
 .vscode/
-containers/
+containers/Containerfile*
 docs/
 services/
 test/

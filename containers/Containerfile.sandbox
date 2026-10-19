@@ -1,0 +1,22 @@
+# Sandbox runtime image: executes one uploaded Python tool per container.
+# Launched by the app's PodmanRunner with the limits in docs/superpowers/specs/2026-10-19-podman-sandbox-runner-design.md.
+
+FROM python:3.12-slim-bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  libgl1 \
+  libxrender1 \
+  libglib2.0-0 \
+  libgomp1 \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -u 1001 -m app && mkdir -p /venvs && chown app:app /venvs
+
+USER app
+COPY --chown=app:app sandbox /tmp/sandbox
+RUN python3 -m venv /venvs/sandbox && \
+  /venvs/sandbox/bin/pip install --no-cache-dir /tmp/sandbox && \
+  rm -rf /tmp/sandbox
+
+WORKDIR /box
+ENTRYPOINT ["/venvs/sandbox/bin/sandbox"]
