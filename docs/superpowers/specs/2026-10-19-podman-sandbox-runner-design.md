@@ -31,11 +31,13 @@ established what nesting needs for *enforced* limits:
 | Inner storage: overlay with `mount_program = fuse-overlayfs` | Native overlay is unavailable to the inner podman. |
 | Outer run flag `--security-opt unmask=ALL` | The kernel refuses a fresh `/proc` mount while podman's default masked paths cover parts of the outer `/proc`. Inherent to nesting with private namespaces. |
 | Sandboxes run with `--uts=host` | The host seccomp profile denies `sethostname` without `CAP_SYS_ADMIN`. Sharing the app container's UTS namespace avoids the call; a sandbox cannot change the hostname (verified). The outer container keeps the default seccomp profile. |
+| Sandboxes run with `--userns=auto` and the run directory mounted `:U` | Each sandbox gets its own 1,024-UID range from the `podman` user's sub-UIDs (disjoint among concurrently running sandboxes), so sandboxes share no UID with each other or with the app. `:U` re-owns the run directory to the sandbox before the run; the app re-owns it afterwards with `podman unshare chown -R 0:0`. Verified: uploads readable, results written, memory limit still enforced, start 0.40 s. |
 
 Measured with that recipe: `--memory=64m` OOM-killed a 200 MB allocation (exit 137),
 `--cpus=0.5` gave 1.02 CPU-seconds in 2 s, `--pids-limit=16` refused the 17th fork,
 `--network=none` left the network unreachable, `--read-only --cap-drop=ALL` gave
-`CapEff: 0`, warm start 0.27 s, `--timeout=3` killed `sleep 30` at 3.1 s.
+`CapEff: 0`, warm start 0.27 s (0.40 s with `--userns=auto`), `--timeout=3` killed
+`sleep 30` at 3.1 s.
 
 The accepted concession is `unmask=ALL` on the app container: its unprivileged
 "root" can then read a few host statistics (`/proc/timer_list`, `/proc/sched_debug`,
@@ -128,22 +130,25 @@ the app itself; 2 × 0.5 CPU leaves one vCPU for the app, nginx and the OS.
 
    ```
    podman run --name run-<id> \
-     --network=none --uts=host \
+     --network=none --uts=host --userns=auto \
      --cpus=0.5 --memory=1g --memory-swap=1g --pids-limit=64 \
      --read-only --tmpfs /tmp:rw,size=64m \
      --cap-drop=ALL --security-opt=no-new-privileges \
      --timeout=10 \
-     -v <dir>:/box \
+     -v <dir>:/box:U \
      <SANDBOX_IMAGE> --file /box/<tool>.py --workdir /box
    ```
 
-   The sandbox process is container-root, which rootless mapping makes the outer
-   `podman` user, so files it writes to `/box` are readable by the app without a
-   chown. It has no capabilities.
+   The sandbox process is container-root inside its own UID range (outer UIDs
+   2000 and up), with no capabilities. It shares no UID with the app or with other
+   running sandboxes; `:U` gives it ownership of its run directory.
 4. The app waits with a 12-second safety net; if podman's own `--timeout` did not
    end the run, it runs `podman kill run-<id>` and logs a warning.
 5. It reads `podman inspect --format '{{.State.ExitCode}} {{.State.OOMKilled}}'`
-   and `podman logs --tail 20`, then `podman rm -f run-<id>`.
+   and `podman logs --tail 20`, then `podman rm -f run-<id>`, then
+   `podman unshare chown -R 0:0 <dir>` so the app owns the results again (the
+   `podman` user is root over its sub-UID range inside `podman unshare`). The
+   existing delayed-delete task can then remove the directory normally.
 6. Outcome mapping:
 
    | State | Response |
@@ -193,7 +198,9 @@ tags on pushes to `main`, build-only on pull requests. The Docker Hub repository
   container, skipped elsewhere): `lower_case_text` happy path; 200 MB allocation →
   memory message; infinite loop → timeout message within 12 s; 40 forks → run fails
   with the pids limit; network connect → fails; file output downloadable; two
-  concurrent runs succeed while a third waits.
+  concurrent runs succeed while a third waits; two concurrent sandboxes report
+  different UID ranges in `/proc/self/uid_map`; the run directory is owned by the
+  app user again after the run.
 - **Deploy smoke:** `POST https://pywebtools.com/tool/8` (`input=hi`,
   `output=hexadecimal`) returns `"0x68 0x69"`, the baseline recorded before the
   migration; `/healthz` reports ready.
