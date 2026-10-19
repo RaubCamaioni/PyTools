@@ -155,7 +155,7 @@ def list_item_user(root_path: str, tools: list[Tool]):
     template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     htmlx = []
 
-    for i, tool in enumerate(tools):
+    for tool in tools:
         htmlx.append(
             template.render(
                 root_path=root_path,
@@ -163,10 +163,7 @@ def list_item_user(root_path: str, tools: list[Tool]):
                 name=tool.name,
                 public="checked" if tool.public else "",
                 anonymous="checked" if tool.annonymous else "",
-                # tree listing (box-drawing): the last file gets the corner, the others a tee;
-                # its child lines continue the trunk only when more files follow
-                branch="└── " if i == len(tools) - 1 else "├── ",
-                indent="    " if i == len(tools) - 1 else "│   ",
+                runs=tool.usage,
             )
         )
 

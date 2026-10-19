@@ -1,12 +1,7 @@
-<li class="px-1 py-0.5 hover:bg-faint">
+<li class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 py-0.5 hover:bg-faint">
 
-    <div class="flex items-center">
-        <span class="whitespace-pre text-dim select-none">{{ branch }}</span>
-        <a href="{{ root_path }}/tool/{{ id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">{{ name }}.py</a>
-    </div>
-
-    <div class="flex items-center gap-1">
-        <span class="whitespace-pre text-dim select-none">{{ indent }}├── </span>
+    {# mode column: the two switches #}
+    <span class="w-[22ch] flex items-center gap-1 shrink-0">
         <label class="switch">
             <input
                 type="checkbox"
@@ -27,10 +22,16 @@
                 end"/>
             <span class="label-text">[anonymous]</span>
         </label>
-    </div>
+    </span>
 
-    <div class="flex items-center gap-1 text-dim">
-        <span class="whitespace-pre select-none">{{ indent }}└── </span>
+    {# size column: run count #}
+    <span class="w-[6ch] text-right text-dim shrink-0" title="runs">{{ runs }}</span>
+
+    {# name #}
+    <a href="{{ root_path }}/tool/{{ id }}" class="flex-1 min-w-[12ch] truncate no-underline px-1 hover:bg-paper hover:text-ink">{{ name }}.py</a>
+
+    {# actions #}
+    <span class="w-[20ch] flex items-center justify-end gap-1 text-dim shrink-0">
         <input
             id="tool-update-{{ id }}"
             type="file"
@@ -47,5 +48,5 @@
             hx-confirm="Delete {{ name }}.py?"
             hx-target="closest li"
             class="cursor-pointer no-underline px-1 hover:bg-paper hover:text-ink">[delete]</a>
-    </div>
+    </span>
 </li>
