@@ -40,6 +40,8 @@ jobs:
           file: ./containers/Containerfile.prod
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
+          # org.opencontainers.image.revision lets the server skip a restart for an image it already runs
+          labels: ${{ steps.meta.outputs.labels }}
           # plain manifests: podman on the server pulls these without attestation quirks
           provenance: false
           sbom: false
