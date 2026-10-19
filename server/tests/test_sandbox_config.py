@@ -9,6 +9,7 @@ def test_defaults_from_empty_environment():
     assert (cfg.max_concurrent, cfg.queue_seconds, cfg.timeout_seconds) == (2, 10.0, 10.0)
     assert (cfg.memory, cfg.cpus, cfg.pids) == ("1g", "0.5", 64)
     assert cfg.run_dir == Path("/tmp/pywebtools-runs")
+    assert cfg.max_output_mb == 64
 
 
 def test_overrides_from_environment():

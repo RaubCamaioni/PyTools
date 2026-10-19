@@ -17,6 +17,7 @@ class SandboxConfig:
     cpus: str
     pids: int
     run_dir: Path
+    max_output_mb: int = 64  # run directory size after a run; larger output is discarded
 
     @classmethod
     def from_environment(cls, env: Mapping[str, str]) -> "SandboxConfig":
@@ -29,6 +30,7 @@ class SandboxConfig:
             cpus=env.get("SANDBOX_CPUS", "0.5"),
             pids=int(env.get("SANDBOX_PIDS", "64")),
             run_dir=Path(env.get("SANDBOX_RUN_DIR", "/tmp/pywebtools-runs")),
+            max_output_mb=int(env.get("SANDBOX_MAX_OUTPUT_MB", "64")),
         )
 
     @property

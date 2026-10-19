@@ -46,3 +46,31 @@ def test_crash_keeps_stderr_tail(tmp_path):
 def test_classify_malformed_result_is_crashed(tmp_path):
     (tmp_path / "result.json").write_text("{not json")
     assert classify(tmp_path).outcome is Outcome.CRASHED
+
+
+# result.json is written by untrusted code: anything but a modest regular file is a crash, never a 500
+def test_result_json_directory_is_crashed(tmp_path):
+    (tmp_path / "result.json").mkdir()
+    assert classify(tmp_path).outcome is Outcome.CRASHED
+
+
+def test_result_json_symlink_is_crashed(tmp_path):
+    (tmp_path / "real.json").write_text(json.dumps("x"))
+    (tmp_path / "result.json").symlink_to(tmp_path / "real.json")
+    assert classify(tmp_path).outcome is Outcome.CRASHED
+
+
+def test_result_json_oversized_is_crashed(tmp_path):
+    from app.utility.podman_runner import RESULT_MAX_BYTES
+
+    (tmp_path / "result.json").write_bytes(b'"' + b"x" * RESULT_MAX_BYTES + b'"')
+    assert classify(tmp_path).outcome is Outcome.CRASHED
+
+
+def test_oversized_output_directory_is_crashed_and_emptied(tmp_path):
+    small = SandboxConfig.from_environment({"SANDBOX_MAX_OUTPUT_MB": "1"})
+    (tmp_path / "result.json").write_text(json.dumps("ok"))
+    (tmp_path / "big.bin").write_bytes(b"\0" * (2 * 1024 * 1024))
+    r = PodmanRunner(small).classify(tmp_path, exit_code=0, oom_killed=False, elapsed=0.5, stderr="")
+    assert r.outcome is Outcome.CRASHED and r.message == "Tool output exceeded the 1 MB limit"
+    assert list(tmp_path.iterdir()) == []

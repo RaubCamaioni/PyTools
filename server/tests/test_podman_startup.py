@@ -12,6 +12,7 @@ class ScriptedPodman(FakePodman):
     async def __call__(self, *argv, timeout=None):
         if argv[1] == "run":
             self.calls.append(list(argv))
+            self.timeouts.append(timeout)
             return self.run_responses.pop(0)
         return await super().__call__(*argv, timeout=timeout)
 
@@ -62,6 +63,29 @@ async def test_pull_failure_without_local_image_is_unavailable():
     await runner.start()
     await runner.stop()
     assert not runner.available and "image" in runner.unavailable_reason
+
+
+async def test_runner_is_unavailable_until_started():
+    runner = PodmanRunner(cfg(), exec=FakePodman(), sleep=no_sleep)
+    assert not runner.available and runner.unavailable_reason == "starting"
+
+
+async def test_start_exception_marks_unavailable_and_schedules_retry():
+    fake = ScriptedPodman({"pull": RuntimeError("storage locked")})
+    runner = PodmanRunner(cfg(), exec=fake, sleep=no_sleep)
+    await runner.start()  # must not raise: the site keeps serving pages
+    assert not runner.available and "storage locked" in runner.unavailable_reason
+    assert len(runner._tasks) == 2  # refresh loop + retry loop
+    await runner.stop()
+
+
+async def test_start_puts_timeouts_on_info_and_pull():
+    fake = ScriptedPodman(run_responses=[(137, "", ""), (255, "", "")])
+    runner = PodmanRunner(cfg(), exec=fake, sleep=no_sleep)
+    await runner.start()
+    await runner.stop()
+    by_sub = dict(zip(fake.subcommands(), fake.timeouts))
+    assert by_sub["info"] is not None and by_sub["pull"] is not None
 
 
 async def test_start_without_podman_binary_is_unavailable():
