@@ -1,38 +1,14 @@
 # Production image: server (FastAPI) + sandbox venv in one container.
 # Built by .github/workflows/main.yml and pulled by the server's deploy timer.
 
-FROM python:3.12-slim-bookworm AS isolate-builder
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  libcap-dev \
-  pkg-config \
-  libsystemd-dev \
-  asciidoc \
-  build-essential \
-  git \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN /usr/local/bin/pip install --no-cache-dir asciidoc
-
-# isolate 1.10 is the last release that works without the cgroup-v2 keeper service.
-# It is kept only until the podman-based runner replaces it.
-RUN git clone --branch v1.10 --depth 1 https://github.com/ioi/isolate.git /tmp/isolate && \
-  cd /tmp/isolate && \
-  make
-
-
 FROM python:3.12-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  make \
   libgl1 \
   libxrender1 \
   libglib2.0-0 \
   libgomp1 \
   && rm -rf /var/lib/apt/lists/*
-
-COPY --from=isolate-builder /tmp/isolate /tmp/isolate
-RUN cd /tmp/isolate && make install && rm -rf /tmp/isolate
 
 RUN groupadd -g 1001 app && \
   useradd -m -u 1001 -g 1001 -s /bin/bash app && \
