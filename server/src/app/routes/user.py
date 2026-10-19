@@ -15,6 +15,7 @@ async def user_page(request: Request):
         alias = user.alias
 
     return TEMPLATES.TemplateResponse(
+        request,
         "pages/user.html",
         {
             "header_title": f"Alias: {alias}",

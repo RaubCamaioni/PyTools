@@ -39,6 +39,7 @@ async def tool_delete(
 @router.get("/manage/tool/upload", response_class=HTMLResponse)
 async def tool_upload_get(request: Request):
     return TEMPLATES.TemplateResponse(
+        request,
         "pages/upload.html",
         {
             "header_title": "upload",
