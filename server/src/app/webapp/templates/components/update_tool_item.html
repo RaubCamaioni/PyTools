@@ -10,8 +10,7 @@
             on change
                 fetch `{{ root_path }}/manage/tool/settings/{{ id }}?public=${my.checked}` with method:'POST'
             end"/>
-        <span class="state"></span>
-        <span class="label-text">public</span>
+        <span class="label-text">[public]</span>
     </label>
 
     <label class="switch">
@@ -22,8 +21,7 @@
             on change
                 fetch `{{ root_path }}/manage/tool/settings/{{ id }}?anonymous=${my.checked}` with method:'POST'
             end"/>
-        <span class="state"></span>
-        <span class="label-text">anonymous</span>
+        <span class="label-text">[anonymous]</span>
     </label>
 
     <div class="flex items-center gap-2 text-dim">

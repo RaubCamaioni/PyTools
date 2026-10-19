@@ -97,34 +97,24 @@
   .htmx-request.htmx-indicator {
     @apply opacity-100;
   }
-  /* terminal switch: a hidden checkbox drives a [off]/[on ] badge that inverts when on */
+  /* terminal switch: a hidden checkbox drives a [label] that is dim when off and inverted when on */
   .switch {
-    @apply inline-flex items-center gap-2 cursor-pointer select-none text-dim;
+    @apply inline-flex cursor-pointer select-none;
   }
   .switch input {
     @apply sr-only;
   }
-  .switch .state {
-    @apply inline-block w-[5ch] border border-line text-center;
+  .switch .label-text {
+    @apply px-1 text-dim;
   }
-  .switch .state::before {
-    content: "off";
-  }
-  .switch input:checked ~ .state {
-    @apply bg-paper text-ink border-paper;
-  }
-  .switch input:checked ~ .state::before {
-    content: "on";
-  }
-  .switch input:focus-visible ~ .state {
-    @apply outline-2 outline-dashed outline-paper outline-offset-2;
-  }
-  .switch:hover .state {
-    @apply border-paper;
-  }
-  .switch input:checked ~ .label-text,
   .switch:hover .label-text {
     @apply text-paper;
+  }
+  .switch input:checked ~ .label-text {
+    @apply bg-paper text-ink;
+  }
+  .switch input:focus-visible ~ .label-text {
+    @apply outline-2 outline-dashed outline-paper outline-offset-2;
   }
   /* indeterminate loading bar; htmx adds .htmx-request to the hx-indicator element while a request runs */
   .loadbar {
