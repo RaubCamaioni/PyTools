@@ -12,7 +12,7 @@
 
         <div class="w-11/12 max-w-7xl mx-auto flex flex-col">
 
-            <div class="prompt font-bold mb-2">{{ tool }}</div>
+            <div class="prompt font-bold mb-2">cat {{ tool }}.py</div>
             <div class="panel flex flex-col md:flex-row">
 
                 <div class="md:w-3/4 max-h-[700px] overflow-auto border-b md:border-b-0 md:border-r border-line">
@@ -36,9 +36,9 @@
                             form="argument-form">[ run ]</button>
                     </form>
 
-                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-dim">
-                        <a href="{{ root_path }}/download/tool/{{ tool_id }}">[download]</a>
-                        <button id="share-link-button" class="underline underline-offset-2 decoration-line hover:decoration-paper cursor-pointer">[share link]</button>
+                    <div class="flex flex-wrap gap-x-3 gap-y-1 text-dim">
+                        <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[download]</a>
+                        <button id="share-link-button" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[share link]</button>
                     </div>
 
                     <div class="flex-grow"></div>
