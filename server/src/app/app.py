@@ -1,7 +1,6 @@
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-from starlette.routing import Mount
 from fastapi import FastAPI
 from pathlib import Path
 
@@ -30,6 +29,8 @@ app.add_middleware(SessionMiddleware, secret_key=ENVIRONMENT.SESSION_KEY)
 
 
 for route in app.routes:
-    if isinstance(route, Mount):
+    # mounts and included routers carry no HTTP methods
+    methods = getattr(route, "methods", None)
+    if methods is None:
         continue
-    logger.info(f"{route.methods} {route.path} {route.name}")
+    logger.info(f"{methods} {route.path} {route.name}")

@@ -26,10 +26,11 @@ async def login_button(request: Request):
     if logged:
         name = user.alias
         kwargs = {"request": request, "name": name}
-        button_html = TEMPLATES.TemplateResponse("components/logout_button.html", kwargs)
+        button_html = TEMPLATES.TemplateResponse(request, "components/logout_button.html", kwargs)
     else:
         kwargs = {"request": request, "url": ENVIRONMENT.LOGIN_URL}
         button_html = TEMPLATES.TemplateResponse(
+            request,
             "components/login_button.html",
             kwargs,
         )
@@ -41,7 +42,7 @@ async def login_button(request: Request):
 async def logout(request: Request):
     request.session.clear()
     kwargs = {"request": request, "url": ENVIRONMENT.LOGIN_URL}
-    button_html = TEMPLATES.TemplateResponse("components/login_button.html", kwargs)
+    button_html = TEMPLATES.TemplateResponse(request, "components/login_button.html", kwargs)
     return button_html
 
 

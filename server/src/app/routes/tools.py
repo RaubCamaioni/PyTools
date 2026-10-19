@@ -87,6 +87,7 @@ Tempdir = Annotated[Path, Depends(get_temp_dir)]
 @router.route("/", methods=["GET", "POST"])
 async def read_root(request: Request):
     return TEMPLATES.TemplateResponse(
+        request,
         "pages/index.html",
         {
             "header_title": "PyTools",
@@ -192,6 +193,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
         arguments[name] = (t, default)
 
     return TEMPLATES.TemplateResponse(
+        request,
         "pages/tool.html",
         {
             "header_title": "PyTools",
@@ -357,10 +359,10 @@ async def download_file(file_str: str):
 @router.get("/terms-of-service", response_class=FileResponse)
 async def terms_of_service(request: Request):
     kwargs = {"request": request, "header_title": "PyTools"}
-    return TEMPLATES.TemplateResponse("pages/terms_of_service.html", kwargs)
+    return TEMPLATES.TemplateResponse(request, "pages/terms_of_service.html", kwargs)
 
 
 @router.get("/privacy-policy", response_class=FileResponse)
 async def privacy_policy(request: Request):
     kwargs = {"request": request, "header_title": "PyTools"}
-    return TEMPLATES.TemplateResponse("pages/privacy_policy.html", kwargs)
+    return TEMPLATES.TemplateResponse(request, "pages/privacy_policy.html", kwargs)
