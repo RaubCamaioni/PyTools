@@ -1,14 +1,8 @@
-<div class="form-group mb-2 flex items-center gap-2">
-
-	<label
-		class="block w-1/3 text-dim truncate"
-		for="{{ name }}"
-		title="{{ name }}">
-		{{ name }}:
-	</label>
-
+<div class="form-group flex items-center gap-2 py-0.5">
+	<span class="whitespace-pre text-dim select-none">{{ glyph }}</span>
+	<label class="text-dim whitespace-nowrap" for="{{ name }}">{{ name }}: <span class="text-paper">{{ py_type }}</span></label>
 	<select
-		class="block w-2/3"
+		class="ml-auto w-1/2 min-w-[8ch]"
 		id="{{ name }}"
 		name="{{ name }}">
 		{% for option in options %}

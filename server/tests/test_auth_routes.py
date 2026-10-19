@@ -75,7 +75,30 @@ def test_callback_logs_in_and_redirects_home(github):
     r = c.get("/auth/github", params={"code": "abc", "state": state}, follow_redirects=False)
     assert r.status_code in (302, 307) and r.headers["location"] == "/"
     assert github.codes == ["abc"]
-    assert "logout: octocat" in c.get("/login/button").text  # alias defaults to the GitHub login
+    assert "[logout]" in c.get("/login/button").text
+    assert "octocat@pytools" in c.get("/").text  # the prompt shows the alias (defaults to the GitHub login)
+
+
+def test_header_highlights_the_current_page(github):
+    import re
+
+    def active(html):
+        # the one nav link rendered with the inverted (active) classes
+        return re.findall(r'class="[^"]*bg-paper text-ink[^"]*">\[(\w+)\]', html)
+
+    c = TestClient(app)
+    assert active(c.get("/").text) == ["home"]
+    assert active(c.get("/privacy-policy").text) == ["privacy"]
+    assert active(c.get("/terms-of-service").text) == ["terms"]
+    assert active(c.get("/user").text) == ["profile"]
+
+
+def test_header_prompt_shows_user_and_directory(github):
+    c = TestClient(app)
+    assert "anonymous@pytools</span>:~<" in c.get("/").text
+    assert "anonymous@pytools</span>:~/tools<" in c.get("/user").text
+    assert "anonymous@pytools</span>:~/privacy<" in c.get("/privacy-policy").text
+    assert "anonymous@pytools</span>:~/terms<" in c.get("/terms-of-service").text
 
 
 def test_owner_github_login_maps_to_existing_user_id(github):

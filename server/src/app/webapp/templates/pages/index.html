@@ -9,14 +9,16 @@
 
         {% include 'components/header.html'%}
 
-        <div class="max-w-2xl mx-auto px-4">
-            <label class="flex items-center gap-2">
-                <span class="text-dim">$</span>
+        <div class="max-w-4xl mx-auto px-4">
+            {# the command line: the search box is the grep pattern #}
+            <label class="flex items-center gap-2 whitespace-nowrap">
+                <span><span class="text-dim">$</span> ls tools/ | grep -i</span>
                 <input
-                    class="flex-grow"
+                    class="flex-grow min-w-0 border-0 border-b border-line px-1 py-0 focus:border-paper"
                     type="search"
                     name="search"
-                    placeholder="search tags..."
+                    placeholder="pattern"
+                    aria-label="filter tools"
                     hx-post="{{ root_path }}/tools?start=0&end=50"
                     hx-trigger="keyup[key=='Enter']"
                     hx-target="#tool-list"
@@ -24,7 +26,8 @@
                     hx-swap="innerHTML">
             </label>
 
-            <ul id="tool-list" class="mt-4">
+            {# ls output: columns of file names #}
+            <ul id="tool-list" class="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6">
                 {% with start=0, end=50 %}
                     {% include 'components/tool_scroll_loader.html'%}
                 {% endwith %}

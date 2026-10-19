@@ -75,9 +75,9 @@
     content: "> ";
     color: var(--color-dim);
   }
-  /* bordered text buttons that invert on hover */
+  /* [bracket] buttons: plain text that inverts on hover, no box */
   .btn {
-    @apply inline-flex items-center justify-center border border-paper px-3 py-1 no-underline cursor-pointer select-none whitespace-nowrap;
+    @apply inline-flex items-center px-1 no-underline cursor-pointer select-none whitespace-nowrap;
   }
   .btn:hover,
   .btn:focus-visible {
@@ -96,6 +96,33 @@
   .htmx-request .htmx-indicator,
   .htmx-request.htmx-indicator {
     @apply opacity-100;
+  }
+  /* terminal switch: a hidden checkbox drives a [label] that is dim when off and inverted when on */
+  .switch {
+    @apply inline-flex cursor-pointer select-none;
+  }
+  .switch input {
+    @apply sr-only;
+  }
+  .switch .label-text {
+    @apply px-1 text-dim;
+  }
+  .switch:hover .label-text {
+    @apply text-paper;
+  }
+  .switch input:checked ~ .label-text {
+    @apply bg-paper text-ink;
+  }
+  .switch input:focus-visible ~ .label-text {
+    @apply outline-2 outline-dashed outline-paper outline-offset-2;
+  }
+  /* vim CursorLine while a run is in flight (positioned by the tool page script) */
+  .exec-cursor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.12);
+    pointer-events: none;
   }
   /* indeterminate loading bar; htmx adds .htmx-request to the hx-indicator element while a request runs */
   .loadbar {

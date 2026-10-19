@@ -1,29 +1,27 @@
+{# terminal prompt: user@host:cwd $ on the left, the bracket links on the right.
+   Pages set `cwd` before including this (default ~). The link for the current page is inverted. #}
+{% set path = request.url.path %}
+{% macro navlink(href, label, active) -%}
+<a href="{{ root_path }}{{ href }}" class="no-underline px-1 {% if active %}bg-paper text-ink{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[{{ label }}]</a>
+{%- endmacro %}
 <header class="w-full border-b border-line mb-6">
-  <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
 
-    <a href="{{ root_path }}/" class="text-paper no-underline hover:underline" title="home">~/pytools</a>
-
-    <nav class="flex flex-wrap items-center gap-x-4 text-dim">
-      <a href="{{ root_path }}/privacy-policy" class="whitespace-nowrap">privacy</a>
-      <a href="{{ root_path }}/terms-of-service" class="whitespace-nowrap">terms</a>
-    </nav>
+    <span class="whitespace-nowrap"><span class="text-dim">{{ session_alias(request) }}@pytools</span>:{{ cwd | default('~') }}<span class="text-dim"> $</span></span>
 
     <div class="flex-grow"></div>
 
-    <h1 class="text-paper whitespace-nowrap order-last w-full text-center sm:order-none sm:w-auto">[ {{ header_title }} ]</h1>
-
-    <div class="flex-grow"></div>
-
-    <div class="flex items-center gap-2">
-      <a class="btn" href="{{ root_path }}/user">profile</a>
-      <a
-        class="btn"
+    <nav class="flex flex-wrap items-center gap-1 whitespace-nowrap">
+      {{ navlink('/', 'home', path == '/') }}
+      {{ navlink('/privacy-policy', 'privacy', path == '/privacy-policy') }}
+      {{ navlink('/terms-of-service', 'terms', path == '/terms-of-service') }}
+      {{ navlink('/user', 'profile', path == '/user') }}
+      <span
+        class="text-dim px-1"
         hx-get="{{ root_path }}/login/button"
         hx-trigger="load"
-        hx-swap="outerHTML">
-        login
-      </a>
-    </div>
+        hx-swap="outerHTML">[login]</span>
+    </nav>
 
   </div>
 </header>

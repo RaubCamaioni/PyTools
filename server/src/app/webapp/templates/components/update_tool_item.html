@@ -1,34 +1,37 @@
-<li class="-mt-px">
-    <div class="row flex flex-wrap items-center gap-x-4 gap-y-2">
+<li class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 py-0.5 hover:bg-faint">
 
-        <a href="{{ root_path }}/tool/{{ id }}" class="font-bold">{{ name }}</a>
-
-        <div class="flex-grow"></div>
-
-        <label class="flex items-center gap-1 text-dim">
-            <input
-                type="checkbox"
-                {{ anonymous }}
-                _="
-                on change
-                    toggle @checked on me
-                    fetch `{{ root_path }}/manage/tool/settings/{{ id }}?anonymous=${@checked is not null}` with method:'POST'
-                end"/>
-            anonymous
-        </label>
-
-        <label class="flex items-center gap-1 text-dim">
+    {# mode column: the two switches #}
+    <span class="w-[22ch] flex items-center gap-1 shrink-0">
+        <label class="switch">
             <input
                 type="checkbox"
                 {{ public }}
                 _="
                 on change
-                    toggle @checked on me
-                    fetch `{{ root_path }}/manage/tool/settings/{{ id }}?public=${@checked is not null}` with method:'POST'
+                    fetch `{{ root_path }}/manage/tool/settings/{{ id }}?public=${my.checked}` with method:'POST'
                 end"/>
-            public
+            <span class="label-text">[public]</span>
         </label>
+        <label class="switch">
+            <input
+                type="checkbox"
+                {{ anonymous }}
+                _="
+                on change
+                    fetch `{{ root_path }}/manage/tool/settings/{{ id }}?anonymous=${my.checked}` with method:'POST'
+                end"/>
+            <span class="label-text">[anonymous]</span>
+        </label>
+    </span>
 
+    {# size column: run count #}
+    <span class="w-[6ch] text-right text-dim shrink-0" title="runs">{{ runs }}</span>
+
+    {# name #}
+    <a href="{{ root_path }}/tool/{{ id }}" class="flex-1 min-w-[12ch] truncate no-underline px-1 hover:bg-paper hover:text-ink">{{ name }}.py</a>
+
+    {# actions #}
+    <span class="w-[20ch] flex items-center justify-end gap-1 text-dim shrink-0">
         <input
             id="tool-update-{{ id }}"
             type="file"
@@ -38,14 +41,12 @@
             hx-trigger="change"
             hx-swap="none"
             style="display: none;" />
-
-        <label for="tool-update-{{ id }}" class="btn">[ update ]</label>
-
+        <label for="tool-update-{{ id }}" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[update]</label>
         <a
             hx-delete="{{ root_path }}/manage/tool/delete/{{ id }}"
             hx-trigger="click"
+            hx-confirm="Delete {{ name }}.py?"
             hx-target="closest li"
-            class="btn">[ delete ]</a>
-
-    </div>
+            class="cursor-pointer no-underline px-1 hover:bg-paper hover:text-ink">[delete]</a>
+    </span>
 </li>

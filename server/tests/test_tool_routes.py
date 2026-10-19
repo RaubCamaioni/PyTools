@@ -108,7 +108,7 @@ def test_stylesheet_urls_are_versioned(monkeypatch, public_tool):
         html = c.get(path).text
         # same URL + new content gets served from browser caches; the version query defeats that
         assert re.search(r'/static/output\.css\?v=[0-9a-f]{8,}"', html), path
-    assert re.search(r'/static/prism-mono\.css\?v=[0-9a-f]{8,}"', c.get("/tool/8").text)
+    assert re.search(r'/static/prism-vim\.css\?v=[0-9a-f]{8,}"', c.get("/tool/8").text)
 
 
 def test_healthz(monkeypatch):

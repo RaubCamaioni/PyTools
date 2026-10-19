@@ -48,7 +48,7 @@ class MyPrettyPrinter(PrettyPrinter):
         return super().format(object, context, maxlevels, level)
 
 
-def literal_to_label(name: str, type: str, default: str):
+def literal_to_label(name: str, type: str, default: str, glyph: str = ""):
     default = sanitize_html(default) or ""
     values = parser_literal(type)
     options = [{"value": v, "label": v} for v in values]
@@ -58,13 +58,15 @@ def literal_to_label(name: str, type: str, default: str):
         {
             "name": name,
             "options": options,
+            "py_type": "Literal",
+            "glyph": glyph,
         },
     )
 
     return form
 
 
-def type_to_label(name: str, type: str, default: str):
+def type_to_label(name: str, type: str, default: str, glyph: str = ""):
     default = sanitize_html(default) or ""
 
     template: Template = TEMPLATES.get_template("components/form_type.html")
@@ -73,6 +75,8 @@ def type_to_label(name: str, type: str, default: str):
             "name": name,
             "type": TYPE_MAP.get(type, "text"),
             "default": default,
+            "py_type": type,
+            "glyph": glyph,
         },
     )
 
@@ -95,22 +99,25 @@ TYPE_TO_LABEL = {
 }
 
 
-def form_group(name: str, type: str, default: str):
+def form_group(name: str, type: str, default: str, glyph: str = ""):
     default = default or ""
 
     if "Literal" in type:
-        return TYPE_TO_LABEL["Literal"](name, type, default)
+        return TYPE_TO_LABEL["Literal"](name, type, default, glyph)
 
     if type in TYPE_TO_LABEL:
-        return TYPE_TO_LABEL[type](name, type, default)
+        return TYPE_TO_LABEL[type](name, type, default, glyph)
 
-    return type_to_label(name, "str", "invalid type")
+    return type_to_label(name, "str", "invalid type", glyph)
 
 
 def args_to_form(arguments: dict[str, tuple[str, str]]):
+    # rendered as a tree under the function name: tee glyphs, corner on the last argument
     items = []
-    for name, (type, default) in arguments.items():
-        items.append(form_group(name, type, default))
+    last = len(arguments) - 1
+    for i, (name, (type, default)) in enumerate(arguments.items()):
+        glyph = "└── " if i == last else "├── "
+        items.append(form_group(name, type, default, glyph))
 
     return "\n".join(items)
 
@@ -163,6 +170,7 @@ def list_item_user(root_path: str, tools: list[Tool]):
                 name=tool.name,
                 public="checked" if tool.public else "",
                 anonymous="checked" if tool.annonymous else "",
+                runs=tool.usage,
             )
         )
 

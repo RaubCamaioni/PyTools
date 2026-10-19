@@ -8,40 +8,38 @@
 
     <body class="bg-ink text-paper font-mono">
 
+        {% set cwd = '~/tools' %}
         {% include 'components/header.html'%}
 
-        <div class="max-w-3xl mx-auto px-4 flex flex-col gap-6">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col gap-6">
+
+            {# settings as a command line: $ alias <name> [ save ] #}
+            <form
+                hx-post="/manage/user/settings"
+                hx-swap="none"
+                onsubmit="event.preventDefault();"
+                class="flex flex-wrap items-center gap-2 whitespace-nowrap">
+               <label for="alias"><span class="text-dim">$</span> alias</label>
+               <input
+                class="flex-grow min-w-0 border-0 border-b border-line px-1 py-0 focus:border-paper"
+                id="alias"
+                type="text"
+                name="alias"
+                value="{{ alias }}">
+                <button class="btn">[ save ]</button>
+            </form>
 
             <section>
-                <div class="prompt font-bold mb-2">user settings</div>
-                <form
-                    hx-post="/manage/user/settings"
-                    hx-swap="none"
-                    onsubmit="event.preventDefault();"
-                    class="panel p-3 flex flex-wrap items-center gap-2">
-                   <label for="alias">alias:</label>
-                   <input
-                    class="flex-grow"
-                    id="alias"
-                    type="text"
-                    name="alias"
-                    value="{{ alias }}">
-                    <button class="btn">[ save ]</button>
-                </form>
-            </section>
-
-            <section>
-                <div class="prompt font-bold mb-2">user tools</div>
-                <ul id="tool-list">
+                <div class="prompt font-bold mb-1">ls -l tools/</div>
+                <ul>
                     {% include 'components/upload_tool_item.html'%}
-
-                    <li
-                        hx-post="{{ root_path }}/user/tools"
-                        hx-trigger="load"
-                        hx-swap="outerHTML"
-                        class="-mt-px">
-                        <span class="row text-dim">loading...</span>
-                    </li>
+                </ul>
+                {# the tool rows reload on page load and whenever an upload sends "refresh" #}
+                <ul id="tool-rows"
+                    hx-post="{{ root_path }}/user/tools"
+                    hx-trigger="load, refresh"
+                    hx-swap="innerHTML">
+                    <li class="px-1 text-dim">...</li>
                 </ul>
             </section>
         </div>

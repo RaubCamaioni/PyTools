@@ -8,15 +8,27 @@
     </head>
     <body class="bg-ink text-paper font-mono">
 
+        {% set cwd = '~/tools' %}
         {% include 'components/header.html'%}
 
         <div class="w-11/12 max-w-7xl mx-auto flex flex-col">
 
-            <div class="prompt font-bold mb-2">{{ tool }}</div>
+            <div class="prompt font-bold mb-2">vim {{ tool }}.py</div>
             <div class="panel flex flex-col md:flex-row">
 
-                <div class="md:w-3/4 max-h-[700px] overflow-auto border-b md:border-b-0 md:border-r border-line">
-                    <pre class="line-numbers"><code class="language-python">{{ code }}</code></pre>
+                <div class="md:w-3/4 flex flex-col border-b md:border-b-0 md:border-r border-line">
+                    <div id="code-scroll" class="max-h-[700px] overflow-auto">
+                        <pre class="line-numbers"><div id="exec-cursor" class="exec-cursor hidden" aria-hidden="true"></div><code class="language-python">{{ code }}</code></pre>
+                    </div>
+                    {# vim status line, inverse video; the mode shows -- RUNNING -- while a run is in flight #}
+                    <div class="flex items-center gap-4 px-2 bg-paper text-ink whitespace-nowrap overflow-hidden">
+                        <span class="font-bold">{{ tool }}.py</span>
+                        <span id="vim-mode"></span>
+                        <span class="flex-grow"></span>
+                        <span>{{ lines }}L</span>
+                        <span>python</span>
+                        <span>utf-8</span>
+                    </div>
                 </div>
 
                 <div class="md:w-1/4 flex flex-col p-3 gap-3">
@@ -27,37 +39,65 @@
                         hx-target="#return"
                         hx-indicator="#loading-bar"
                         hx-swap="innerHTML">
-
+                        {# arguments as a tree under the function name #}
+                        <div class="font-bold mb-1">{{ tool }}()</div>
                         {{ form_groups | safe }}
-
-                        <button
-                            class="btn w-full mt-2"
-                            type="submit"
-                            form="argument-form">[ run ]</button>
                     </form>
-
-                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-dim">
-                        <a href="{{ root_path }}/download/tool/{{ tool_id }}">[download]</a>
-                        <button id="share-link-button" class="underline underline-offset-2 decoration-line hover:decoration-paper cursor-pointer">[share link]</button>
-                    </div>
 
                     <div class="flex-grow"></div>
 
-                    <div class="label">runs: {{ runs }}</div>
+                    {# actions, kept away from the arguments #}
+                    <div class="flex flex-col gap-1 mt-4">
+                        <button class="btn self-start" type="submit" form="argument-form">[ run ]</button>
+                        <div class="flex flex-wrap gap-x-1 text-dim">
+                            <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[download]</a>
+                            <button id="share-link-button" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[share link]</button>
+                        </div>
+                        <div class="label">runs: {{ runs }}</div>
+                    </div>
                 </div>
             </div>
 
-            <div id="result_title" class="output font-bold mt-6 mb-2">results</div>
+            <div id="result_title" class="prompt font-bold mt-6 mb-2">cat results.txt</div>
             <div id="loading-bar" class="loadbar" aria-hidden="true"></div>
             <div class="panel p-3 overflow-x-auto" id="result">
                 <div id="return">
-                    <pre></pre>
+                    {# until a run writes a result, the file does not exist #}
+                    <pre class="text-dim">cat: results.txt: No such file or directory</pre>
                 </div>
             </div>
 
         </div>
         <div style="height: 200px;"></div>
-        <script async>
+        <script>
+            // execution animation: a vim cursor line steps through the file while the run is in flight
+            (function () {
+                const form = document.getElementById("argument-form");
+                const cursor = document.getElementById("exec-cursor");
+                const mode = document.getElementById("vim-mode");
+                const pre = cursor.parentElement;
+                const total = {{ lines }};
+                let timer = null, line = 0;
+                function place(n) {
+                    const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
+                    const top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight;
+                    cursor.style.top = top + "px";
+                    cursor.style.height = lineHeight + "px";
+                    cursor.scrollIntoView({ block: "nearest" });
+                }
+                form.addEventListener("htmx:beforeRequest", function () {
+                    line = 0;
+                    cursor.classList.remove("hidden");
+                    mode.textContent = "-- RUNNING --";
+                    timer = setInterval(function () { line = line % total + 1; place(line); }, 120);
+                });
+                form.addEventListener("htmx:afterRequest", function () {
+                    clearInterval(timer);
+                    cursor.classList.add("hidden");
+                    mode.textContent = "";
+                });
+            })();
+
             function copy_form_to_clipboard() {
                 event.preventDefault();
                 const form = document.getElementById('argument-form');
