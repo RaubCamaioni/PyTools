@@ -14,15 +14,13 @@
 
     <div class="flex-grow"></div>
 
-    <div class="flex items-center gap-2">
-      <a class="btn" href="{{ root_path }}/user">profile</a>
-      <a
-        class="btn"
+    <div class="flex items-center gap-1 whitespace-nowrap">
+      <a class="no-underline px-1 hover:bg-paper hover:text-ink" href="{{ root_path }}/user">[profile]</a>
+      <span
+        class="text-dim px-1"
         hx-get="{{ root_path }}/login/button"
         hx-trigger="load"
-        hx-swap="outerHTML">
-        login
-      </a>
+        hx-swap="outerHTML">[login]</span>
     </div>
 
   </div>
