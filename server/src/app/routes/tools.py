@@ -27,8 +27,9 @@ import time
 import stat
 import os
 
-from app.utility import sandbox, render, serializer, security
-from app import TEMPLATES, ALLOWED_CHARACTERS, logger
+from app.utility import render, serializer, security
+from app.utility.podman_runner import PodmanRunner, Outcome, SandboxBusy, SandboxUnavailable
+from app import TEMPLATES, ALLOWED_CHARACTERS, logger, ENVIRONMENT
 from app.models import tools as db_tools
 from app.routes.auth import User
 import json
@@ -44,6 +45,7 @@ class PathEncoder(json.JSONEncoder):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await runner.start()
     yield
     delete_tasks = []
     for task in asyncio.all_tasks():
@@ -51,9 +53,10 @@ async def lifespan(app: FastAPI):
             delete_tasks.append(task)
             task.cancel()
     await asyncio.gather(*delete_tasks)
+    await runner.stop()
 
 
-isolate = sandbox.IsolationWorkers()
+runner = PodmanRunner(ENVIRONMENT.sandbox)
 router = APIRouter(lifespan=lifespan)
 
 
@@ -72,7 +75,9 @@ async def delete_temp_dir(temp_dir: Path):
 
 async def get_temp_dir():
     try:
-        temp_dir = Path("/tmp") / secret_dir_name(32)
+        run_root = ENVIRONMENT.sandbox.run_dir
+        run_root.mkdir(parents=True, exist_ok=True)
+        temp_dir = run_root / secret_dir_name(32)
         os.mkdir(temp_dir)
         os.chmod(temp_dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
         yield temp_dir
@@ -82,6 +87,13 @@ async def get_temp_dir():
 
 
 Tempdir = Annotated[Path, Depends(get_temp_dir)]
+
+
+@router.get("/healthz")
+async def healthz():
+    if runner.available:
+        return JSONResponse({"sandbox": "ready"})
+    return JSONResponse({"sandbox": "unavailable", "reason": runner.unavailable_reason}, status_code=503)
 
 
 @router.route("/", methods=["GET", "POST"])
@@ -271,6 +283,9 @@ async def run_isolated(
     temp_dir: Tempdir,
     session: db_tools.SessionDep,
 ) -> str:
+    if not runner.available:
+        raise HTTPException(status_code=503, detail="Sandbox unavailable")
+
     tool = db_tools.get_tool_by_id(session, id)
 
     if tool is None:
@@ -317,19 +332,26 @@ async def run_isolated(
     session.commit()
 
     # !DANGER! user submitted code
-    await isolate.run(temp_tool, temp_dir)
+    try:
+        result = await runner.run(temp_tool, temp_dir)
+    except SandboxBusy:
+        raise HTTPException(status_code=503, detail="Server busy, try again")
+    except SandboxUnavailable:
+        raise HTTPException(status_code=503, detail="Sandbox unavailable")
 
-    results_file = temp_dir / "result.json"
-    if not results_file.exists():
-        raise HTTPException(status_code=404, detail="Runner Failed")
+    htmx = request.headers.get("HX-Request") == "true"
 
-    with open(results_file, "r") as f:
-        results = serializer.load(f)
+    if result.outcome is not Outcome.OK:
+        logger.warning(f"tool {tool.id} {result.outcome.name}: {result.stderr_tail}")
+        if htmx:
+            text = result.message + (f"\n{result.stderr_tail}" if result.stderr_tail else "")
+            return HTMLResponse(content=render.render(text))
+        return JSONResponse({"detail": result.message})
 
-    if request.headers.get("HX-Request") == "true":
-        return HTMLResponse(content=render.render(results))
+    if htmx:
+        return HTMLResponse(content=render.render(result.results))
     else:
-        return json.dumps(results, cls=PathEncoder)
+        return json.dumps(result.results, cls=PathEncoder)
 
 
 @security.constant_time_with_random_delay(0.2, 1)

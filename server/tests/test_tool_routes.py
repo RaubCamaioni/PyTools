@@ -1,0 +1,95 @@
+import dataclasses
+import json
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.app import app
+from app.models import tools as db
+from app.routes import tools as tools_routes
+from app.utility.podman_runner import Outcome, RunResult, SandboxBusy, SandboxUnavailable
+
+
+class StubRunner:
+    def __init__(self, result=None, raise_=None, available=True):
+        self.result, self.raise_, self.available = result, raise_, available
+        self.unavailable_reason = None if available else "self-test failed"
+        self.calls = []
+
+    async def start(self):
+        pass
+
+    async def stop(self):
+        pass
+
+    async def run(self, tool, run_dir):
+        self.calls.append((tool, run_dir))
+        if self.raise_:
+            raise self.raise_
+        return self.result
+
+
+@pytest.fixture
+def public_tool(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        db,
+        "get_tool_by_id",
+        lambda session, id: db.Tool(
+            id=8, name="byte_converter", code="def byte_converter(): return 1", arguments={}, public=True, tags=[]
+        ),
+    )
+    # SandboxConfig is frozen: swap the whole ENVIRONMENT the routes module sees
+    env = tools_routes.ENVIRONMENT
+    monkeypatch.setattr(
+        tools_routes,
+        "ENVIRONMENT",
+        dataclasses.replace(env, sandbox=dataclasses.replace(env.sandbox, run_dir=tmp_path)),
+    )
+
+
+def client(monkeypatch, runner):
+    monkeypatch.setattr(tools_routes, "runner", runner)
+    return TestClient(app)
+
+
+def test_run_tool_ok_renders_results(monkeypatch, public_tool):
+    c = client(monkeypatch, StubRunner(RunResult(Outcome.OK, results="0x68 0x69")))
+    r = c.post("/tool/8")
+    assert r.status_code == 200 and json.loads(r.text) == "0x68 0x69"
+
+
+def test_run_tool_timeout_message_htmx(monkeypatch, public_tool):
+    c = client(monkeypatch, StubRunner(RunResult(Outcome.TIMEOUT, message="Tool exceeded the 10 second limit")))
+    r = c.post("/tool/8", headers={"HX-Request": "true"})
+    assert r.status_code == 200 and "Tool exceeded the 10 second limit" in r.text
+
+
+def test_run_tool_malformed_result_renders_failure(monkeypatch, public_tool):
+    c = client(monkeypatch, StubRunner(RunResult(Outcome.CRASHED, message="Tool failed to run", stderr_tail="boom")))
+    r = c.post("/tool/8")
+    assert r.status_code == 200 and r.json() == {"detail": "Tool failed to run"}
+
+
+def test_run_tool_busy_is_503(monkeypatch, public_tool):
+    r = client(monkeypatch, StubRunner(raise_=SandboxBusy())).post("/tool/8")
+    assert r.status_code == 503 and r.json()["detail"] == "Server busy, try again"
+
+
+def test_run_tool_unavailable_returns_503_without_slot(monkeypatch, public_tool):
+    stub = StubRunner(raise_=SandboxUnavailable(), available=False)
+    r = client(monkeypatch, stub).post("/tool/8")
+    assert r.status_code == 503 and r.json()["detail"] == "Sandbox unavailable"
+    assert stub.calls == []  # route checks runner.available before writing files or running
+
+
+def test_healthz(monkeypatch):
+    assert client(monkeypatch, StubRunner()).get("/healthz").json() == {"sandbox": "ready"}
+    r = client(monkeypatch, StubRunner(available=False)).get("/healthz")
+    assert r.status_code == 503 and r.json() == {"sandbox": "unavailable", "reason": "self-test failed"}
+
+
+def test_run_dir_created_under_configured_root(monkeypatch, public_tool, tmp_path):
+    stub = StubRunner(RunResult(Outcome.OK, results=None))
+    client(monkeypatch, stub).post("/tool/8")
+    tool, run_dir = stub.calls[0]
+    assert run_dir.parent == tmp_path and tool == run_dir / "byte_converter.py"
