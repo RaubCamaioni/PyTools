@@ -1,58 +1,57 @@
-FROM python:3.10-slim-bookworm AS isolate-builder
+# Production image: server (FastAPI) + sandbox venv in one container.
+# Built by .github/workflows/main.yml and pulled by the server's deploy timer.
 
-RUN apt-get update && apt install -y \
+FROM python:3.12-slim-bookworm AS isolate-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
   libcap-dev \
   pkg-config \
-  libsystemd-dev \ 
+  libsystemd-dev \
   asciidoc \
   build-essential \
-  git
+  git \
+  && rm -rf /var/lib/apt/lists/*
 
-RUN /usr/local/bin/pip install asciidoc
+RUN /usr/local/bin/pip install --no-cache-dir asciidoc
 
-# isolate 1.10 supports cgroupv1
-RUN cd /tmp && \
-  git clone --branch v1.10 --single-branch https://github.com/ioi/isolate.git && \
-  cd isolate && \
+# isolate 1.10 is the last release that works without the cgroup-v2 keeper service.
+# It is kept only until the podman-based runner replaces it.
+RUN git clone --branch v1.10 --depth 1 https://github.com/ioi/isolate.git /tmp/isolate && \
+  cd /tmp/isolate && \
   make
 
-FROM python:3.10-slim-bookworm
 
-RUN apt-get update && apt install -y \
-  libgl1-mesa-glx \
+FROM python:3.12-slim-bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  make \
+  libgl1 \
   libxrender1 \
   libglib2.0-0 \
-  gcc \
-  gfortran \
-  python3-dev \
-  libopenblas-dev \
-  liblapack-dev \
-  make \
+  libgomp1 \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=isolate-builder /tmp/isolate /tmp/isolate
 RUN cd /tmp/isolate && make install && rm -rf /tmp/isolate
 
 RUN groupadd -g 1001 app && \
-  useradd -ms /bin/bash -u 1001 -g 1001 app
-
-RUN mkdir /app && chown app:app /app && \
-  mkdir /sandbox && chown app:app /sandbox && \
-  mkdir /venvs && chown app:app /venvs
+  useradd -m -u 1001 -g 1001 -s /bin/bash app && \
+  mkdir -p /venvs /data && \
+  chown -R app:app /venvs /data
 
 USER app
 
-RUN python3 -m venv /venvs/app
-COPY --chown=app:app sandbox/app_requirements.txt /tmp/
-RUN /venvs/app/bin/pip install -r /tmp/app_requirements.txt
+# sandbox first: its scientific dependencies are the slow layer and change rarely
+COPY --chown=app:app sandbox /tmp/sandbox
+RUN python3 -m venv /venvs/sandbox && \
+  /venvs/sandbox/bin/pip install --no-cache-dir /tmp/sandbox && \
+  rm -rf /tmp/sandbox
 
-RUN python3 -m venv /venvs/sandbox
-COPY --chown=app:app sandbox/sandbox_requirements.txt /tmp/
-RUN /venvs/sandbox/bin/pip install -r /tmp/sandbox_requirements.txt
+COPY --chown=app:app server /tmp/server
+RUN python3 -m venv /venvs/server && \
+  /venvs/server/bin/pip install --no-cache-dir /tmp/server && \
+  rm -rf /tmp/server
 
-COPY --chown=app:app /files /files
-COPY --chown=app:app /sandbox/sandbox /sandbox
-COPY --chown=app:app /src /app
-
-WORKDIR /app
-ENTRYPOINT ["/venvs/app/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+WORKDIR /home/app
+EXPOSE 8080
+ENTRYPOINT ["/venvs/server/bin/pywebtool"]
