@@ -1,48 +1,30 @@
-<header class="bg-gray-800 text-white w-full">
-  <div class="flex justify-between bg-gray-800 w-full mb-5">
+<header class="w-full border-b border-line mb-6">
+  <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2">
 
-    <div class="py-2 ml-10 gap-10 flex min-w-[400px]">
+    <a href="{{ root_path }}/" class="text-paper no-underline hover:underline" title="home">~/pytools</a>
 
-      <a href="{{ root_path }}/" class="text-gray-500 text-2xl no-underline hover:text-white transition-colors duration-300">
-        <i class="fas fa-home"></i>
-      </a>
-
-      <div class="flex flex-col flex-no-wrap justify-center">
-        <a href="{{ root_path }}/privacy-policy" class="text-sm text-gray-500 hover:text-white transition-colors duration-300 whitespace-nowrap">Privacy Policy</a>
-        <a href="{{ root_path }}/terms-of-service" class="text-sm text-gray-500 hover:text-white transition-colors duration-300 whitespace-nowrap">Terms of Service</a>
-      </div>
-
-      <div class="flex flex-col justify-center">
-        <a class="text-sm text-gray-500 hover:text-white transition-colors duration-300">support@pywebtools.com</a>
-      </div>
-
-      <div class="flex-grow"></div>
-    </div>
+    <nav class="flex flex-wrap items-center gap-x-4 text-dim">
+      <a href="{{ root_path }}/privacy-policy" class="whitespace-nowrap">privacy</a>
+      <a href="{{ root_path }}/terms-of-service" class="whitespace-nowrap">terms</a>
+      <span class="whitespace-nowrap">support@pywebtools.com</span>
+    </nav>
 
     <div class="flex-grow"></div>
-    <h1 class="text-lg py-2 rounded flex items-center"> {{ header_title }} </h1>
+
+    <h1 class="text-paper whitespace-nowrap order-last w-full text-center sm:order-none sm:w-auto">[ {{ header_title }} ]</h1>
+
     <div class="flex-grow"></div>
 
-    <div class="py-2 mr-10 gap-2 flex min-w-[400px]">
-      
-      <div class="flex-grow"></div>
-
-      <a 
-        class="p-2 text-sm rounded bg-gray-700 hover:bg-blue-500 border-2 border-white flex items-center"
-        href="{{ root_path }}/user">
-          Profile
-      </a>
-
-      <a 
-        class="p-2 text-sm rounded bg-gray-700 hover:bg-gray-500 border-2 border-white flex items-center"
+    <div class="flex items-center gap-2">
+      <a class="btn" href="{{ root_path }}/user">profile</a>
+      <a
+        class="btn"
         hx-get="{{ root_path }}/login/button"
         hx-trigger="load"
         hx-swap="outerHTML">
-        Login
+        login
       </a>
-
     </div>
 
   </div>
-  
 </header>

@@ -1,0 +1,68 @@
+/* Monochrome Prism theme: emphasis through weight and shade, not hue. */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #ffffff;
+  background: none;
+  font-family: ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  tab-size: 4;
+  hyphens: none;
+}
+pre[class*="language-"] {
+  padding: 1rem;
+  margin: 0;
+  overflow: auto;
+}
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #737373;
+  font-style: italic;
+}
+.token.punctuation {
+  color: #a3a3a3;
+}
+.token.keyword,
+.token.boolean,
+.token.builtin,
+.token.important {
+  color: #ffffff;
+  font-weight: 700;
+}
+.token.string,
+.token.char,
+.token.triple-quoted-string,
+.token.string-interpolation {
+  color: #a3a3a3;
+}
+.token.number,
+.token.operator,
+.token.entity,
+.token.url {
+  color: #d4d4d4;
+}
+.token.function,
+.token.class-name {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: #525252;
+}
+.token.decorator,
+.token.annotation {
+  color: #d4d4d4;
+  font-style: italic;
+}
+/* line numbers */
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid #525252;
+}
+.line-numbers-rows > span:before {
+  color: #525252;
+}
