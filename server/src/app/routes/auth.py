@@ -23,6 +23,7 @@ router = APIRouter()
 OWNER_USER_ID = 49600918
 OWNER_GITHUB_LOGIN = ENVIRONMENT.OWNER_GITHUB_LOGIN
 DEFAULT_ALIAS = "annonymous"  # matches the User model default
+RECENT_STATES = 5  # login states kept per session (one per rendered login button)
 
 
 class GitHubLoginError(Exception):
@@ -91,7 +92,8 @@ def _login_button(request: Request) -> HTMLResponse:
     url = None
     if github.configured:
         state = secrets.token_urlsafe(24)
-        request.session["oauth_state"] = state
+        # every page render issues a new state; keep the last few so an older tab's login still works
+        request.session["oauth_states"] = (request.session.get("oauth_states") or [])[-(RECENT_STATES - 1) :] + [state]
         url = github.login_url(state)
     return TEMPLATES.TemplateResponse(request, "components/login_button.html", {"url": url})
 
@@ -109,8 +111,8 @@ async def logout(request: Request):
 
 @router.get("/auth/github")
 async def auth_github(request: Request, code: str, state: str, session: SessionDep):
-    expected = request.session.pop("oauth_state", None)
-    if not expected or not secrets.compare_digest(expected, state):
+    expected = request.session.pop("oauth_states", None) or []
+    if not any(secrets.compare_digest(candidate, state) for candidate in expected):
         raise HTTPException(status_code=403, detail="Login state mismatch, try again")
 
     try:

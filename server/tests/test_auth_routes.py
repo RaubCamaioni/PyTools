@@ -53,6 +53,15 @@ def test_login_button_links_to_github_with_state(github):
     assert len(parse_qs(urlparse(url).query)["state"][0]) >= 16
 
 
+def test_callback_accepts_a_recent_state_after_the_button_was_rendered_again(github):
+    # a second tab or a reloaded header renders the button again; the first tab's login must still work
+    c = TestClient(app)
+    first = state_for(c)
+    state_for(c)
+    r = c.get("/auth/github", params={"code": "abc", "state": first}, follow_redirects=False)
+    assert r.status_code in (302, 307)
+
+
 def test_callback_rejects_wrong_state(github):
     c = TestClient(app)
     c.get("/login/button")  # creates the session state
