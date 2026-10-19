@@ -27,6 +27,12 @@ def test_timeout_by_elapsed(tmp_path):
     assert r.outcome is Outcome.TIMEOUT and r.message == "Tool exceeded the 10 second limit"
 
 
+def test_timeout_by_podman_exit_code(tmp_path):
+    # inspect reports ExitCode -1 when podman's own --timeout killed the container
+    r = classify(tmp_path, exit_code=-1, elapsed=0.3)
+    assert r.outcome is Outcome.TIMEOUT
+
+
 def test_timeout_by_safety_net_flag(tmp_path):
     assert classify(tmp_path, exit_code=None, elapsed=0.0, timed_out=True).outcome is Outcome.TIMEOUT
 

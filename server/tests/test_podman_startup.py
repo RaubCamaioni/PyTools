@@ -31,6 +31,15 @@ async def test_start_sequence_and_ready():
     assert runner.available and runner.unavailable_reason is None
 
 
+async def test_self_test_accepts_podman_timeout_exit_code():
+    # podman reports a --timeout kill as exit 255 (inspect ExitCode -1), not 137
+    fake = ScriptedPodman(run_responses=[(137, "", ""), (255, "", "")])
+    runner = PodmanRunner(cfg(), exec=fake, sleep=no_sleep)
+    await runner.start()
+    await runner.stop()
+    assert runner.available
+
+
 async def test_self_test_memory_not_enforced_fails_closed():
     fake = ScriptedPodman(run_responses=[(0, "", ""), (137, "", "")])
     runner = PodmanRunner(cfg(), exec=fake, sleep=no_sleep)

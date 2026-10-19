@@ -10,10 +10,13 @@ def test_command_matches_spec_flags():
     r = PodmanRunner(CFG)
     cmd = r.command("run-abc", Path("/tmp/pywebtools-runs/abc/tool.py"), Path("/tmp/pywebtools-runs/abc"))
     assert cmd[:3] == ["podman", "run", "--name"] and cmd[3] == "run-abc"
+    # no --userns=auto: a per-sandbox UID mapping would force a re-owned copy of the 2.6 GB
+    # sandbox image per mapping on fuse-overlayfs; the sandbox runs as the image's unprivileged user instead
+    assert "--userns=auto" not in cmd
     for flag in [
         "--network=none",
         "--uts=host",
-        "--userns=auto",
+        "--user=1001",
         "--cpus=0.5",
         "--memory=1g",
         "--memory-swap=1g",
@@ -25,8 +28,10 @@ def test_command_matches_spec_flags():
     ]:
         assert flag in cmd
     assert cmd[cmd.index("--tmpfs") + 1] == "/tmp:rw,size=64m"
-    assert cmd[cmd.index("-v") + 1] == "/tmp/pywebtools-runs/abc:/box:U"
-    assert cmd[-5:] == [CFG.image, "--file", "/box/tool.py", "--workdir", "/box"]
+    # the run directory keeps its own path inside the sandbox: args.json carries absolute upload paths
+    # and result.json carries absolute output paths that the app must find on its side afterwards
+    assert cmd[cmd.index("-v") + 1] == "/tmp/pywebtools-runs/abc:/tmp/pywebtools-runs/abc:U"
+    assert cmd[-5:] == [CFG.image, "--file", "/tmp/pywebtools-runs/abc/tool.py", "--workdir", "/tmp/pywebtools-runs/abc"]
     assert "--rm" not in cmd
 
 
