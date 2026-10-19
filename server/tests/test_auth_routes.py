@@ -101,6 +101,20 @@ def test_github_failure_is_403(github):
     assert c.get("/auth/github", params={"code": "abc", "state": state}, follow_redirects=False).status_code == 403
 
 
+async def test_user_for_code_reports_githubs_error_text():
+    # GitHub answers a bad exchange with HTTP 200 and an error field; the reason must reach the log
+    import httpx
+
+    def handler(request):
+        return httpx.Response(200, json={"error": "incorrect_client_credentials", "error_description": "The client_id and/or client_secret passed are incorrect."})
+
+    oauth = auth_routes.GitHubOAuth("id", "secret", "https://pywebtools.com/auth/github")
+    oauth.transport = httpx.MockTransport(handler)
+    with pytest.raises(auth_routes.GitHubLoginError) as e:
+        await oauth.user_for_code("code")
+    assert "incorrect_client_credentials" in str(e.value)
+
+
 def test_login_button_says_unavailable_without_github_keys(github):
     github.configured = False
     page = TestClient(app).get("/login/button").text

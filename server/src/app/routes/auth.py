@@ -37,6 +37,7 @@ class GitHubOAuth:
 
     def __init__(self, client_id: Optional[str], client_secret: Optional[str], redirect_uri: str):
         self.client_id, self.client_secret, self.redirect_uri = client_id, client_secret, redirect_uri
+        self.transport: Optional[httpx.AsyncBaseTransport] = None  # tests inject a MockTransport
 
     @property
     def configured(self) -> bool:
@@ -48,7 +49,7 @@ class GitHubOAuth:
 
     async def user_for_code(self, code: str) -> dict:
         """Exchange the callback code for the GitHub user's id and login."""
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=15, transport=self.transport) as client:
             response = await client.post(
                 self.TOKEN_URL,
                 data={
@@ -59,9 +60,12 @@ class GitHubOAuth:
                 },
                 headers={"Accept": "application/json"},
             )
-            token = response.json().get("access_token") if response.status_code == 200 else None
+            payload = response.json() if response.status_code == 200 else {}
+            token = payload.get("access_token")
             if not token:
-                raise GitHubLoginError(f"token exchange failed: {response.status_code}")
+                # GitHub reports a bad exchange with HTTP 200 and an error field
+                reason = payload.get("error", f"HTTP {response.status_code}")
+                raise GitHubLoginError(f"token exchange failed: {reason}: {payload.get('error_description', '')}".rstrip(": "))
             user = await client.get(
                 self.USER_URL,
                 headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
