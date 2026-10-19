@@ -34,4 +34,18 @@ ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
 APP_DIRECTORY = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=APP_DIRECTORY / "webapp" / "templates")
 
+
+def _static_version() -> str:
+    """Content hash of the built stylesheet: browsers re-fetch /static/*.css?v=... after every release."""
+    import hashlib
+
+    try:
+        css = (APP_DIRECTORY / "webapp" / "static" / "output.css").read_bytes()
+    except OSError:
+        return "0"
+    return hashlib.sha256(css).hexdigest()[:12]
+
+
+TEMPLATES.env.globals["static_version"] = _static_version()
+
 logger = logging.getLogger("uvicorn.error")
