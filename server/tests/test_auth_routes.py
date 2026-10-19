@@ -75,7 +75,12 @@ def test_callback_logs_in_and_redirects_home(github):
     r = c.get("/auth/github", params={"code": "abc", "state": state}, follow_redirects=False)
     assert r.status_code in (302, 307) and r.headers["location"] == "/"
     assert github.codes == ["abc"]
-    assert "logout: octocat" in c.get("/login/button").text  # alias defaults to the GitHub login
+    assert "[logout]" in c.get("/login/button").text
+    assert "[ octocat ]" in c.get("/").text  # the header centre shows the alias (defaults to the GitHub login)
+
+
+def test_header_shows_anonymous_when_logged_out(github):
+    assert "[ anonymous ]" in TestClient(app).get("/").text
 
 
 def test_owner_github_login_maps_to_existing_user_id(github):

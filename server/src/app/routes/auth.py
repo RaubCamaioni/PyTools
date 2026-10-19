@@ -89,6 +89,15 @@ def _session_user(request: Request) -> Optional[User]:
         return None
 
 
+def session_alias(request: Request) -> str:
+    """What the header centre shows: the logged-in alias, or 'anonymous'."""
+    user = _session_user(request)
+    return user.alias if user is not None else "anonymous"
+
+
+TEMPLATES.env.globals["session_alias"] = session_alias
+
+
 def _login_button(request: Request) -> HTMLResponse:
     user = _session_user(request)
     if user is not None:
