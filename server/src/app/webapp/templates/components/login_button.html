@@ -1,5 +1,5 @@
-<a
-    href="{{ url }}"
-    class="btn">
-    login
-</a>
+{% if url %}
+<a href="{{ url }}" class="btn">login</a>
+{% else %}
+<span class="text-dim" title="GitHub login is not configured on this server">login unavailable</span>
+{% endif %}

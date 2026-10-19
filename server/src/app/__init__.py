@@ -4,28 +4,31 @@ import string
 import logging
 import os
 from dataclasses import dataclass, field
+from typing import Optional
 
 from app.utility.sandbox_config import SandboxConfig
+
+
+REQUIRED_ENVIRONMENT = ("SESSION_KEY", "DATABASE")
 
 
 @dataclass
 class _ENVIRONMENT:
     SESSION_KEY: str = os.environ.get("SESSION_KEY")
-    GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID")
-    GOOGLE_CLIENT_SECRET: str = os.environ.get("GOOGLE_CLIENT_SECRET")
-    GOOGLE_REDIRECT_URI: str = os.environ.get("GOOGLE_REDIRECT_URI")
     DATABASE: str = os.environ.get("DATABASE")
+    # GitHub login is optional: without the keys the site runs with login disabled
+    GITHUB_CLIENT_ID: Optional[str] = os.environ.get("GITHUB_CLIENT_ID")
+    GITHUB_CLIENT_SECRET: Optional[str] = os.environ.get("GITHUB_CLIENT_SECRET")
+    GITHUB_REDIRECT_URI: str = os.environ.get("GITHUB_REDIRECT_URI", "https://pywebtools.com/auth/github")
+    # the GitHub account that owns the tools uploaded under the original (Google) account
+    OWNER_GITHUB_LOGIN: str = os.environ.get("OWNER_GITHUB_LOGIN", "RaubCamaioni")
     # SANDBOX_* variables all have defaults; see SandboxConfig
     sandbox: SandboxConfig = field(default_factory=lambda: SandboxConfig.from_environment(os.environ))
 
     def __post_init__(self):
-        for name, value in self.__dict__.items():
-            if value is None:
+        for name in REQUIRED_ENVIRONMENT:
+            if getattr(self, name) is None:
                 raise ValueError(f"Missing environment variable: {name}")
-
-    @property
-    def LOGIN_URL(self):
-        return f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={self.GOOGLE_CLIENT_ID}&redirect_uri={self.GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=online"
 
 
 ENVIRONMENT = _ENVIRONMENT()
