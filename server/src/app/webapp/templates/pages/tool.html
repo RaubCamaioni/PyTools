@@ -6,78 +6,55 @@
         {% include 'components/tool_style.html' %}
         {% include 'components/code_style.html' %}
     </head>
-    <body class="bg-gray-900 text-gray-300 font-sans">
+    <body class="bg-ink text-paper font-mono">
 
         {% include 'components/header.html'%}
 
-        <div class="w-4/5 mx-auto flex flex-col items-center bg-gray-900">
-            
-            <div class="w-full text-left font-bold mt-6 mb-2 text-white pl-4">{{ tool }}</div>
-            <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md overflow-x-auto">
-                <div class="flex flex-row gap-4 w-full">
-                    
-                    <div class="max-h-[700px] w-3/4 bg-gray-700 rounded-md overflow-x-auto">
-                        <pre class="line-numbers"><code class="language-python">{{ code }}</code></pre>
+        <div class="w-11/12 max-w-7xl mx-auto flex flex-col">
+
+            <div class="prompt font-bold mb-2">{{ tool }}</div>
+            <div class="panel flex flex-col md:flex-row">
+
+                <div class="md:w-3/4 max-h-[700px] overflow-auto border-b md:border-b-0 md:border-r border-line">
+                    <pre class="line-numbers"><code class="language-python">{{ code }}</code></pre>
+                </div>
+
+                <div class="md:w-1/4 flex flex-col p-3 gap-3">
+                    <form
+                        id="argument-form"
+                        enctype="multipart/form-data"
+                        hx-post="{{ endpoint }}"
+                        hx-target="#return"
+                        hx-indicator="#loading-bar"
+                        hx-swap="innerHTML">
+
+                        {{ form_groups | safe }}
+
+                        <button
+                            class="btn w-full mt-2"
+                            type="submit"
+                            form="argument-form">[ run ]</button>
+                    </form>
+
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-dim">
+                        <a href="{{ root_path }}/download/tool/{{ tool_id }}">[download]</a>
+                        <button id="share-link-button" class="underline underline-offset-2 decoration-line hover:decoration-paper cursor-pointer">[share link]</button>
                     </div>
 
-                    <div class="w-1/4 flex flex-col mt-0 gap-0 rounded-md bg-gray-700 p-2">
-                        <form
-                            id="argument-form" 
-                            enctype="multipart/form-data"
-                            hx-post="{{ endpoint }}"
-                            hx-target="#return"
-                            _="on htmx:beforeRequest add .animate-wiggle to #result_title
-                            on htmx:afterRequest remove .animate-wiggle from #result_title"
-                            hx-swap="innerHTML">
-                        
-                            {{ form_groups | safe }}
-                    
-                            <button 
-                                class="w-full mt-2 h-10 px-4 border border-gray-300 rounded-md bg-gray-700 text-white hover:bg-gray-600"
-                                type="submit"
-                                form="argument-form">Submit</button>
-                        </form>
+                    <div class="flex-grow"></div>
 
-                        <div class="flex gap-2 mt-2 w-full">
-                            <a
-                                href="{{ root_path }}/download/tool/{{ tool_id }}"
-                                class="hover:text-white"> 
-                                <i class="fas fa-download mr-2"></i>
-                                Offline Runner
-                            </a>
-                            <div id="spacer" class="flex-grow"></div>
-                            <button 
-                                id="share-link-button"
-                                class="hover:text-white">
-                                <i class="fas fa-share-alt mr-2"></i>
-                                Share Link 
-                            </button>
-                        </div>
-
-                        <div id="spacer" class="flex-grow"></div>
-
-                        <div>
-                            runs: {{ runs }}
-                        </div>
-                    </div>
+                    <div class="label">runs: {{ runs }}</div>
                 </div>
             </div>
-            
-            <div class="container flex flex-row items-center max-w-full">
-                <div
-                    id="result_title"
-                    class="text-left font-bold mt-6 mb-2 mr-2 text-white pl-4">
-                    Results
-                </div>
-                <div class="flex-grow"></div>
-            </div>
 
-            <div class="container flex flex-row items-start max-w-full m-0 p-4 rounded-md bg-gray-800 shadow-md" id="result">
-                <div class="w-full mx-auto p-2 bg-gray-700 rounded-md" id="return">
+            <div id="result_title" class="output font-bold mt-6 mb-2">results</div>
+            <div id="loading-bar" class="loadbar" aria-hidden="true"></div>
+            <div class="panel p-3 overflow-x-auto" id="result">
+                <div id="return">
                     <pre></pre>
                 </div>
             </div>
-            
+
         </div>
         <div style="height: 200px;"></div>
         <script async>
@@ -86,7 +63,7 @@
                 const form = document.getElementById('argument-form');
                 const formData = new FormData(form);
                 const queryString = new URLSearchParams(formData).toString();
-                const currentUrl = new URL(window.location.href); 
+                const currentUrl = new URL(window.location.href);
                 currentUrl.search = queryString;
                 navigator.clipboard.writeText(currentUrl.toString())
             }

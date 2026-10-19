@@ -1,16 +1,11 @@
-<li class="my-4 rounded-md overflow-hidden flex justify-between items-center">
-    
-    <div class="flex justify-between bg-gray-800 w-full">
+<li class="-mt-px">
+    <div class="row flex flex-wrap items-center gap-x-4 gap-y-2">
 
-        <a href="{{ root_path }}/tool/{{ id }}" class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg text-gray-300 rounded-md">
-            {{ name }}
-        </a>
+        <a href="{{ root_path }}/tool/{{ id }}" class="font-bold">{{ name }}</a>
 
         <div class="flex-grow"></div>
 
-        <div class="flex items-center space-x-2">
-
-            <label>Anonymous:</label>
+        <label class="flex items-center gap-1 text-dim">
             <input
                 type="checkbox"
                 {{ anonymous }}
@@ -19,8 +14,10 @@
                     toggle @checked on me
                     fetch `{{ root_path }}/manage/tool/settings/{{ id }}?anonymous=${@checked is not null}` with method:'POST'
                 end"/>
+            anonymous
+        </label>
 
-            <label>Public:</label>
+        <label class="flex items-center gap-1 text-dim">
             <input
                 type="checkbox"
                 {{ public }}
@@ -29,31 +26,26 @@
                     toggle @checked on me
                     fetch `{{ root_path }}/manage/tool/settings/{{ id }}?public=${@checked is not null}` with method:'POST'
                 end"/>
+            public
+        </label>
 
-            <input
-                id="tool-update-{{ id }}"
-                type="file" 
-                name="file" 
-                hx-post="{{ root_path }}/manage/tool/update/{{ id }}"
-                hx-encoding="multipart/form-data"
-                hx-trigger="change" 
-                hx-swap="none" 
-                style="display: none;" />
+        <input
+            id="tool-update-{{ id }}"
+            type="file"
+            name="file"
+            hx-post="{{ root_path }}/manage/tool/update/{{ id }}"
+            hx-encoding="multipart/form-data"
+            hx-trigger="change"
+            hx-swap="none"
+            style="display: none;" />
 
-            <label
-                for="tool-update-{{ id }}"
-                class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg text-gray-300 rounded-md">
-                Update
-            </label>
+        <label for="tool-update-{{ id }}" class="btn">[ update ]</label>
 
-            <a 
-                hx-delete="{{ root_path }}/manage/tool/delete/{{ id }}"
-                hx-trigger="click"
-                hx-target="closest li"
-                class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg text-gray-300 rounded-md">
-                Delete
-            </a>
+        <a
+            hx-delete="{{ root_path }}/manage/tool/delete/{{ id }}"
+            hx-trigger="click"
+            hx-target="closest li"
+            class="btn">[ delete ]</a>
 
-        </div>
     </div>
 </li>

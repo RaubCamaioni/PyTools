@@ -1,36 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-
-        {% with title="User Profile" %}
+        {% with title="PyTools" %}
             {% include 'components/head.html'%}
         {% endwith %}
-
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
     </head>
-    <body class="bg-tahiti text-gray-300 font-sans">
+    <body class="bg-ink text-paper font-mono">
 
         {% include 'components/header.html'%}
-        
-        <div class="w-full p-4 flex justify-center">
-            <input 
-                class="px-4 py-2 rounded border border-gray-300 bg-gray-900"
-                type="search"
-                name="search"
-                placeholder="Tags..."
-                hx-post="{{ root_path }}/tools?start=0&end=50"
-                hx-trigger="keyup[key=='Enter']"
-                hx-target="#tool-list"
-                hx-indicator=".htmx-indicator"
-                hx-swap="innerHTML">
+
+        <div class="max-w-2xl mx-auto px-4">
+            <label class="flex items-center gap-2">
+                <span class="text-dim">$</span>
+                <input
+                    class="flex-grow"
+                    type="search"
+                    name="search"
+                    placeholder="search tags..."
+                    hx-post="{{ root_path }}/tools?start=0&end=50"
+                    hx-trigger="keyup[key=='Enter']"
+                    hx-target="#tool-list"
+                    hx-indicator=".htmx-indicator"
+                    hx-swap="innerHTML">
+            </label>
+
+            <ul id="tool-list" class="mt-4">
+                {% with start=0, end=50 %}
+                    {% include 'components/tool_scroll_loader.html'%}
+                {% endwith %}
+            </ul>
         </div>
 
-        <ul id="tool-list" class="max-w-2xl mx-auto">
-            {% with start=0, end=50 %}
-                {% include 'components/tool_scroll_loader.html'%}
-            {% endwith %}
-        </ul>
-        
     </body>
 </html>

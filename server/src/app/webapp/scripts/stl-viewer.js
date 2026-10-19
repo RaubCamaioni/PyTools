@@ -10,7 +10,6 @@ class STLViewer extends HTMLElement {
         this.shadow.appendChild(this.container);
         this.container.style.width = '100%';
         this.container.style.height = '100%';
-        this.container.style.borderRadius = '15px';
         this.container.style.overflow = 'hidden';
     }
 
@@ -52,11 +51,13 @@ class STLViewer extends HTMLElement {
     initScene() {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        // transparent canvas: the page behind it is black, so the model floats on the terminal background
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setClearColor(0x000000, 0);
         renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
         this.container.appendChild(renderer.domElement);
 
-        scene.background = new THREE.Color(0x4B5563);
+        scene.background = null;
 
         // Add light to the scene
         const light = new THREE.AmbientLight(0x404040, 2);
@@ -110,7 +111,8 @@ class STLViewer extends HTMLElement {
     loadSTL(url) {
         const loader = new STLLoader();
         loader.load(url, geometry => {
-            const material = new THREE.MeshPhongMaterial({ color: 0xd3d3d3 });
+            // pure white model; the lights give it shading so the shape still reads
+            const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
             const mesh = new THREE.Mesh(geometry, material);
             this.scene.add(mesh);
 

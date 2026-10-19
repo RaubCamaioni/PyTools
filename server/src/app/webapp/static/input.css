@@ -1,7 +1,122 @@
 @import "tailwindcss";
 
+/* Monochrome terminal theme. Build: tailwindcss -i static/input.css -o static/output.css --minify
+   (run from server/src/app/webapp so the templates are scanned). */
 @theme {
-  --color-midnight: #121063;
-  --color-tahiti: #3ab7bf;
-  --color-bermuda: #78dcca;
+  --color-ink: #000000;   /* page background */
+  --color-paper: #ffffff; /* primary text, active borders */
+  --color-dim: #a3a3a3;   /* secondary text */
+  --color-line: #525252;  /* panel borders */
+  --color-faint: #171717; /* subtle fills */
+  --font-mono: ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  html {
+    background: var(--color-ink);
+  }
+  body {
+    @apply bg-ink text-paper font-mono text-sm antialiased;
+  }
+  a {
+    @apply underline underline-offset-2 decoration-line;
+  }
+  a:hover {
+    @apply decoration-paper;
+  }
+  ::selection {
+    @apply bg-paper text-ink;
+  }
+  :focus-visible {
+    @apply outline-2 outline-dashed outline-paper outline-offset-2;
+  }
+  input,
+  select,
+  textarea {
+    @apply bg-ink text-paper border border-line px-2 py-1 font-mono text-sm;
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    @apply border-paper outline-none;
+  }
+  input[type="checkbox"] {
+    @apply accent-paper;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-ink);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-dim);
+  }
+  pre {
+    @apply font-mono text-sm;
+  }
+}
+
+@layer components {
+  /* a TUI panel: a 1px border instead of a filled, rounded card */
+  .panel {
+    @apply border border-line;
+  }
+  /* section titles read like a shell prompt */
+  .prompt::before {
+    content: "$ ";
+    color: var(--color-dim);
+  }
+  .output::before {
+    content: "> ";
+    color: var(--color-dim);
+  }
+  /* bordered text buttons that invert on hover */
+  .btn {
+    @apply inline-flex items-center justify-center border border-paper px-3 py-1 no-underline cursor-pointer select-none whitespace-nowrap;
+  }
+  .btn:hover,
+  .btn:focus-visible {
+    @apply bg-paper text-ink;
+  }
+  /* list rows */
+  .row {
+    @apply block border border-line px-4 py-3 no-underline;
+  }
+  a.row:hover {
+    @apply bg-paper text-ink;
+  }
+  .label {
+    @apply text-dim text-xs uppercase tracking-wider;
+  }
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    @apply opacity-100;
+  }
+  /* indeterminate loading bar; htmx adds .htmx-request to the hx-indicator element while a request runs */
+  .loadbar {
+    @apply relative hidden h-0.5 w-full overflow-hidden bg-faint;
+  }
+  .loadbar.htmx-request {
+    @apply block;
+  }
+  .loadbar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: var(--color-paper);
+    animation: loadbar 1.2s linear infinite;
+  }
+  @keyframes loadbar {
+    to {
+      left: 100%;
+    }
+  }
 }

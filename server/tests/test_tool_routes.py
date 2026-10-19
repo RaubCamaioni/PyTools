@@ -100,6 +100,17 @@ def test_lifespan_does_not_wait_for_runner_start(monkeypatch):
     assert time.monotonic() - started < 2  # pages are served while the sandbox is still starting
 
 
+def test_stylesheet_urls_are_versioned(monkeypatch, public_tool):
+    import re
+
+    c = client(monkeypatch, StubRunner())
+    for path in ("/", "/tool/8"):
+        html = c.get(path).text
+        # same URL + new content gets served from browser caches; the version query defeats that
+        assert re.search(r'/static/output\.css\?v=[0-9a-f]{8,}"', html), path
+    assert re.search(r'/static/prism-mono\.css\?v=[0-9a-f]{8,}"', c.get("/tool/8").text)
+
+
 def test_healthz(monkeypatch):
     assert client(monkeypatch, StubRunner()).get("/healthz").json() == {"sandbox": "ready"}
     r = client(monkeypatch, StubRunner(available=False)).get("/healthz")

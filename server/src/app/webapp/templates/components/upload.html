@@ -1,20 +1,16 @@
-<div class="bg-gray-800 px-2 py-1 rounded-lg shadow-lg w-full max-w-md mx-auto">
-    
-    <h1 class="text-2xl font-semibold text-center text-white mb-6">Upload Code</h1>
+<div class="panel p-3 w-full max-w-md mx-auto">
 
-    <label 
-        for="file-input"
-        class="w-full bg-blue-600 text-white px-2 py-2 rounded-md mt-4 hover:bg-blue-700">
-        Upload Code File
-    </label>
+    <div class="prompt font-bold mb-3">upload code</div>
 
-    <input 
-        id="file-input" 
-        type="file" 
-        name="file" 
+    <label for="file-input" class="btn w-full">[ choose .py file ]</label>
+
+    <input
+        id="file-input"
+        type="file"
+        name="file"
         hx-post="/manage/tool/upload"
         hx-encoding="multipart/form-data"
-        hx-trigger="change" 
-        hx-swap="none" 
+        hx-trigger="change"
+        hx-swap="none"
         style="display: none;" />
 </div>

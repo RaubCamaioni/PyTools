@@ -3,11 +3,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ title }}</title>
-<link rel="icon" type="image/x-icon" href="/static/favicon.ico"> 
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
 
 {# Styling #}
-<link href="/static/output.css" rel="stylesheet">
-<link href="/static/all.min.css" rel="stylesheet">
+<link href="/static/output.css?v={{ static_version }}" rel="stylesheet">
 
 {# Interactivity #}
 <script src="/scripts/htmx.min.js"></script>

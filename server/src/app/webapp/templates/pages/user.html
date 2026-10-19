@@ -1,50 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-    
+
     <head>
         {% set title = 'User Profile' %}
         {% include 'components/head.html' %}
     </head>
 
-    <body class="bg-gray-900 text-gray-300 font-sans">
+    <body class="bg-ink text-paper font-mono">
 
         {% include 'components/header.html'%}
 
-        <div class="mx-auto flex flex-col items-center bg-gray-900">
+        <div class="max-w-3xl mx-auto px-4 flex flex-col gap-6">
 
-            <div class="text-center font-bold text-white m-2">User Settings</div>
-            <form 
-                hx-post="/manage/user/settings"
-                hx-swap="none"
-                onsubmit="event.preventDefault();"
-                class="mx-auto items-center flex flex-row gap-2">
-               <label>Alias:</label>
-               <input 
-                class="rounded-md bg-gray-700 px-2"
-                type="text"
-                name="alias"
-                value="{{ alias }}">
-                <button
-                    class="rounded-md bg-gray-700 text-white hover:bg-gray-500 px-2">
-                    Submit
-                </button>
-            </form>
+            <section>
+                <div class="prompt font-bold mb-2">user settings</div>
+                <form
+                    hx-post="/manage/user/settings"
+                    hx-swap="none"
+                    onsubmit="event.preventDefault();"
+                    class="panel p-3 flex flex-wrap items-center gap-2">
+                   <label for="alias">alias:</label>
+                   <input
+                    class="flex-grow"
+                    id="alias"
+                    type="text"
+                    name="alias"
+                    value="{{ alias }}">
+                    <button class="btn">[ save ]</button>
+                </form>
+            </section>
 
-            <ul id="tool-list" class="mx-auto">
-                <div class="text-center font-bold text-white m-2">User Tools</div>
+            <section>
+                <div class="prompt font-bold mb-2">user tools</div>
+                <ul id="tool-list">
+                    {% include 'components/upload_tool_item.html'%}
 
-                {% include 'components/upload_tool_item.html'%}
-
-                <li
-                    hx-post="{{ root_path }}/user/tools"
-                    hx-trigger="load"
-                    hx-swap="outerHTML"
-                    class="my-4 rounded-md overflow-hidden">
-                    <a href="#"
-                        class="block px-6 py-4 bg-gray-800 hover:bg-gray-700 text-lg">
-                    </a>
-                </li>
-            </ul>
+                    <li
+                        hx-post="{{ root_path }}/user/tools"
+                        hx-trigger="load"
+                        hx-swap="outerHTML"
+                        class="-mt-px">
+                        <span class="row text-dim">loading...</span>
+                    </li>
+                </ul>
+            </section>
         </div>
     </body>
 </html>

@@ -1,29 +1,20 @@
-<li class="my-4 rounded-md overflow-hidden flex justify-between items-center w-full">
-    
-    <div class="flex justify-between bg-gray-800 w-full">
+<li class="-mt-px">
+    <div class="row flex flex-wrap items-center gap-2">
 
-        <a class="block px-6 py-4 bg-gray-800 text-lg text-gray-300 rounded-md">
-            Upload Code
-        </a>
+        <span class="text-dim">upload a new tool (.py)</span>
 
         <div class="flex-grow"></div>
 
-        <div class="flex items-center space-x-2">
-			<label 
-				for="tool-upload"
-				class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 cursor-pointer text-center m-2">
-				Upload Code File
-			</label>
+        <label for="tool-upload" class="btn">[ choose file ]</label>
 
-			<input 
-				id="tool-upload"
-				type="file" 
-				name="file" 
-				hx-post="{{ root_path }}/manage/tool/upload"
-				hx-encoding="multipart/form-data"
-				hx-trigger="change" 
-				hx-swap="none" 
-				style="display: none;" />
-        </div>
+        <input
+            id="tool-upload"
+            type="file"
+            name="file"
+            hx-post="{{ root_path }}/manage/tool/upload"
+            hx-encoding="multipart/form-data"
+            hx-trigger="change"
+            hx-swap="none"
+            style="display: none;" />
     </div>
 </li>

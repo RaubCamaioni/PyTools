@@ -1,14 +1,15 @@
-<div class="form-group mb-2 flex items-center gap-4"> 
-	
-	<label 
-		class="block w-1/3 text-sm font-medium text-gray-300 mr-2"
-		for="{{ name }}">
+<div class="form-group mb-2 flex items-center gap-2">
+
+	<label
+		class="block w-1/3 text-dim truncate"
+		for="{{ name }}"
+		title="{{ name }}">
 		{{ name }}:
 	</label>
-	
-	<select 
-		class="block w-2/3 rounded-md bg-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-		id="{{ name }}" 
+
+	<select
+		class="block w-2/3"
+		id="{{ name }}"
 		name="{{ name }}">
 		{% for option in options %}
             <option value="{{ option.value }}">{{ option.label }}</option>
