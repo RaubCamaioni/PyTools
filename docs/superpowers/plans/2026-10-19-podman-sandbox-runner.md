@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Sandbox limits, verbatim from the spec: `--network=none --uts=host --userns=auto --cpus=0.5 --memory=1g --memory-swap=1g --pids-limit=64 --read-only --tmpfs /tmp:rw,size=64m --cap-drop=ALL --security-opt=no-new-privileges --timeout=10`, run dir mounted `-v <dir>:/box:U`.
+- Sandbox limits, verbatim from the spec: `--network=none --uts=host --user=1001 --cpus=0.5 --memory=1g --memory-swap=1g --pids-limit=64 --read-only --tmpfs /tmp:rw,size=64m --cap-drop=ALL --security-opt=no-new-privileges --timeout=10`, run dir mounted at its own path `-v <dir>:<dir>:U` (absolute upload/result paths must resolve on both sides).
 - Concurrency 2, queue wait 10 s, app-side safety net 12 s, re-pull of the sandbox image every 10 min, readiness wait up to 60 s, pull retry every 60 s.
 - User-facing messages, verbatim: `Tool exceeded the 10 second limit`, `Tool exceeded the 1 GB memory limit`, `Tool failed to run`, `Server busy, try again`, `Sandbox unavailable`.
 - Environment variables and defaults: `SANDBOX_IMAGE=docker.io/raubcamaioni/pywebtools-sandbox:latest`, `SANDBOX_MAX_CONCURRENT=2`, `SANDBOX_QUEUE_SECONDS=10`, `SANDBOX_TIMEOUT_SECONDS=10`, `SANDBOX_MEMORY=1g`, `SANDBOX_CPUS=0.5`, `SANDBOX_PIDS=64`, `SANDBOX_RUN_DIR=/tmp/pywebtools-runs`. `SANDBOX` (old venv path) is removed.
@@ -633,7 +633,7 @@ async def test_memory_bomb_reports_memory_limit(runner, run_dir): ...  # tool: b
 async def test_infinite_loop_reports_timeout(runner, run_dir): ...  # while True: pass; outcome TIMEOUT, elapsed < 12.5 s
 async def test_fork_bomb_hits_pids_limit(runner, run_dir): ...  # 100 subprocess.Popen(["sleep","5"]); outcome CRASHED or result reports error
 async def test_network_is_unreachable(runner, run_dir): ...  # socket.create_connection(("1.1.1.1",53)); result contains "unreachable" or OSError text
-async def test_two_concurrent_runs_distinct_uid_ranges(runner, run_dir): ...  # tool prints open("/proc/self/uid_map").read(); run two via asyncio.gather; maps differ
+async def test_sandbox_runs_as_unprivileged_user(runner, run_dir): ...  # tool returns os.getuid() and whether /run/secrets exists; uid == 1001, no secrets visible
 async def test_run_dir_owned_by_app_user_after_run(runner, run_dir): ...  # (run_dir/"result.json").stat().st_uid == os.getuid()
 ```
 

@@ -33,6 +33,11 @@ SELFTEST_MEMORY_CODE = "bytearray(200*1024*1024)"
 SELFTEST_TIMEOUT = 2
 SELFTEST_TIMEOUT_CODE = "import time; time.sleep(30)"
 KILLED_EXIT_CODES = (137, 143)
+# how podman reports a container killed by its own --timeout: `podman run` exits 255, inspect shows -1
+TIMEOUT_RUN_EXIT_CODE = 255
+TIMEOUT_INSPECT_EXIT_CODE = -1
+# uid of the `app` user created in containers/Containerfile.sandbox
+SANDBOX_UID = 1001
 
 
 class SandboxBusy(Exception):
@@ -112,7 +117,7 @@ class PodmanRunner:
         if rc not in KILLED_EXIT_CODES:
             return "memory limit not enforced"
         rc = await self._selftest_run({"--timeout": str(SELFTEST_TIMEOUT)}, SELFTEST_TIMEOUT_CODE)
-        if rc not in KILLED_EXIT_CODES:
+        if rc not in (*KILLED_EXIT_CODES, TIMEOUT_RUN_EXIT_CODE):
             return "timeout not enforced"
         return None
 
@@ -279,7 +284,9 @@ class PodmanRunner:
         return [
             "--network=none",
             "--uts=host",
-            "--userns=auto",
+            # the image's unprivileged user; maps to a sub-UID of the inner podman user, never to the app user.
+            # (--userns=auto would force a re-owned copy of the 2.6 GB image per mapping on fuse-overlayfs)
+            f"--user={SANDBOX_UID}",
             f"--cpus={cfg.cpus}",
             f"--memory={cfg.memory}",
             f"--memory-swap={cfg.memory}",
@@ -296,6 +303,8 @@ class PodmanRunner:
         # keep the "--tmpfs <spec>" form the tests and operators expect
         i = flags.index("--tmpfs=/tmp:rw,size=64m")
         flags[i : i + 1] = ["--tmpfs", "/tmp:rw,size=64m"]
+        # the run directory keeps its own path inside the sandbox: args.json carries absolute upload
+        # paths and result.json carries absolute output paths that the app serves afterwards
         return [
             "podman",
             "run",
@@ -303,12 +312,12 @@ class PodmanRunner:
             name,
             *flags,
             "-v",
-            f"{run_dir}:/box:U",
+            f"{run_dir}:{run_dir}:U",
             self.config.image,
             "--file",
-            f"/box/{tool.name}",
+            str(run_dir / tool.name),
             "--workdir",
-            "/box",
+            str(run_dir),
         ]
 
     def classify(
@@ -333,6 +342,6 @@ class PodmanRunner:
 
         if oom_killed:
             return RunResult(Outcome.OOM, message=f"Tool exceeded the {cfg.memory_label} memory limit", stderr_tail=tail)
-        if timed_out or elapsed >= cfg.timeout_seconds - TIMEOUT_TOLERANCE:
+        if timed_out or exit_code == TIMEOUT_INSPECT_EXIT_CODE or elapsed >= cfg.timeout_seconds - TIMEOUT_TOLERANCE:
             return RunResult(Outcome.TIMEOUT, message=f"Tool exceeded the {cfg.timeout_seconds:g} second limit", stderr_tail=tail)
         return RunResult(Outcome.CRASHED, message="Tool failed to run", stderr_tail=tail)

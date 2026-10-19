@@ -1,33 +1,43 @@
-# Production image: server (FastAPI) + sandbox venv in one container.
-# Built by .github/workflows/main.yml and pulled by the server's deploy timer.
+# Production app image: systemd as PID 1, the web app as a user service of `podman`,
+# and a nested rootless podman that runs each tool in its own sandbox container.
+# Design and the reasons behind every knob: docs/superpowers/specs/2026-10-19-podman-sandbox-runner-design.md
+#
+# Run it with: --device /dev/fuse --security-opt unmask=ALL (see the spec's host section).
 
-FROM python:3.12-slim-bookworm
+FROM registry.access.redhat.com/ubi9/ubi-init
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  libgl1 \
-  libxrender1 \
-  libglib2.0-0 \
-  libgomp1 \
-  && rm -rf /var/lib/apt/lists/*
+RUN dnf install -y podman fuse-overlayfs shadow-utils python3.12 python3.12-pip && dnf clean all
 
-RUN groupadd -g 1001 app && \
-  useradd -m -u 1001 -g 1001 -s /bin/bash app && \
-  mkdir -p /venvs /data && \
-  chown -R app:app /venvs /data
+# Unprivileged user that runs the app and the inner podman. Its sub-UID range must fit inside
+# the 65536 UIDs the container receives. newuidmap keeps its file capability: do not setuid it.
+RUN useradd -u 1000 -m podman && usermod -p "*" podman && \
+  echo "podman:2000:60000" > /etc/subuid && echo "podman:2000:60000" > /etc/subgid && \
+  mkdir -p /var/lib/systemd/linger && touch /var/lib/systemd/linger/podman
 
-USER app
+# systemd user manager for `podman`: started at boot, all controllers delegated
+COPY containers/app/user@.service.d-container.conf /etc/systemd/system/user@.service.d/container.conf
+RUN mkdir -p /etc/systemd/system/multi-user.target.wants && \
+  ln -s /usr/lib/systemd/system/user@.service /etc/systemd/system/multi-user.target.wants/user@1000.service
 
-# sandbox first: its scientific dependencies are the slow layer and change rarely
-COPY --chown=app:app sandbox /tmp/sandbox
-RUN python3 -m venv /venvs/sandbox && \
-  /venvs/sandbox/bin/pip install --no-cache-dir /tmp/sandbox && \
-  rm -rf /tmp/sandbox
+# inner podman configuration
+COPY containers/app/containers.conf.d-nested.conf /etc/containers/containers.conf.d/nested.conf
+COPY --chown=podman:podman containers/app/storage.conf /home/podman/.config/containers/storage.conf
+# the inner image store is a named volume; podman gives a new volume this directory's ownership
+RUN mkdir -p /home/podman/.local/share/containers && chown -R podman:podman /home/podman/.local
 
-COPY --chown=app:app server /tmp/server
-RUN python3 -m venv /venvs/server && \
+# server
+COPY server /tmp/server
+RUN python3.12 -m venv /venvs/server && \
   /venvs/server/bin/pip install --no-cache-dir /tmp/server && \
   rm -rf /tmp/server
 
-WORKDIR /home/app
+# the app as a systemd user service of `podman`
+COPY --chown=podman:podman containers/app/pywebtools.service /home/podman/.config/systemd/user/pywebtools.service
+RUN mkdir -p /home/podman/.config/systemd/user/default.target.wants && \
+  ln -s ../pywebtools.service /home/podman/.config/systemd/user/default.target.wants/pywebtools.service && \
+  chown -R podman:podman /home/podman/.config && \
+  mkdir -p /data && chown podman:podman /data
+
+STOPSIGNAL SIGRTMIN+3
 EXPOSE 8080
-ENTRYPOINT ["/venvs/server/bin/pywebtool"]
+CMD ["/sbin/init"]

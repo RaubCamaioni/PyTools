@@ -31,7 +31,7 @@ established what nesting needs for *enforced* limits:
 | Inner storage: overlay with `mount_program = fuse-overlayfs` | Native overlay is unavailable to the inner podman. |
 | Outer run flag `--security-opt unmask=ALL` | The kernel refuses a fresh `/proc` mount while podman's default masked paths cover parts of the outer `/proc`. Inherent to nesting with private namespaces. |
 | Sandboxes run with `--uts=host` | The host seccomp profile denies `sethostname` without `CAP_SYS_ADMIN`. Sharing the app container's UTS namespace avoids the call; a sandbox cannot change the hostname (verified). The outer container keeps the default seccomp profile. |
-| Sandboxes run with `--userns=auto` and the run directory mounted `:U` | Each sandbox gets its own 1,024-UID range from the `podman` user's sub-UIDs (disjoint among concurrently running sandboxes), so sandboxes share no UID with each other or with the app. `:U` re-owns the run directory to the sandbox before the run; the app re-owns it afterwards with `podman unshare chown -R 0:0`. Verified: uploads readable, results written, memory limit still enforced, start 0.40 s. |
+| Sandboxes run as the image's unprivileged user (`--user=1001`) with the run directory mounted `:U` | Container uid 1001 maps to a sub-UID of the inner `podman` user (outer UID 3000), so a sandbox shares no UID with the app: a breakout cannot read the app's secrets or database. `:U` re-owns the run directory to the sandbox before the run; the app re-owns it afterwards with `podman unshare chown -R 0:0`. **Not `--userns=auto`:** it was probed successfully with a 50 MB image, but with the real 2.66 GB sandbox image the inner podman (fuse-overlayfs, no idmapped mounts) must create a re-owned copy of every layer per UID mapping; the self-test failed with `creating /etc/mtab symlink: cannot allocate memory` and production runs would pay minutes and ~2.7 GB of disk per concurrent sandbox. Sandboxes therefore share one UID among themselves; they still cannot reach each other's files, because each sees only its own `/box` in its own mount and PID namespaces. |
 
 Measured with that recipe: `--memory=64m` OOM-killed a 200 MB allocation (exit 137),
 `--cpus=0.5` gave 1.02 CPU-seconds in 2 s, `--pids-limit=16` refused the 17th fork,
@@ -130,18 +130,22 @@ the app itself; 2 × 0.5 CPU leaves one vCPU for the app, nginx and the OS.
 
    ```
    podman run --name run-<id> \
-     --network=none --uts=host --userns=auto \
+     --network=none --uts=host --user=1001 \
      --cpus=0.5 --memory=1g --memory-swap=1g --pids-limit=64 \
      --read-only --tmpfs /tmp:rw,size=64m \
      --cap-drop=ALL --security-opt=no-new-privileges \
      --timeout=10 \
-     -v <dir>:/box:U \
-     <SANDBOX_IMAGE> --file /box/<tool>.py --workdir /box
+     -v <dir>:<dir>:U \
+     <SANDBOX_IMAGE> --file <dir>/<tool>.py --workdir <dir>
    ```
 
-   The sandbox process is container-root inside its own UID range (outer UIDs
-   2000 and up), with no capabilities. It shares no UID with the app or with other
-   running sandboxes; `:U` gives it ownership of its run directory.
+   The run directory keeps its own absolute path inside the sandbox (as it did under
+   `isolate`): `args.json` carries absolute upload paths and `result.json` carries
+   absolute output paths that `/download/{path}` serves from the app's filesystem.
+
+   The sandbox process runs as the image's `app` user (container uid 1001, outer
+   UID 3000), with no capabilities. It shares no UID with the app; `:U` gives it
+   ownership of its run directory.
 4. The app waits with a 12-second safety net; if podman's own `--timeout` did not
    end the run, it runs `podman kill run-<id>` and logs a warning.
 5. It reads `podman inspect --format '{{.State.ExitCode}} {{.State.OOMKilled}}'`
@@ -198,9 +202,9 @@ tags on pushes to `main`, build-only on pull requests. The Docker Hub repository
   container, skipped elsewhere): `lower_case_text` happy path; 200 MB allocation →
   memory message; infinite loop → timeout message within 12 s; 40 forks → run fails
   with the pids limit; network connect → fails; file output downloadable; two
-  concurrent runs succeed while a third waits; two concurrent sandboxes report
-  different UID ranges in `/proc/self/uid_map`; the run directory is owned by the
-  app user again after the run.
+  concurrent runs succeed while a third waits; the sandbox process reports uid 1001
+  and cannot read the app's secrets file; the run directory is owned by the app
+  user again after the run.
 - **Deploy smoke:** `POST https://pywebtools.com/tool/8` (`input=hi`,
   `output=hexadecimal`) returns `"0x68 0x69"`, the baseline recorded before the
   migration; `/healthz` reports ready.
