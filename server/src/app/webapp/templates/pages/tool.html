@@ -155,6 +155,15 @@
                 });
             })();
 
+            // numeric arguments are plain text fields: keep only digits, sign and point as the user types
+            document.addEventListener("input", function (event) {
+                const field = event.target;
+                if (field.matches && field.matches("input[data-numeric]")) {
+                    const clean = field.value.replace(/[^0-9.\-]/g, "");
+                    if (clean !== field.value) field.value = clean;
+                }
+            });
+
             function copy_form_to_clipboard() {
                 event.preventDefault();
                 const form = document.getElementById('argument-form');
