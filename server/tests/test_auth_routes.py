@@ -97,6 +97,8 @@ def test_header_prompt_shows_user_and_directory(github):
     c = TestClient(app)
     assert "anonymous@pytools</span>:~<" in c.get("/").text
     assert "anonymous@pytools</span>:~/tools<" in c.get("/user").text
+    assert "anonymous@pytools</span>:~/privacy<" in c.get("/privacy-policy").text
+    assert "anonymous@pytools</span>:~/terms<" in c.get("/terms-of-service").text
 
 
 def test_owner_github_login_maps_to_existing_user_id(github):
