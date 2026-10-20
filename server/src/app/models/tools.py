@@ -215,6 +215,52 @@ def lift_expired_ban(session: Session, user: User) -> bool:
     return False
 
 
+VOTE_MODELS = {"up": UpVote, "down": DownVote}
+
+
+def user_vote(session: Session, user_id: int, tool_id: int) -> Optional[str]:
+    """'up', 'down' or None: the vote this user has on the tool."""
+    for direction, model in VOTE_MODELS.items():
+        if session.exec(select(model).where(model.user_id == user_id, model.tool_id == tool_id)).first():
+            return direction
+    return None
+
+
+def set_vote(session: Session, user_id: int, tool_id: int, direction: str) -> Optional[str]:
+    """One vote per user per tool: voting the same way again removes it, the other way switches it.
+    Returns the vote left in place."""
+    current = user_vote(session, user_id, tool_id)
+    for model in VOTE_MODELS.values():
+        for vote in session.exec(select(model).where(model.user_id == user_id, model.tool_id == tool_id)).all():
+            session.delete(vote)
+    result = None
+    if current != direction:
+        session.add(VOTE_MODELS[direction](user_id=user_id, tool_id=tool_id))
+        result = direction
+    session.commit()
+    return result
+
+
+def vote_counts(session: Session, tool_id: int) -> tuple[int, int]:
+    up = session.exec(select(func.count()).select_from(UpVote).where(UpVote.tool_id == tool_id)).one()
+    down = session.exec(select(func.count()).select_from(DownVote).where(DownVote.tool_id == tool_id)).one()
+    return int(up), int(down)
+
+
+def add_report(session: Session, user_id: int, tool_id: int, reason: str) -> None:
+    """One report per user per tool; reporting again replaces the reason."""
+    report = session.exec(select(Report).where(Report.user_id == user_id, Report.tool_id == tool_id)).first()
+    if report is None:
+        report = Report(user_id=user_id, tool_id=tool_id, reason=reason)
+    report.reason = reason
+    session.add(report)
+    session.commit()
+
+
+def has_reported(session: Session, user_id: int, tool_id: int) -> bool:
+    return session.exec(select(Report).where(Report.user_id == user_id, Report.tool_id == tool_id)).first() is not None
+
+
 def get_user_tools(session: Session, user: User) -> list[Tool]:
     statement = select(Tool).where(Tool.user_id == user.id)
     result = session.exec(statement).all()

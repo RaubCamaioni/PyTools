@@ -114,6 +114,10 @@
   .switch input:checked ~ .label-text {
     @apply bg-paper text-ink;
   }
+  /* a [bracket] control in its "on" state, inverted like a checked switch */
+  .switch-on {
+    @apply bg-paper text-ink;
+  }
   .switch input:focus-visible ~ .label-text {
     @apply outline-2 outline-dashed outline-paper outline-offset-2;
   }

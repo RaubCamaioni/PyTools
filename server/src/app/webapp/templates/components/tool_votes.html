@@ -1,0 +1,37 @@
+{# votes and report for one tool; re-rendered whole by the vote/report routes (htmx outerHTML) #}
+<div id="tool-votes" class="flex flex-wrap items-center gap-1 text-dim">
+    {% if login_needed == "vote" %}
+        <span class="px-1">[login to vote]</span>
+    {% elif login_needed == "report" %}
+        <span class="px-1">[login to report]</span>
+    {% endif %}
+    <button
+        class="px-1 cursor-pointer {% if my_vote == 'up' %}switch-on{% else %}hover:bg-paper hover:text-ink{% endif %}"
+        title="upvote: this tool is useful"
+        hx-post="{{ root_path }}/tool/{{ tool_id }}/vote?direction=up"
+        hx-target="#tool-votes"
+        hx-swap="outerHTML">[up {{ up }}]</button>
+    <button
+        class="px-1 cursor-pointer {% if my_vote == 'down' %}switch-on{% else %}hover:bg-paper hover:text-ink{% endif %}"
+        title="downvote: this tool is not useful"
+        hx-post="{{ root_path }}/tool/{{ tool_id }}/vote?direction=down"
+        hx-target="#tool-votes"
+        hx-swap="outerHTML">[down {{ down }}]</button>
+    {% if reported %}
+        <span class="px-1 switch-on" title="you reported this tool">[reported]</span>
+    {% else %}
+        {# [report] opens a one-line reason prompt; sending it replaces this whole block #}
+        <button class="px-1 cursor-pointer hover:bg-paper hover:text-ink" title="report: tell the admin this tool is harmful or broken"
+            _="on click remove .hidden from #report-form then call #report-reason.focus()">[report]</button>
+        <form id="report-form" class="hidden flex items-center gap-2 basis-full"
+            hx-post="{{ root_path }}/tool/{{ tool_id }}/report"
+            hx-target="#tool-votes"
+            hx-swap="outerHTML"
+            onsubmit="event.preventDefault()"
+            hx-trigger="submit, keyup[key=='Enter'] from:#report-reason">
+            <span class="whitespace-nowrap"><span class="text-dim">$</span> report --reason</span>
+            <span class="field flex-grow"><input id="report-reason" type="text" name="reason" maxlength="1000" autocomplete="off" spellcheck="false" required></span>
+            <button class="btn" type="submit">[send]</button>
+        </form>
+    {% endif %}
+</div>
