@@ -52,8 +52,12 @@ that the upload parser enforces are worth knowing when writing new ones:
 - tags on line 1 are plain alphanumeric words
 
 The sandbox image (`sandbox/pyproject.toml`) provides numpy, scipy, pandas,
-opencv, av, pymupdf, cadquery, ezdxf, Pillow (+HEIF), PyYAML, qrcode, openpyxl,
-python-docx, python-pptx, markdown, tzdata, num2words, xmltodict, tomli-w and py7zr.
+opencv (headless, 4.x), av, pymupdf (+pymupdf4llm), cadquery, ezdxf, Pillow (+HEIF),
+PyYAML, qrcode, openpyxl, python-docx, python-pptx, pdf2docx, mammoth, ebooklib, rawpy,
+markdown, tzdata, num2words, xmltodict, tomli-w and py7zr.
+
+Converter ideas that are not built yet, and why, are kept in
+`docs/converter-backlog.md`.
 
 ## Demo Website
 The application is hosted at https://pywebtools.com.  
