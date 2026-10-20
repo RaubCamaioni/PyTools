@@ -1,5 +1,9 @@
 {# terminal prompt: user@host:cwd $ on the left, the bracket links on the right.
-   Pages set `cwd` before including this (default ~). #}
+   Pages set `cwd` before including this (default ~). The link for the current page is inverted. #}
+{% set path = request.url.path %}
+{% macro navlink(href, label, active) -%}
+<a href="{{ root_path }}{{ href }}" class="no-underline px-1 {% if active %}bg-paper text-ink{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[{{ label }}]</a>
+{%- endmacro %}
 <header class="w-full border-b border-line mb-6">
   <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
 
@@ -8,10 +12,10 @@
     <div class="flex-grow"></div>
 
     <nav class="flex flex-wrap items-center gap-1 whitespace-nowrap">
-      <a href="{{ root_path }}/" class="no-underline px-1 hover:bg-paper hover:text-ink">[home]</a>
-      <a href="{{ root_path }}/privacy-policy" class="no-underline px-1 text-dim hover:bg-paper hover:text-ink">[privacy]</a>
-      <a href="{{ root_path }}/terms-of-service" class="no-underline px-1 text-dim hover:bg-paper hover:text-ink">[terms]</a>
-      <a href="{{ root_path }}/user" class="no-underline px-1 hover:bg-paper hover:text-ink">[profile]</a>
+      {{ navlink('/', 'home', path == '/') }}
+      {{ navlink('/privacy-policy', 'privacy', path == '/privacy-policy') }}
+      {{ navlink('/terms-of-service', 'terms', path == '/terms-of-service') }}
+      {{ navlink('/user', 'profile', path == '/user') }}
       <span
         class="text-dim px-1"
         hx-get="{{ root_path }}/login/button"
