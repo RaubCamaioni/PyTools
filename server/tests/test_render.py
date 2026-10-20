@@ -38,3 +38,8 @@ def test_render_long_list_is_one_item_per_line():
 def test_render_scalars_unchanged():
     assert render.render("0x68 0x69") == "<pre>'0x68 0x69'</pre>"
     assert render.render(42) == "<pre>42</pre>"
+
+
+def test_argument_inputs_are_console_fields():
+    html = render.args_to_form({"count": ("int", "1"), "mode": ("Literal['a', 'b']", "a")})
+    assert html.count('<span class="field') == 2  # text input and select each sit in a blinking-underscore field

@@ -13,13 +13,12 @@
 		name="{{ name }}"
 		_="on change if my.files.length > 0 set #{{ name }}-label.innerText to '[' + my.files[0].name + ']' end">
 	{% else %}
-	<input
-		class="ml-auto w-1/2 min-w-[8ch]"
+	<span class="field ml-auto max-w-[60%]"><input
 		required
 		type="{{ type }}"
 		id="{{ name }}"
 		name="{{ name }}"
 		value="{{ default }}"
-		step=".01">
+		step=".01"></span>
 	{% endif %}
 </div>

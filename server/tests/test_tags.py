@@ -35,7 +35,7 @@ def test_home_page_lists_tags_as_a_first_line_grep(monkeypatch):
     page = client(monkeypatch, StubRunner()).get("/").text
     assert "head -n1 tools/*.py | grep -i" in page
     assert page.index('value="converter"') < page.index('value="pdf"') < page.index('value="ring"')
-    assert "[+2 more]" in page  # single-use tags are folded away by default
+    assert "[+2 more]" in page and "[-2 less]" in page  # single-use tags fold; the toggle mirrors as -N less
 
 
 def test_tools_route_filters_by_selected_tags(monkeypatch):
@@ -50,3 +50,38 @@ def test_tools_route_filters_by_selected_tags(monkeypatch):
     assert r.status_code == 200 and calls == [["merge", "pdf", "text"]]
     # the infinite-scroll loader carries every term forward
     assert 'hx-vals=\'{"search": "merge pdf text" }\'' in html.unescape(r.text) or "merge pdf text" in r.text
+
+
+def test_get_tag_counts_narrows_to_tools_matching_the_terms():
+    session = session_with(
+        [
+            db.Tool(name="pdf_merge", code="", tags=["pdf", "merge", "pdf_merge"], public=True, user_id=1),
+            db.Tool(name="pdf_split", code="", tags=["pdf", "split", "pdf_split"], public=True, user_id=1),
+            db.Tool(name="image_crop", code="", tags=["image", "crop", "image_crop"], public=True, user_id=1),
+        ]
+    )
+    assert db.get_tag_counts(session, ["pdf"]) == [("pdf", 2), ("merge", 1), ("split", 1)]
+    assert db.get_tag_counts(session, ["pdf", "split"]) == [("pdf", 1), ("split", 1)]
+
+
+def test_tools_route_swaps_in_the_overlapping_tags(monkeypatch):
+    seen = []
+
+    def counts(session, terms=()):
+        seen.append(list(terms))
+        return [("pdf", 2), ("merge", 1), ("split", 1)]
+
+    monkeypatch.setattr(db, "get_tag_counts", counts)
+    monkeypatch.setattr(db, "get_tools_by_tags", lambda session, tags, start, end: [(1, "pdf_merge")])
+    r = client(monkeypatch, StubRunner()).post("/tools?start=0&end=50", data={"tag": ["pdf"]})
+    assert r.status_code == 200 and seen == [["pdf"]]
+    body = html.unescape(r.text)
+    assert 'id="tag-filters"' in body and 'hx-swap-oob="true"' in body
+    assert 'value="pdf" checked' in body and 'value="merge"' in body and "more]" not in body  # no fold while filtering
+
+
+def test_scrolling_pages_do_not_swap_the_tags(monkeypatch):
+    monkeypatch.setattr(db, "get_tag_counts", lambda session, terms=(): [("pdf", 2)])
+    monkeypatch.setattr(db, "get_tools_by_tags", lambda session, tags, start, end: [(1, "pdf_merge")])
+    r = client(monkeypatch, StubRunner()).post("/tools?start=50&end=100", data={"tag": ["pdf"]})
+    assert 'id="tag-filters"' not in r.text

@@ -15,34 +15,19 @@
             <form
                 id="filter"
                 hx-post="{{ root_path }}/tools?start=0&end=50"
-                hx-trigger="keyup[key=='Enter'] from:input[name='search'], change from:input[name='tag']"
+                hx-trigger="keyup[key=='Enter'], change[target.name=='tag']"
                 hx-target="#tool-list"
                 hx-indicator=".htmx-indicator"
                 hx-swap="innerHTML">
                 <label class="flex items-center gap-2 whitespace-nowrap">
                     <span><span class="text-dim">$</span> ls tools/ | grep -i</span>
-                    <input
-                        class="flex-grow min-w-0 border-0 border-b border-line px-1 py-0 focus:border-paper"
+                    <span class="field flex-grow"><input
                         type="search"
                         name="search"
                         placeholder="pattern"
-                        aria-label="filter tools">
+                        aria-label="filter tools"></span>
                 </label>
-                <div class="mt-2 flex flex-wrap items-baseline gap-y-1">
-                    <span class="whitespace-nowrap mr-2"><span class="text-dim">$</span> head -n1 tools/*.py | grep -i</span>
-                    {% for tag in common_tags %}
-                        <label class="switch"><input type="checkbox" name="tag" value="{{ tag }}"><span class="label-text">[{{ tag }}]</span></label>
-                    {% endfor %}
-                    {% if rare_tags %}
-                        {# tags carried by a single tool stay folded until asked for #}
-                        <span id="rare-tags" class="hidden">
-                            {% for tag in rare_tags %}
-                                <label class="switch"><input type="checkbox" name="tag" value="{{ tag }}"><span class="label-text">[{{ tag }}]</span></label>
-                            {% endfor %}
-                        </span>
-                        <button type="button" class="btn text-dim" _="on click remove .hidden from #rare-tags then add .contents to #rare-tags then remove me">[+{{ rare_tags | length }} more]</button>
-                    {% endif %}
-                </div>
+                {{ tag_filters | safe }}
             </form>
 
             {# ls output: columns of file names #}
@@ -52,6 +37,8 @@
                 {% endwith %}
             </ul>
         </div>
+        {# room to scroll past the end of the listing #}
+        <div class="h-48" aria-hidden="true"></div>
 
     </body>
 </html>
