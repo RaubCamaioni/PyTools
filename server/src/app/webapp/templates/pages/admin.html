@@ -30,7 +30,8 @@
                         {# the account row folds its tools: click the name to expand #}
                         <span class="px-1 py-0.5 font-bold">
                             <button class="cursor-pointer hover:bg-paper hover:text-ink px-1"
-                                _="on click toggle .hidden on #tools-{{ account.user.id }} then set my innerText to (#tools-{{ account.user.id }} matches .hidden ? '[+]' : '[-]')">[+]</button>
+                                _="on click toggle .hidden on #tools-{{ account.user.id }}
+                                    then if #tools-{{ account.user.id }} matches .hidden set my innerText to '[+]' else set my innerText to '[-]' end">[+]</button>
                             {{ account.user.alias }}/ <span class="text-dim font-normal">{{ account.user.id }}</span>
                         </span>
                         <span class="px-1 py-0.5 text-dim">{{ 'admin' if account.user.admin else '' }}{% if account.user.banned %}banned until {{ account.user.banned_until.strftime('%Y-%m-%d') if account.user.banned_until else 'further notice' }}{% endif %}</span>
