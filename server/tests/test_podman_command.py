@@ -41,3 +41,8 @@ def test_command_name_and_volume_with_leading_dash():
     assert name == "run--_weird"
     cmd = PodmanRunner(CFG).command(name, run_dir / "t.py", run_dir)
     assert cmd[cmd.index("-v") + 1].startswith("/tmp/pywebtools-runs/-_weird:")
+
+
+def test_command_adds_trace_flag_after_workdir():
+    cmd = PodmanRunner(CFG).command("run-x", Path("/r/x/t.py"), Path("/r/x"), trace=Path("/r/x/trace"))
+    assert cmd[-2:] == ["--trace", "/r/x/trace"] and cmd[-4:-2] == ["--workdir", "/r/x"]
