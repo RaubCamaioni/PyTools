@@ -37,18 +37,26 @@ def test_migration_adds_role_columns_once():
         assert conn.execute(text("SELECT admin, banned FROM user WHERE id = 1")).one() == (0, 0)
 
 
-def test_users_with_tools_lists_every_account_and_its_tools():
+def test_users_with_tools_lists_every_account_with_vote_and_report_totals():
     engine = engine_with(
         users=[db.User(id=1, alias="rob", admin=True), db.User(id=2, alias="eve")],
         tools=[
-            db.Tool(name="a", code="", user_id=1, public=True, tags=[]),
-            db.Tool(name="b", code="", user_id=2, public=False, tags=[]),
-            db.Tool(name="c", code="", user_id=2, public=True, tags=[]),
+            db.Tool(id=10, name="a", code="", user_id=1, public=True, tags=[]),
+            db.Tool(id=11, name="b", code="", user_id=2, public=False, tags=[]),
+            db.Tool(id=12, name="c", code="", user_id=2, public=True, tags=[]),
         ],
     )
     with Session(engine) as session:
-        listing = db.get_users_with_tools(session)
-    assert [(u.id, u.alias, [t.name for t in ts]) for u, ts in listing] == [(1, "rob", ["a"]), (2, "eve", ["b", "c"])]
+        session.add(db.UpVote(user_id=1, tool_id=11))
+        session.add(db.DownVote(user_id=1, tool_id=12))
+        session.add(db.DownVote(user_id=3, tool_id=12))
+        session.add(db.Report(user_id=1, tool_id=12, reason="spam"))
+        session.add(db.Report(user_id=3, tool_id=11, reason="malware"))
+        session.commit()
+        accounts = db.get_users_with_tools(session)
+    assert [(a.user.alias, a.up, a.down, a.reports) for a in accounts] == [("rob", 0, 0, 0), ("eve", 1, 2, 2)]
+    eve = accounts[1]
+    assert [(t.tool.name, t.up, t.down, t.reports) for t in eve.tools] == [("b", 1, 0, 1), ("c", 0, 2, 1)]
 
 
 def test_ban_unpublishes_the_users_tools_and_unban_keeps_them_private():
@@ -77,12 +85,15 @@ def test_admin_page_lists_accounts_and_their_tools(monkeypatch):
     from app.routes import admin as admin_routes
 
     monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    rob, eve = db.User(id=1, alias="rob", admin=True), db.User(id=2, alias="eve", banned=True)
+    a = db.Tool(id=5, name="a", code="", user_id=1, public=True, tags=[])
+    b = db.Tool(id=6, name="b", code="", user_id=2, public=False, tags=[])
     monkeypatch.setattr(
         db,
         "get_users_with_tools",
         lambda session: [
-            (db.User(id=1, alias="rob", admin=True), [db.Tool(id=5, name="a", code="", user_id=1, public=True, tags=[])]),
-            (db.User(id=2, alias="eve", banned=True), [db.Tool(id=6, name="b", code="", user_id=2, public=False, tags=[])]),
+            db.AccountSummary(rob, [db.ToolSummary(a, 0, 0, 0)], 0, 0, 0),
+            db.AccountSummary(eve, [db.ToolSummary(b, 1, 4, 3)], 1, 4, 3),
         ],
     )
     page = client(monkeypatch, StubRunner()).get("/admin").text
@@ -90,6 +101,10 @@ def test_admin_page_lists_accounts_and_their_tools(monkeypatch):
     assert page.index("rob/ ") < page.index("a.py") < page.index("eve/ ") < page.index("b.py")
     assert 'href="/tool/6"' in page  # private tools are linked for the admin
     assert "[banned]" in page and "[ban]" in page  # eve's state inverted, rob's switch off
+    import re
+
+    eve_row = page[page.index("eve/ "):page.index("b.py")]
+    assert re.search(r">\s*1\s*<.*>\s*4\s*<.*>\s*3\s*<", eve_row, re.S)  # totals: up, down, reports
 
 
 def test_admin_can_ban_and_unban(monkeypatch):
