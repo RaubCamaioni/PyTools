@@ -175,6 +175,19 @@ def tag_filters(tag_counts, selected=frozenset(), filtered=False, oob=False) -> 
     return template.render(common_tags=common, rare_tags=rare, selected=selected, oob=oob)
 
 
+def format_runs(count: int) -> str:
+    """A run count in at most four characters: 9999, 10K, 999K, 1.2M, 12M, 999M, 1.2B."""
+    count = max(0, int(count))
+    for limit, unit in ((1_000_000_000, "B"), (1_000_000, "M")):
+        if count >= 10 * limit:
+            return f"{count // limit}{unit}"
+        if count >= limit:
+            return f"{int(count / limit * 10) / 10:.1f}{unit}"  # floored, so 9 999 999 stays 9.9M
+    if count >= 10_000:
+        return f"{count // 1_000}K"
+    return str(count)
+
+
 def list_item_user(root_path: str, tools: list[Tool]):
     template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     # the rows are cells of one grid (`ls -l | column -t`): the header row aligns with them
@@ -191,7 +204,7 @@ def list_item_user(root_path: str, tools: list[Tool]):
                 name=tool.name,
                 public="checked" if tool.public else "",
                 anonymous="checked" if tool.annonymous else "",
-                runs=tool.usage,
+                runs=format_runs(tool.usage),
             )
         )
 
