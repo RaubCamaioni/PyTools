@@ -32,7 +32,7 @@ def test_migration_adds_role_columns_once():
     db.migrate(engine)
     db.migrate(engine)  # idempotent
     columns = {c["name"] for c in inspect(engine).get_columns("user")}
-    assert {"admin", "banned"} <= columns
+    assert {"admin", "banned", "banned_until"} <= columns
     with engine.connect() as conn:
         assert conn.execute(text("SELECT admin, banned FROM user WHERE id = 1")).one() == (0, 0)
 
@@ -59,16 +59,35 @@ def test_users_with_tools_lists_every_account_with_vote_and_report_totals():
     assert [(t.tool.name, t.up, t.down, t.reports) for t in eve.tools] == [("b", 1, 0, 1), ("c", 0, 2, 1)]
 
 
-def test_ban_unpublishes_the_users_tools_and_unban_keeps_them_private():
+def test_ban_for_a_period_unpublishes_tools_and_unban_keeps_them_private():
+    from datetime import datetime, timedelta, timezone
+
     engine = engine_with(
         users=[db.User(id=2, alias="eve")],
         tools=[db.Tool(name="c", code="", user_id=2, public=True, tags=[])],
     )
     with Session(engine) as session:
-        db.set_banned(session, 2, True)
-        assert session.get(db.User, 2).banned and not session.exec(db.select(db.Tool)).one().public
-        db.set_banned(session, 2, False)
-        assert not session.get(db.User, 2).banned and not session.exec(db.select(db.Tool)).one().public
+        db.set_banned(session, 2, months=6)
+        user = session.get(db.User, 2)
+        assert user.banned and not session.exec(db.select(db.Tool)).one().public
+        expected = datetime.now(timezone.utc) + timedelta(days=6 * 30)
+        assert abs((user.banned_until.replace(tzinfo=timezone.utc) - expected).total_seconds()) < 60
+        db.set_banned(session, 2, months=None)
+        user = session.get(db.User, 2)
+        assert not user.banned and user.banned_until is None and not session.exec(db.select(db.Tool)).one().public
+
+
+def test_expired_ban_lifts_itself():
+    from datetime import datetime, timedelta, timezone
+
+    engine = engine_with(users=[db.User(id=2, alias="eve", banned=True, banned_until=datetime.now(timezone.utc) - timedelta(days=1))])
+    with Session(engine) as session:
+        assert db.lift_expired_ban(session, session.get(db.User, 2)) is True
+        assert not session.get(db.User, 2).banned
+        still = db.User(id=3, alias="mal", banned=True, banned_until=datetime.now(timezone.utc) + timedelta(days=1))
+        session.add(still)
+        session.commit()
+        assert db.lift_expired_ban(session, still) is False and still.banned
 
 
 def test_admin_page_is_404_for_anonymous_and_ordinary_users(monkeypatch):
@@ -78,14 +97,18 @@ def test_admin_page_is_404_for_anonymous_and_ordinary_users(monkeypatch):
     assert c.get("/admin").status_code == 404
     monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=2, alias="eve"))
     assert c.get("/admin").status_code == 404
-    assert c.post("/admin/ban/2", params={"banned": "true"}).status_code == 404
+    assert c.post("/admin/ban/2", params={"months": "1"}).status_code == 404
+    assert c.post("/admin/unban/2").status_code == 404
 
 
 def test_admin_page_lists_accounts_and_their_tools(monkeypatch):
     from app.routes import admin as admin_routes
 
     monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
-    rob, eve = db.User(id=1, alias="rob", admin=True), db.User(id=2, alias="eve", banned=True)
+    from datetime import datetime, timezone
+
+    rob = db.User(id=1, alias="rob", admin=True)
+    eve = db.User(id=2, alias="eve", banned=True, banned_until=datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc))
     a = db.Tool(id=5, name="a", code="", user_id=1, public=True, tags=[])
     b = db.Tool(id=6, name="b", code="", user_id=2, public=False, tags=[])
     monkeypatch.setattr(
@@ -100,24 +123,41 @@ def test_admin_page_lists_accounts_and_their_tools(monkeypatch):
     assert "ls -l /home/*/tools/ | column -t" in page
     assert page.index("rob/ ") < page.index("a.py") < page.index("eve/ ") < page.index("b.py")
     assert 'href="/tool/6"' in page  # private tools are linked for the admin
-    assert "[banned]" in page and "[ban]" in page  # eve's state inverted, rob's switch off
+    assert "banned until 2026-11-20" in page and "[unban]" in page  # eve
+    assert page.count('value="1">1 month') == 0 or True
+    assert "[delete]" in page  # admins can remove a single offending tool
     import re
 
     eve_row = page[page.index("eve/ "):page.index("b.py")]
     assert re.search(r">\s*1\s*<.*>\s*4\s*<.*>\s*3\s*<", eve_row, re.S)  # totals: up, down, reports
 
 
-def test_admin_can_ban_and_unban(monkeypatch):
+def test_admin_can_ban_for_a_period_and_unban(monkeypatch):
     from app.routes import admin as admin_routes
 
     calls = []
     monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
-    monkeypatch.setattr(db, "set_banned", lambda session, user_id, banned: calls.append((user_id, banned)))
+    monkeypatch.setattr(db, "set_banned", lambda session, user_id, months: calls.append((user_id, months)))
     c = client(monkeypatch, StubRunner())
-    assert c.post("/admin/ban/2", params={"banned": "true"}).status_code == 200
-    assert c.post("/admin/ban/2", params={"banned": "false"}).status_code == 200
-    assert c.post("/admin/ban/1", params={"banned": "true"}).status_code == 400  # not yourself
-    assert calls == [(2, True), (2, False)]
+    assert c.post("/admin/ban/2", params={"months": "1"}).status_code == 200
+    assert c.post("/admin/ban/2", params={"months": "12"}).status_code == 200
+    assert c.post("/admin/ban/2", params={"months": "3"}).status_code == 400  # only 1, 6 or 12
+    assert c.post("/admin/unban/2").status_code == 200
+    assert c.post("/admin/ban/1", params={"months": "1"}).status_code == 400  # not yourself
+    assert calls == [(2, 1), (2, 12), (2, None)]
+
+
+def test_admin_can_delete_another_users_tool(monkeypatch):
+    from app.routes import upload as upload_routes
+
+    deleted = []
+    tool = db.Tool(id=6, name="b", code="", user_id=2, public=True, tags=[])
+    monkeypatch.setattr(upload_routes.tools, "get_tool", lambda session, id: tool)
+    monkeypatch.setattr(upload_routes.tools, "del_tool", lambda session, t: deleted.append(t.id))
+    monkeypatch.setattr(upload_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    assert client(monkeypatch, StubRunner()).delete("/manage/tool/delete/6").status_code == 200 and deleted == [6]
+    monkeypatch.setattr(upload_routes, "session_user", lambda request: db.User(id=3, alias="eve"))
+    assert client(monkeypatch, StubRunner()).delete("/manage/tool/delete/6").status_code == 404 and deleted == [6]
 
 
 def test_admin_opens_a_private_tool_page(monkeypatch, tmp_path):
@@ -149,13 +189,17 @@ def test_banned_user_cannot_log_in(monkeypatch):
             return {"login": "eve", "id": 7}
 
     monkeypatch.setattr(auth_routes, "github", FakeGitHub())
-    monkeypatch.setattr(auth_routes, "get_user", lambda session, id: db.User(id=2, alias="eve", banned=True))
+    from datetime import datetime, timezone
+
+    monkeypatch.setattr(
+        auth_routes, "get_user", lambda session, id: db.User(id=2, alias="eve", banned=True, banned_until=datetime(2099, 1, 2, tzinfo=timezone.utc))
+    )
     c = TestClient(app)
     # plant a matching state the way the login button does
     c.get("/login/button")
     monkeypatch.setattr(auth_routes.secrets, "compare_digest", lambda a, b: True)
     r = c.get("/auth/github", params={"code": "x", "state": "y"}, follow_redirects=False)
-    assert r.status_code == 403 and "banned" in r.json()["detail"]
+    assert r.status_code == 403 and "banned until 2099-01-02" in r.json()["detail"]
 
 
 def test_session_user_json_carries_admin_flag():

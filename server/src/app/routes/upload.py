@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.exceptions import HTTPException
 from app.models import tools
 from app.models.tools import SessionDep, User, FilterDep, get_user
+from app.routes.auth import session_user
 from pathlib import Path
 from app import TEMPLATES, logger
 from typing import Optional
@@ -17,7 +18,8 @@ async def tool_delete(
     id: int,
     session: SessionDep,
 ):
-    if "user" not in request.session:
+    user = session_user(request)
+    if user is None:
         logger.info("user is not logged in")
         return HTMLResponse(status_code=407)
 
@@ -26,9 +28,8 @@ async def tool_delete(
         logger.info("unable to find tool")
         return HTMLResponse(status_code=404)
 
-    user: User = User.model_validate_json(request.session["user"])
-
-    if user.id != tool.user_id:
+    # the owner, or an admin removing an offending upload
+    if user.id != tool.user_id and not user.admin:
         logger.info("tool does not belong to user")
         return HTMLResponse(status_code=404)
 
