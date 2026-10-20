@@ -122,6 +122,18 @@ def get_tools_by_tags(
         return session.exec(statement).all()
 
 
+def get_tag_counts(session: Session) -> list[tuple[str, int]]:
+    """Hashtags from the first line of every public tool with how many tools carry each,
+    most used first then alphabetical; a tool's own name (stored with its tags) is left out."""
+    with session:
+        counts: dict[str, int] = {}
+        for name, tags in session.exec(select(Tool.name, Tool.tags).where(Tool.public == True)).all():
+            for tag in {t.strip().lower() for t in (tags or [])}:
+                if tag and tag != name.lower():
+                    counts[tag] = counts.get(tag, 0) + 1
+        return sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+
+
 def get_user_tools(session: Session, user: User) -> list[Tool]:
     statement = select(Tool).where(Tool.user_id == user.id)
     result = session.exec(statement).all()
