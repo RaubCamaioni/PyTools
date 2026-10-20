@@ -116,6 +116,14 @@
   .switch input:focus-visible ~ .label-text {
     @apply outline-2 outline-dashed outline-paper outline-offset-2;
   }
+  /* vim CursorLine while a run is in flight (positioned by the tool page script) */
+  .exec-cursor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.12);
+    pointer-events: none;
+  }
   /* indeterminate loading bar; htmx adds .htmx-request to the hx-indicator element while a request runs */
   .loadbar {
     @apply relative hidden h-0.5 w-full overflow-hidden bg-faint;

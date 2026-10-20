@@ -13,16 +13,17 @@
 
         <div class="w-11/12 max-w-7xl mx-auto flex flex-col">
 
-            <div class="prompt font-bold mb-2">cat {{ tool }}.py</div>
+            <div class="prompt font-bold mb-2">vim {{ tool }}.py</div>
             <div class="panel flex flex-col md:flex-row">
 
                 <div class="md:w-3/4 flex flex-col border-b md:border-b-0 md:border-r border-line">
-                    <div class="max-h-[700px] overflow-auto">
-                        <pre class="line-numbers"><code class="language-python">{{ code }}</code></pre>
+                    <div id="code-scroll" class="max-h-[700px] overflow-auto">
+                        <pre class="line-numbers"><div id="exec-cursor" class="exec-cursor hidden" aria-hidden="true"></div><code class="language-python">{{ code }}</code></pre>
                     </div>
-                    {# vim status line, inverse video #}
+                    {# vim status line, inverse video; the mode shows -- RUNNING -- while a run is in flight #}
                     <div class="flex items-center gap-4 px-2 bg-paper text-ink whitespace-nowrap overflow-hidden">
                         <span class="font-bold">{{ tool }}.py</span>
+                        <span id="vim-mode"></span>
                         <span class="flex-grow"></span>
                         <span>{{ lines }}L</span>
                         <span>python</span>
@@ -68,7 +69,35 @@
 
         </div>
         <div style="height: 200px;"></div>
-        <script async>
+        <script>
+            // execution animation: a vim cursor line steps through the file while the run is in flight
+            (function () {
+                const form = document.getElementById("argument-form");
+                const cursor = document.getElementById("exec-cursor");
+                const mode = document.getElementById("vim-mode");
+                const pre = cursor.parentElement;
+                const total = {{ lines }};
+                let timer = null, line = 0;
+                function place(n) {
+                    const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
+                    const top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight;
+                    cursor.style.top = top + "px";
+                    cursor.style.height = lineHeight + "px";
+                    cursor.scrollIntoView({ block: "nearest" });
+                }
+                form.addEventListener("htmx:beforeRequest", function () {
+                    line = 0;
+                    cursor.classList.remove("hidden");
+                    mode.textContent = "-- RUNNING --";
+                    timer = setInterval(function () { line = line % total + 1; place(line); }, 120);
+                });
+                form.addEventListener("htmx:afterRequest", function () {
+                    clearInterval(timer);
+                    cursor.classList.add("hidden");
+                    mode.textContent = "";
+                });
+            })();
+
             function copy_form_to_clipboard() {
                 event.preventDefault();
                 const form = document.getElementById('argument-form');
