@@ -23,8 +23,19 @@ UNITS = {
 def length_converter(
     value: float = 1,
     unit: Literal[
-        "meter", "centimeter", "millimeter", "kilometer", "inch", "foot", "yard", "mile",
-        "nautical_mile", "micrometer", "nanometer", "astronomical_unit", "light_year",
+        "meter",
+        "centimeter",
+        "millimeter",
+        "kilometer",
+        "inch",
+        "foot",
+        "yard",
+        "mile",
+        "nautical_mile",
+        "micrometer",
+        "nanometer",
+        "astronomical_unit",
+        "light_year",
     ] = "meter",
 ) -> dict:
     """Convert a length or distance between metric and imperial units (mm, cm, m, km, in, ft, yd, mi and more)."""

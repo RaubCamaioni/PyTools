@@ -24,13 +24,19 @@ def images_to_pdf(
     page_size: Literal["fit_each_image", "a4", "letter"] = "fit_each_image",
     margin_points: int = 24,
 ) -> dict:
-    """Combine many images into one PDF, one image per page, ordered by file name. Upload a .zip of JPG/PNG/WEBP/HEIC/TIFF files (a single image works too)."""
+    """Combine many images into one PDF, one image per page, ordered by file name. Upload a .zip of
+    JPG/PNG/WEBP/HEIC/TIFF files (a single image works too).
+    """
     with tempfile.TemporaryDirectory(dir=".") as tmp:
         work = Path(tmp)
         if zipfile.is_zipfile(images_zip):
             with zipfile.ZipFile(images_zip) as zf:
                 for member in zf.infolist():
-                    if member.is_dir() or Path(member.filename).suffix.lower() not in IMAGE_EXT or "__MACOSX" in member.filename:
+                    if (
+                        member.is_dir()
+                        or Path(member.filename).suffix.lower() not in IMAGE_EXT
+                        or "__MACOSX" in member.filename
+                    ):
                         continue
                     target = work / Path(member.filename).name
                     target.write_bytes(zf.read(member))
@@ -60,4 +66,8 @@ def images_to_pdf(
         out = Path(f"{images_zip.stem}.pdf")
         doc.save(out, garbage=3, deflate=True)
         doc.close()
-    return {"file": out, "pages": len(files[:500]), "order": [p.name for p in files[:20]] + (["..."] if len(files) > 20 else [])}
+    return {
+        "file": out,
+        "pages": len(files[:500]),
+        "order": [p.name for p in files[:20]] + (["..."] if len(files) > 20 else []),
+    }

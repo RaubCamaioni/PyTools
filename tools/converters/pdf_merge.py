@@ -5,7 +5,9 @@ import pymupdf
 
 
 def pdf_merge(first_pdf: Path, second_pdf: Path, third_pdf: Path) -> Path:
-    """Merge two or three PDFs into one, in order. Upload the same file twice if you only have two (duplicates are skipped)."""
+    """Merge two or three PDFs into one, in order. Upload the same file twice if you only have two (duplicates are
+    skipped).
+    """
     doc = pymupdf.open()
     seen = set()
     for pdf in (first_pdf, second_pdf, third_pdf):

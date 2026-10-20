@@ -5,7 +5,27 @@ from typing import Literal
 from html.parser import HTMLParser
 import re
 
-BLOCK = {"p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "section", "article", "header", "footer", "pre", "blockquote", "hr", "table"}
+BLOCK = {
+    "p",
+    "div",
+    "br",
+    "li",
+    "tr",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "section",
+    "article",
+    "header",
+    "footer",
+    "pre",
+    "blockquote",
+    "hr",
+    "table",
+}
 SKIP = {"script", "style", "head", "noscript", "template"}
 
 

@@ -21,7 +21,9 @@ def excel_to_pdf(
     font_size: int = 9,
     header_row: Literal["yes", "no"] = "yes",
 ) -> Path:
-    """Print an Excel workbook (every sheet) or a CSV file to a PDF table. Cell values and number formats are kept; charts, merged-cell layouts and colours are not."""
+    """Print an Excel workbook (every sheet) or a CSV file to a PDF table. Cell values and number formats are kept;
+    charts, merged-cell layouts and colours are not.
+    """
     sheets: list[tuple[str, list[list[str]]]] = []
     if spreadsheet.suffix.lower() in (".csv", ".tsv", ".txt"):
         text = spreadsheet.read_text(encoding="utf-8-sig", errors="replace")
@@ -56,7 +58,9 @@ def excel_to_pdf(
         parts.append(f"<h2>{html.escape(title)}</h2><table>{''.join(body)}</table>")
 
     width, height = (842, 595) if orientation == "landscape" else (595, 842)
-    story = pymupdf.Story(html="<body>" + "<p></p>".join(parts) + "</body>", user_css=STYLE % max(5, min(font_size, 20)))
+    story = pymupdf.Story(
+        html="<body>" + "<p></p>".join(parts) + "</body>", user_css=STYLE % max(5, min(font_size, 20))
+    )
     out = spreadsheet.with_suffix(".pdf")
     writer = pymupdf.DocumentWriter(str(out))
     margin = 36

@@ -16,7 +16,9 @@ def video_converter(
     quality: Literal["medium", "small_file", "high"] = "medium",
     audio: Literal["keep", "remove"] = "keep",
 ) -> dict:
-    """Convert and compress a video (MP4, MOV, MKV, WEBM, AVI, 3GP...): choose the container, cap the resolution and pick a quality. Clips longer than 2 minutes are cut at 2 minutes to fit the sandbox time limit."""
+    """Convert and compress a video (MP4, MOV, MKV, WEBM, AVI, 3GP...): choose the container, cap the resolution and
+    pick a quality. Clips longer than 2 minutes are cut at 2 minutes to fit the sandbox time limit.
+    """
     crf = {"small_file": 30, "medium": 25, "high": 20}[quality]
     out = video.with_name(f"{video.stem}_{max_height}p.{output}")
     frames_written = 0
@@ -37,7 +39,11 @@ def video_converter(
         out_v.width, out_v.height, out_v.pix_fmt = width, height, "yuv420p"
         time_base = Fraction(1, round(fps))
         out_v.codec_context.time_base = time_base
-        out_v.options = {"crf": str(crf + 6), "b:v": "0", "cpu-used": "6", "row-mt": "1", "deadline": "realtime"} if output == "webm" else {"crf": str(crf), "preset": "veryfast"}
+        out_v.options = (
+            {"crf": str(crf + 6), "b:v": "0", "cpu-used": "6", "row-mt": "1", "deadline": "realtime"}
+            if output == "webm"
+            else {"crf": str(crf), "preset": "veryfast"}
+        )
         out_a = None
         if in_a is not None:
             acodec = "libopus" if output == "webm" else "aac"
@@ -68,4 +74,10 @@ def video_converter(
         if out_a is not None:
             for p in out_a.encode():
                 dst.mux(p)
-    return {"file": out, "resolution": f"{width}x{height}", "frames": frames_written, "before_bytes": video.stat().st_size, "after_bytes": out.stat().st_size}
+    return {
+        "file": out,
+        "resolution": f"{width}x{height}",
+        "frames": frames_written,
+        "before_bytes": video.stat().st_size,
+        "after_bytes": out.stat().st_size,
+    }

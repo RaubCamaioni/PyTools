@@ -12,7 +12,10 @@ PAGE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <style>
-body {{ max-width: 46rem; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; line-height: 1.6; color: #222; }}
+body {{
+  max-width: 46rem; margin: 2rem auto; padding: 0 1rem;
+  font-family: system-ui, sans-serif; line-height: 1.6; color: #222;
+}}
 pre {{ background: #f4f4f4; padding: .75rem; overflow-x: auto; }}
 code {{ background: #f4f4f4; padding: .1rem .3rem; }}
 table {{ border-collapse: collapse; }} td, th {{ border: 1px solid #ccc; padding: .3rem .6rem; }}

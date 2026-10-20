@@ -4,12 +4,40 @@ import colorsys
 import re
 
 NAMED = {
-    "black": "#000000", "white": "#ffffff", "red": "#ff0000", "lime": "#00ff00", "blue": "#0000ff", "yellow": "#ffff00",
-    "cyan": "#00ffff", "aqua": "#00ffff", "magenta": "#ff00ff", "fuchsia": "#ff00ff", "silver": "#c0c0c0", "gray": "#808080",
-    "grey": "#808080", "maroon": "#800000", "olive": "#808000", "green": "#008000", "purple": "#800080", "teal": "#008080",
-    "navy": "#000080", "orange": "#ffa500", "pink": "#ffc0cb", "brown": "#a52a2a", "gold": "#ffd700", "coral": "#ff7f50",
-    "salmon": "#fa8072", "tomato": "#ff6347", "violet": "#ee82ee", "indigo": "#4b0082", "turquoise": "#40e0d0",
-    "beige": "#f5f5dc", "ivory": "#fffff0", "khaki": "#f0e68c", "lavender": "#e6e6fa", "crimson": "#dc143c",
+    "black": "#000000",
+    "white": "#ffffff",
+    "red": "#ff0000",
+    "lime": "#00ff00",
+    "blue": "#0000ff",
+    "yellow": "#ffff00",
+    "cyan": "#00ffff",
+    "aqua": "#00ffff",
+    "magenta": "#ff00ff",
+    "fuchsia": "#ff00ff",
+    "silver": "#c0c0c0",
+    "gray": "#808080",
+    "grey": "#808080",
+    "maroon": "#800000",
+    "olive": "#808000",
+    "green": "#008000",
+    "purple": "#800080",
+    "teal": "#008080",
+    "navy": "#000080",
+    "orange": "#ffa500",
+    "pink": "#ffc0cb",
+    "brown": "#a52a2a",
+    "gold": "#ffd700",
+    "coral": "#ff7f50",
+    "salmon": "#fa8072",
+    "tomato": "#ff6347",
+    "violet": "#ee82ee",
+    "indigo": "#4b0082",
+    "turquoise": "#40e0d0",
+    "beige": "#f5f5dc",
+    "ivory": "#fffff0",
+    "khaki": "#f0e68c",
+    "lavender": "#e6e6fa",
+    "crimson": "#dc143c",
 }
 
 
@@ -40,11 +68,16 @@ def parse_color(text: str) -> tuple[int, int, int]:
         return round(255 * (1 - c) * (1 - k)), round(255 * (1 - m_) * (1 - k)), round(255 * (1 - y) * (1 - k))
     if len(nums) == 3 and all(0 <= n <= 255 for n in nums):
         return tuple(round(n) for n in nums)
-    raise ValueError(f"Could not parse color '{text}'. Try #ff8800, rgb(255,136,0), hsl(32,100%,50%), cmyk(0,47,100,0) or a name like coral.")
+    raise ValueError(
+        f"Could not parse color '{text}'. "
+        "Try #ff8800, rgb(255,136,0), hsl(32,100%,50%), cmyk(0,47,100,0) or a name like coral."
+    )
 
 
 def color_converter(color: str = "#ff8800") -> dict:
-    """Convert a color between HEX, RGB, HSL, HSV/HSB and CMYK, with luminance and contrast against black and white. Accepts any of those formats or a CSS color name."""
+    """Convert a color between HEX, RGB, HSL, HSV/HSB and CMYK, with luminance and contrast against black and white.
+    Accepts any of those formats or a CSS color name.
+    """
     r, g, b = parse_color(color)
     rf, gf, bf = r / 255, g / 255, b / 255
     h, l, s = colorsys.rgb_to_hls(rf, gf, bf)

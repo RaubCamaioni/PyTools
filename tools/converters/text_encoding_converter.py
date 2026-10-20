@@ -3,7 +3,14 @@
 from pathlib import Path
 from typing import Literal
 
-ENCODINGS = {"utf8": "utf-8", "utf8_with_bom": "utf-8-sig", "utf16": "utf-16", "latin1": "latin-1", "windows1252": "cp1252", "ascii": "ascii"}
+ENCODINGS = {
+    "utf8": "utf-8",
+    "utf8_with_bom": "utf-8-sig",
+    "utf16": "utf-16",
+    "latin1": "latin-1",
+    "windows1252": "cp1252",
+    "ascii": "ascii",
+}
 
 
 def text_encoding_converter(
@@ -12,7 +19,9 @@ def text_encoding_converter(
     line_endings: Literal["keep", "unix_LF", "windows_CRLF", "classic_mac_CR"] = "keep",
     input_encoding: str = "auto",
 ) -> dict:
-    """Re-encode a text file (UTF-8 with/without BOM, UTF-16, Latin-1, Windows-1252, ASCII) and normalise its line endings; the source encoding is auto-detected."""
+    """Re-encode a text file (UTF-8 with/without BOM, UTF-16, Latin-1, Windows-1252, ASCII) and normalise its line
+    endings; the source encoding is auto-detected.
+    """
     raw = text_file.read_bytes()
     detected = None
     if input_encoding.strip().lower() != "auto":
@@ -32,7 +41,11 @@ def text_encoding_converter(
             text = raw.decode("latin-1")
             detected = "latin-1"
 
-    crlf, lf_only, cr_only = text.count("\r\n"), text.count("\n") - text.count("\r\n"), text.count("\r") - text.count("\r\n")
+    crlf, lf_only, cr_only = (
+        text.count("\r\n"),
+        text.count("\n") - text.count("\r\n"),
+        text.count("\r") - text.count("\r\n"),
+    )
     if line_endings != "keep":
         text = text.replace("\r\n", "\n").replace("\r", "\n")
         text = text.replace("\n", {"unix_LF": "\n", "windows_CRLF": "\r\n", "classic_mac_CR": "\r"}[line_endings])

@@ -3,12 +3,34 @@
 from decimal import Decimal, InvalidOperation
 import re
 
-SI = {-24: "y", -21: "z", -18: "a", -15: "f", -12: "p", -9: "n", -6: "µ", -3: "m", 0: "", 3: "k", 6: "M", 9: "G", 12: "T", 15: "P", 18: "E", 21: "Z", 24: "Y"}
+SI = {
+    -24: "y",
+    -21: "z",
+    -18: "a",
+    -15: "f",
+    -12: "p",
+    -9: "n",
+    -6: "µ",
+    -3: "m",
+    0: "",
+    3: "k",
+    6: "M",
+    9: "G",
+    12: "T",
+    15: "P",
+    18: "E",
+    21: "Z",
+    24: "Y",
+}
 
 
 def scientific_notation(input: str = "6.02214076e23", significant_digits: int = 4) -> dict:
-    """Convert a number between plain decimal, scientific (1.23e5), engineering (123e3) notation and SI prefixes (123 k). Accepts any of those as input."""
-    text = input.strip().replace(",", "").replace("×10^", "e").replace("x10^", "e").replace("*10^", "e").replace(" ", "")
+    """Convert a number between plain decimal, scientific (1.23e5), engineering (123e3) notation and SI prefixes (123
+    k). Accepts any of those as input.
+    """
+    text = (
+        input.strip().replace(",", "").replace("×10^", "e").replace("x10^", "e").replace("*10^", "e").replace(" ", "")
+    )
     text = re.sub(r"[Ee]\+?", "e", text)
     try:
         value = Decimal(text)

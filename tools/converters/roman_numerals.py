@@ -1,8 +1,19 @@
 # number, roman, converter
 
 VALUES = [
-    (1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
-    (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
+    (1000, "M"),
+    (900, "CM"),
+    (500, "D"),
+    (400, "CD"),
+    (100, "C"),
+    (90, "XC"),
+    (50, "L"),
+    (40, "XL"),
+    (10, "X"),
+    (9, "IX"),
+    (5, "V"),
+    (4, "IV"),
+    (1, "I"),
 ]
 
 
@@ -16,7 +27,9 @@ def to_roman(n: int) -> str:
 
 
 def roman_numerals(input: str) -> str:
-    """Convert an integer (1-3999) to Roman numerals, or Roman numerals back to an integer. Direction is detected automatically."""
+    """Convert an integer (1-3999) to Roman numerals, or Roman numerals back to an integer. Direction is detected
+    automatically.
+    """
     text = input.strip().upper()
     if text.isdigit():
         n = int(text)

@@ -15,7 +15,9 @@ def markdown_to_epub(
     input_format: Literal["markdown", "plain_text", "html"] = "markdown",
     split_chapters_on: Literal["heading_1", "heading_2", "no_split"] = "heading_1",
 ) -> Path:
-    """Build an EPUB ebook from a Markdown, plain text or HTML file. Level-1 (or level-2) headings become chapters and the table of contents."""
+    """Build an EPUB ebook from a Markdown, plain text or HTML file. Level-1 (or level-2) headings become chapters and
+    the table of contents.
+    """
     text = text_file.read_text(encoding="utf-8-sig", errors="replace")
     if input_format == "plain_text":
         body = "".join(f"<p>{html.escape(p.strip())}</p>\n" for p in re.split(r"\n\s*\n", text) if p.strip())
@@ -41,7 +43,12 @@ def markdown_to_epub(
     book.set_title(title.strip() or text_file.stem)
     book.set_language("en")
     book.add_author(author.strip() or "Unknown")
-    style = epub.EpubItem(uid="style", file_name="style/main.css", media_type="text/css", content="body{font-family:serif;line-height:1.5}h1,h2{font-family:sans-serif}pre{white-space:pre-wrap}")
+    style = epub.EpubItem(
+        uid="style",
+        file_name="style/main.css",
+        media_type="text/css",
+        content="body{font-family:serif;line-height:1.5}h1,h2{font-family:sans-serif}pre{white-space:pre-wrap}",
+    )
     book.add_item(style)
 
     items = []

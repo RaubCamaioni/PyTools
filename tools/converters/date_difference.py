@@ -8,7 +8,16 @@ def parse(text: str) -> datetime:
     text = text.strip()
     if text.lower() in ("", "now", "today"):
         return datetime.now()
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d %B %Y", "%B %d, %Y", "%d %b %Y"):
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d",
+        "%d/%m/%Y",
+        "%m/%d/%Y",
+        "%d %B %Y",
+        "%B %d, %Y",
+        "%d %b %Y",
+    ):
         try:
             return datetime.strptime(text, fmt)
         except ValueError:

@@ -6,11 +6,16 @@ import re
 
 
 def epoch_converter(input: str = "now", timezone_name: str = "UTC") -> dict:
-    """Convert a Unix timestamp (seconds, milliseconds, microseconds or nanoseconds are auto-detected) to human dates, or a date like 2026-10-19 14:30 to a timestamp. 'now' gives the current time."""
+    """Convert a Unix timestamp (seconds, milliseconds, microseconds or nanoseconds are auto-detected) to human dates,
+    or a date like 2026-10-19 14:30 to a timestamp. 'now' gives the current time.
+    """
     try:
         tz = ZoneInfo(timezone_name.strip() or "UTC")
     except Exception:  # noqa: BLE001
-        return {"error": f"Unknown time zone '{timezone_name}'. Use IANA names such as UTC, Europe/London, America/New_York."}
+        return {
+            "error": f"Unknown time zone '{timezone_name}'. "
+            "Use IANA names such as UTC, Europe/London, America/New_York."
+        }
 
     text = input.strip()
     unit = "seconds"
@@ -28,9 +33,22 @@ def epoch_converter(input: str = "now", timezone_name: str = "UTC") -> dict:
         when = datetime.fromtimestamp(number, timezone.utc)
     else:
         candidate = text.replace("T", " ").replace("Z", "+00:00")
-        formats = ["%Y-%m-%d %H:%M:%S.%f%z", "%Y-%m-%d %H:%M:%S%z", "%Y-%m-%d %H:%M%z",
-                   "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d",
-                   "%d/%m/%Y %H:%M", "%d/%m/%Y", "%m/%d/%Y %H:%M", "%m/%d/%Y", "%d %B %Y", "%B %d, %Y", "%d %b %Y"]
+        formats = [
+            "%Y-%m-%d %H:%M:%S.%f%z",
+            "%Y-%m-%d %H:%M:%S%z",
+            "%Y-%m-%d %H:%M%z",
+            "%Y-%m-%d %H:%M:%S.%f",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %H:%M",
+            "%Y-%m-%d",
+            "%d/%m/%Y %H:%M",
+            "%d/%m/%Y",
+            "%m/%d/%Y %H:%M",
+            "%m/%d/%Y",
+            "%d %B %Y",
+            "%B %d, %Y",
+            "%d %b %Y",
+        ]
         when = None
         for fmt in formats:
             try:

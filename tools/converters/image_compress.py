@@ -14,14 +14,20 @@ def image_compress(
     output: Literal["same_format", "jpg", "webp", "png"] = "same_format",
     max_dimension: int = 0,
 ) -> dict:
-    """Shrink an image's file size: lower JPEG/WEBP quality, palette-reduce PNG, optionally cap the longest side. Returns the file and the size before/after."""
+    """Shrink an image's file size: lower JPEG/WEBP quality, palette-reduce PNG, optionally cap the longest side.
+    Returns the file and the size before/after.
+    """
     before = image.stat().st_size
     with Image.open(image) as img:
         img = ImageOps.exif_transpose(img)
         if max_dimension > 0:
             img.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
 
-        fmt = (img.format or "PNG").upper() if output == "same_format" else {"jpg": "JPEG", "webp": "WEBP", "png": "PNG"}[output]
+        fmt = (
+            (img.format or "PNG").upper()
+            if output == "same_format"
+            else {"jpg": "JPEG", "webp": "WEBP", "png": "PNG"}[output]
+        )
         if fmt not in ("JPEG", "WEBP", "PNG"):
             fmt = "JPEG"
         ext = {"JPEG": ".jpg", "WEBP": ".webp", "PNG": ".png"}[fmt]

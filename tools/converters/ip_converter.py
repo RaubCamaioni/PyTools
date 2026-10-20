@@ -4,7 +4,9 @@ import ipaddress
 
 
 def ip_converter(input: str = "192.168.1.10/24") -> dict:
-    """Convert an IPv4/IPv6 address to decimal, hex, binary and reverse-DNS form; a CIDR block (10.0.0.0/8) also gives netmask, broadcast, host range and count."""
+    """Convert an IPv4/IPv6 address to decimal, hex, binary and reverse-DNS form; a CIDR block (10.0.0.0/8) also gives
+    netmask, broadcast, host range and count.
+    """
     text = input.strip()
     try:
         if "/" in text:
@@ -27,7 +29,9 @@ def ip_converter(input: str = "192.168.1.10/24") -> dict:
         "version": f"IPv{addr.version}",
         "integer": int(addr),
         "hex": f"0x{int(addr):0{bits // 4}x}",
-        "binary": ".".join(f"{int(o):08b}" for o in str(addr).split(".")) if addr.version == 4 else f"{int(addr):0128b}",
+        "binary": (
+            ".".join(f"{int(o):08b}" for o in str(addr).split(".")) if addr.version == 4 else f"{int(addr):0128b}"
+        ),
         "reverse_pointer": addr.reverse_pointer,
         "is_private": addr.is_private,
         "is_global": addr.is_global,

@@ -19,8 +19,21 @@ UNITS = {
 
 def pressure_converter(
     value: float = 1,
-    unit: Literal["bar", "psi", "pascal", "kilopascal", "megapascal", "millibar_hPa", "atmosphere", "torr_mmHg", "inHg", "kgf_per_cm2"] = "bar",
+    unit: Literal[
+        "bar",
+        "psi",
+        "pascal",
+        "kilopascal",
+        "megapascal",
+        "millibar_hPa",
+        "atmosphere",
+        "torr_mmHg",
+        "inHg",
+        "kgf_per_cm2",
+    ] = "bar",
 ) -> dict:
-    """Convert pressure between pascals, kPa, bar, millibar/hPa, atmospheres, psi, torr/mmHg, inHg and kgf/cm2 (tyres, weather, diving)."""
+    """Convert pressure between pascals, kPa, bar, millibar/hPa, atmospheres, psi, torr/mmHg, inHg and kgf/cm2 (tyres,
+    weather, diving).
+    """
     pa = value * UNITS[unit]
     return {name: float(f"{pa / factor:.6g}") for name, factor in UNITS.items()}

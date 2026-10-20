@@ -5,13 +5,21 @@ from typing import Literal
 from pptx import Presentation
 
 
-def pptx_to_text(pptx_file: Path, output: Literal["markdown", "plain_text"] = "markdown", include_notes: Literal["yes", "no"] = "yes") -> Path:
-    """Extract all text from a PowerPoint .pptx (titles, bullets, tables and speaker notes), one section per slide, as Markdown or plain text."""
+def pptx_to_text(
+    pptx_file: Path, output: Literal["markdown", "plain_text"] = "markdown", include_notes: Literal["yes", "no"] = "yes"
+) -> Path:
+    """Extract all text from a PowerPoint .pptx (titles, bullets, tables and speaker notes), one section per slide, as
+    Markdown or plain text.
+    """
     prs = Presentation(str(pptx_file))
     md = output == "markdown"
     lines: list[str] = []
     for number, slide in enumerate(prs.slides, 1):
-        title = slide.shapes.title.text.strip() if slide.shapes.title is not None and slide.shapes.title.has_text_frame else ""
+        title = (
+            slide.shapes.title.text.strip()
+            if slide.shapes.title is not None and slide.shapes.title.has_text_frame
+            else ""
+        )
         lines.append(f"## Slide {number}: {title}" if md else f"=== Slide {number}: {title} ===")
         for shape in slide.shapes:
             if shape == slide.shapes.title:

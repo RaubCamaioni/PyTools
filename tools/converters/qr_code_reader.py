@@ -34,4 +34,8 @@ def qr_code_reader(image: Path) -> dict:
         if text:
             results.append({"text": text})
 
-    return {"codes_found": len(results), "codes": results} if results else {"codes_found": 0, "message": "No QR code could be decoded. Try a sharper, better-lit image."}
+    return (
+        {"codes_found": len(results), "codes": results}
+        if results
+        else {"codes_found": 0, "message": "No QR code could be decoded. Try a sharper, better-lit image."}
+    )

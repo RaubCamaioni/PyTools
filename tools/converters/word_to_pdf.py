@@ -19,7 +19,9 @@ def word_to_pdf(
     page_size: Literal["a4", "letter"] = "a4",
     font_size: int = 11,
 ) -> Path:
-    """Convert a Word .docx to PDF. Headings, paragraphs, bold/italic, lists, tables and embedded images are kept; exact page layout, fonts and headers/footers are not (no Office installed in the sandbox)."""
+    """Convert a Word .docx to PDF. Headings, paragraphs, bold/italic, lists, tables and embedded images are kept;
+    exact page layout, fonts and headers/footers are not (no Office installed in the sandbox).
+    """
     with open(docx, "rb") as f:
         result = mammoth.convert_to_html(f)
     html = result.value

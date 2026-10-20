@@ -19,14 +19,18 @@ def time_duration_converter(
     value: float = 90,
     unit: Literal["minute", "second", "millisecond", "hour", "day", "week", "month_30d", "year_365d"] = "minute",
 ) -> dict:
-    """Convert a duration between milliseconds, seconds, minutes, hours, days, weeks, months and years, with an hh:mm:ss breakdown."""
+    """Convert a duration between milliseconds, seconds, minutes, hours, days, weeks, months and years, with an
+    hh:mm:ss breakdown.
+    """
     seconds = value * UNITS[unit]
     result = {name: float(f"{seconds / factor:.6g}") for name, factor in UNITS.items()}
     total = int(round(seconds))
     days, rem = divmod(total, 86400)
     hours, rem = divmod(rem, 3600)
     minutes, secs = divmod(rem, 60)
-    result["hh_mm_ss"] = f"{days}d {hours:02d}:{minutes:02d}:{secs:02d}" if days else f"{hours:02d}:{minutes:02d}:{secs:02d}"
+    result["hh_mm_ss"] = (
+        f"{days}d {hours:02d}:{minutes:02d}:{secs:02d}" if days else f"{hours:02d}:{minutes:02d}:{secs:02d}"
+    )
     parts = []
     for label, amount in (("day", days), ("hour", hours), ("minute", minutes), ("second", secs)):
         if amount:

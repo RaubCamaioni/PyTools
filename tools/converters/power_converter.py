@@ -21,11 +21,22 @@ UNITS = {
 def power_converter(
     value: float = 1,
     unit: Literal[
-        "kilowatt", "watt", "milliwatt", "megawatt", "gigawatt", "mechanical_horsepower", "metric_horsepower_PS",
-        "btu_per_hour", "ton_of_refrigeration", "foot_pound_per_second", "dBm",
+        "kilowatt",
+        "watt",
+        "milliwatt",
+        "megawatt",
+        "gigawatt",
+        "mechanical_horsepower",
+        "metric_horsepower_PS",
+        "btu_per_hour",
+        "ton_of_refrigeration",
+        "foot_pound_per_second",
+        "dBm",
     ] = "kilowatt",
 ) -> dict:
-    """Convert power between watts, kW, MW, horsepower (mechanical and metric PS), BTU/h, tons of refrigeration and dBm."""
+    """Convert power between watts, kW, MW, horsepower (mechanical and metric PS), BTU/h, tons of refrigeration and
+    dBm.
+    """
     watts = 10 ** ((value - 30) / 10) if unit == "dBm" else value * UNITS[unit]
     result = {name: float(f"{watts / factor:.6g}") for name, factor in UNITS.items()}
     result["dBm"] = float(f"{10 * math.log10(watts * 1000):.6g}") if watts > 0 else "undefined"

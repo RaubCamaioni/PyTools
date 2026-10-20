@@ -11,11 +11,19 @@ pillow_heif.register_heif_opener()
 def image_rotate_flip(
     image: Path,
     operation: Literal[
-        "rotate_90_clockwise", "rotate_90_counterclockwise", "rotate_180", "flip_horizontal", "flip_vertical", "auto_orient_from_exif", "custom_angle",
+        "rotate_90_clockwise",
+        "rotate_90_counterclockwise",
+        "rotate_180",
+        "flip_horizontal",
+        "flip_vertical",
+        "auto_orient_from_exif",
+        "custom_angle",
     ] = "rotate_90_clockwise",
     angle: float = 0,
 ) -> Path:
-    """Rotate or mirror an image, or fix its orientation from the EXIF tag. custom_angle rotates by any angle (counterclockwise) and expands the canvas."""
+    """Rotate or mirror an image, or fix its orientation from the EXIF tag. custom_angle rotates by any angle
+    (counterclockwise) and expands the canvas.
+    """
     with Image.open(image) as img:
         img.load()
         if operation == "auto_orient_from_exif":
@@ -33,7 +41,11 @@ def image_rotate_flip(
         else:
             result = img.convert("RGBA").rotate(angle, expand=True, resample=Image.BICUBIC)
 
-        suffix = image.suffix.lower() if image.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff") else ".png"
+        suffix = (
+            image.suffix.lower()
+            if image.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")
+            else ".png"
+        )
         if operation == "custom_angle" and suffix in (".jpg", ".jpeg", ".bmp"):
             suffix = ".png"  # keep the transparent corners
         out = image.with_name(f"{image.stem}_{operation}{suffix}")

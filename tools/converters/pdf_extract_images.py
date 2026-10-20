@@ -6,7 +6,9 @@ import zipfile
 
 
 def pdf_extract_images(pdf: Path, min_size_px: int = 64) -> dict:
-    """Pull every embedded picture out of a PDF (original resolution) into a zip. Tiny images such as icons and bullets are skipped by the size threshold."""
+    """Pull every embedded picture out of a PDF (original resolution) into a zip. Tiny images such as icons and bullets
+    are skipped by the size threshold.
+    """
     out = Path(f"{pdf.stem}_images.zip")
     count = 0
     skipped = 0

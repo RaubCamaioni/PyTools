@@ -39,7 +39,8 @@ def number_base_converter(
         "octal": sign + oct(magnitude)[2:],
         "hexadecimal": sign + hex(magnitude)[2:].upper(),
         "base36": sign + to_base(magnitude, 36).upper(),
-        "binary_grouped": sign + " ".join(
+        "binary_grouped": sign
+        + " ".join(
             bin(magnitude)[2:].zfill((magnitude.bit_length() + 7) // 8 * 8 or 8)[i : i + 8]
             for i in range(0, (magnitude.bit_length() + 7) // 8 * 8 or 8, 8)
         ),

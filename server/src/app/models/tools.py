@@ -228,7 +228,19 @@ def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
     return arguments
 
 
+MAX_LINE_LENGTH = 120
+
+
+def check_line_lengths(tool_source: str) -> None:
+    """Uploaded code is shown as-is on the tool page; keep every line within the page's width."""
+    for number, line in enumerate(tool_source.splitlines(), 1):
+        if len(line) > MAX_LINE_LENGTH:
+            detail = f"Line Too Long: line {number} has {len(line)} characters, wrap lines at {MAX_LINE_LENGTH}"
+            raise HTTPException(status_code=400, detail=detail)
+
+
 def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
+    check_line_lengths(tool_source)
     tags = get_tags(tool_source.split("\n")[0])
     tags.append(tool_name)
     arguments = get_arguments(tool_name, tool_source)

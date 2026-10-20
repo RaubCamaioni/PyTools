@@ -14,7 +14,9 @@ def csv_to_xlsx(
     input_format: Literal["csv_or_tsv", "json"] = "csv_or_tsv",
     numbers: Literal["convert", "keep_as_text"] = "convert",
 ) -> Path:
-    """Convert a CSV/TSV file or a JSON list of objects into an Excel .xlsx workbook with a bold header row, auto-sized columns and real numbers."""
+    """Convert a CSV/TSV file or a JSON list of objects into an Excel .xlsx workbook with a bold header row, auto-sized
+    columns and real numbers.
+    """
     text = data_file.read_text(encoding="utf-8-sig", errors="replace")
 
     if input_format == "json":
@@ -28,7 +30,10 @@ def csv_to_xlsx(
             for k in row:
                 if k not in header:
                     header.append(k)
-        rows = [header] + [[(json.dumps(r.get(k)) if isinstance(r.get(k), (dict, list)) else r.get(k, "")) for k in header] for r in data]
+        rows = [header] + [
+            [(json.dumps(r.get(k)) if isinstance(r.get(k), (dict, list)) else r.get(k, "")) for k in header]
+            for r in data
+        ]
     else:
         try:
             dialect = csv.Sniffer().sniff(text[:4096], delimiters=",;\t|")

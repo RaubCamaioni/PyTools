@@ -5,8 +5,12 @@ from typing import Literal
 import pymupdf
 
 
-def pdf_to_markdown(pdf: Path, output: Literal["markdown", "html", "text_by_page"] = "markdown", pages: str = "all") -> Path:
-    """Convert a PDF to Markdown (headings, lists, tables and emphasis detected), to HTML, or to plain text with a marker per page."""
+def pdf_to_markdown(
+    pdf: Path, output: Literal["markdown", "html", "text_by_page"] = "markdown", pages: str = "all"
+) -> Path:
+    """Convert a PDF to Markdown (headings, lists, tables and emphasis detected), to HTML, or to plain text with a
+    marker per page.
+    """
     with pymupdf.open(pdf) as doc:
         if pages.strip().lower() == "all":
             indexes = list(range(doc.page_count))
@@ -25,7 +29,11 @@ def pdf_to_markdown(pdf: Path, output: Literal["markdown", "html", "text_by_page
             ext = "md"
         elif output == "html":
             parts = [doc[i].get_text("xhtml") for i in indexes]
-            content = "<!doctype html>\n<html><head><meta charset='utf-8'><title>%s</title></head><body>\n%s\n</body></html>\n" % (pdf.stem, "\n<hr>\n".join(parts))
+            content = (
+                "<!doctype html>\n<html><head><meta charset='utf-8'><title>%s</title></head>"
+                "<body>\n%s\n</body></html>\n"
+                % (pdf.stem, "\n<hr>\n".join(parts))
+            )
             ext = "html"
         else:
             parts = [f"===== page {i + 1} =====\n{doc[i].get_text()}" for i in indexes]

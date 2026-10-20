@@ -9,7 +9,9 @@ from pptx.util import Emu
 
 
 def pdf_to_powerpoint(pdf: Path, mode: Literal["page_images", "editable_text"] = "page_images", dpi: int = 120) -> Path:
-    """Turn each PDF page into a PowerPoint slide: as a full-slide image (looks identical) or as editable text boxes (keeps the words, loses the layout)."""
+    """Turn each PDF page into a PowerPoint slide: as a full-slide image (looks identical) or as editable text boxes
+    (keeps the words, loses the layout).
+    """
     dpi = max(50, min(dpi, 200))
     prs = Presentation()
     out = pdf.with_suffix(".pptx")
@@ -36,7 +38,12 @@ def pdf_to_powerpoint(pdf: Path, mode: Literal["page_images", "editable_text"] =
                     text = text.strip()
                     if not text:
                         continue
-                    box = slide.shapes.add_textbox(Emu(int(x0 * scale)), Emu(int(y0 * scale)), Emu(int((x1 - x0) * scale)), Emu(int((y1 - y0) * scale)))
+                    box = slide.shapes.add_textbox(
+                        Emu(int(x0 * scale)),
+                        Emu(int(y0 * scale)),
+                        Emu(int((x1 - x0) * scale)),
+                        Emu(int((y1 - y0) * scale)),
+                    )
                     box.text_frame.word_wrap = True
                     box.text_frame.text = text
     prs.save(str(out))

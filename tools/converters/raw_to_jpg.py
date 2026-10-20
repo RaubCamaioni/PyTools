@@ -13,7 +13,9 @@ def raw_to_jpg(
     brightness: float = 1.0,
     max_dimension: int = 0,
 ) -> dict:
-    """Develop a camera RAW file (CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2, PEF...) into a JPG, PNG or TIFF, with camera or automatic white balance and a brightness multiplier."""
+    """Develop a camera RAW file (CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2, PEF...) into a JPG, PNG or TIFF, with camera
+    or automatic white balance and a brightness multiplier.
+    """
     with rawpy.imread(str(raw_photo)) as raw:
         rgb = raw.postprocess(
             use_camera_wb=white_balance == "camera",
@@ -33,4 +35,8 @@ def raw_to_jpg(
         img.save(out, "PNG", optimize=True)
     else:
         img.save(out, "TIFF")
-    return {"file": out, "sensor_size": f"{sizes.raw_width}x{sizes.raw_height}", "output_size": f"{img.width}x{img.height}"}
+    return {
+        "file": out,
+        "sensor_size": f"{sizes.raw_width}x{sizes.raw_height}",
+        "output_size": f"{img.width}x{img.height}",
+    }

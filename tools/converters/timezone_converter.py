@@ -4,9 +4,23 @@ from datetime import datetime
 from zoneinfo import ZoneInfo, available_timezones
 
 COMMON = [
-    "UTC", "America/Los_Angeles", "America/Denver", "America/Chicago", "America/New_York", "America/Sao_Paulo",
-    "Europe/London", "Europe/Paris", "Europe/Berlin", "Europe/Moscow", "Africa/Johannesburg", "Asia/Dubai",
-    "Asia/Kolkata", "Asia/Shanghai", "Asia/Tokyo", "Australia/Sydney", "Pacific/Auckland",
+    "UTC",
+    "America/Los_Angeles",
+    "America/Denver",
+    "America/Chicago",
+    "America/New_York",
+    "America/Sao_Paulo",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Europe/Moscow",
+    "Africa/Johannesburg",
+    "Asia/Dubai",
+    "Asia/Kolkata",
+    "Asia/Shanghai",
+    "Asia/Tokyo",
+    "Australia/Sydney",
+    "Pacific/Auckland",
 ]
 
 
@@ -19,10 +33,24 @@ def find_zone(name: str) -> ZoneInfo:
     except Exception:  # noqa: BLE001
         pass
     lowered = name.lower().replace(" ", "_")
-    aliases = {"est": "America/New_York", "edt": "America/New_York", "cst": "America/Chicago", "cdt": "America/Chicago",
-               "mst": "America/Denver", "mdt": "America/Denver", "pst": "America/Los_Angeles", "pdt": "America/Los_Angeles",
-               "gmt": "Europe/London", "bst": "Europe/London", "cet": "Europe/Paris", "cest": "Europe/Paris",
-               "ist": "Asia/Kolkata", "jst": "Asia/Tokyo", "aest": "Australia/Sydney", "aedt": "Australia/Sydney"}
+    aliases = {
+        "est": "America/New_York",
+        "edt": "America/New_York",
+        "cst": "America/Chicago",
+        "cdt": "America/Chicago",
+        "mst": "America/Denver",
+        "mdt": "America/Denver",
+        "pst": "America/Los_Angeles",
+        "pdt": "America/Los_Angeles",
+        "gmt": "Europe/London",
+        "bst": "Europe/London",
+        "cet": "Europe/Paris",
+        "cest": "Europe/Paris",
+        "ist": "Asia/Kolkata",
+        "jst": "Asia/Tokyo",
+        "aest": "Australia/Sydney",
+        "aedt": "Australia/Sydney",
+    }
     if lowered in aliases:
         return ZoneInfo(aliases[lowered])
     for zone in available_timezones():
@@ -36,7 +64,9 @@ def timezone_converter(
     from_zone: str = "UTC",
     to_zone: str = "America/New_York",
 ) -> dict:
-    """Convert a date/time from one time zone to another and show it in the world's major cities. Accepts IANA names (Europe/Paris), city names (Tokyo) or abbreviations (PST, CET)."""
+    """Convert a date/time from one time zone to another and show it in the world's major cities. Accepts IANA names
+    (Europe/Paris), city names (Tokyo) or abbreviations (PST, CET).
+    """
     src = find_zone(from_zone)
     dst = find_zone(to_zone)
     text = time.strip()

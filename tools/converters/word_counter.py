@@ -6,7 +6,9 @@ import re
 
 
 def word_counter(text_file: Path, top_words: int = 10) -> dict:
-    """Count characters, words, sentences, lines and paragraphs in a text file, with reading time and the most common words."""
+    """Count characters, words, sentences, lines and paragraphs in a text file, with reading time and the most common
+    words.
+    """
     text = text_file.read_text(encoding="utf-8", errors="replace")
     words = re.findall(r"[A-Za-z0-9'-]+", text)
     sentences = [s for s in re.split(r"[.!?]+(?:\s|$)", text) if s.strip()]

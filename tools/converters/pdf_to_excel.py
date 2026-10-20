@@ -10,7 +10,9 @@ from openpyxl.styles import Font
 
 
 def pdf_to_excel(pdf: Path, output: Literal["xlsx", "csv"] = "xlsx", pages: str = "all") -> dict:
-    """Extract the tables from a PDF into an Excel workbook (one sheet per table) or CSV files (zipped). Works on PDFs with real text, not scans."""
+    """Extract the tables from a PDF into an Excel workbook (one sheet per table) or CSV files (zipped). Works on PDFs
+    with real text, not scans.
+    """
     with pymupdf.open(pdf) as doc:
         if pages.strip().lower() == "all":
             indexes = range(doc.page_count)
@@ -28,12 +30,22 @@ def pdf_to_excel(pdf: Path, output: Literal["xlsx", "csv"] = "xlsx", pages: str 
             found = page.find_tables()
             for n, table in enumerate(found.tables, 1):
                 rows = table.extract()
-                rows = [[("" if c is None else str(c).replace("\n", " ")) for c in row] for row in rows if any(c not in (None, "") for c in row)]
+                rows = [
+                    [("" if c is None else str(c).replace("\n", " ")) for c in row]
+                    for row in rows
+                    if any(c not in (None, "") for c in row)
+                ]
                 if rows:
                     tables.append((f"p{i + 1}_t{n}", rows))
 
     if not tables:
-        return {"tables_found": 0, "message": "No tables detected. If the PDF is a scan, OCR it first; if the table has no ruling lines, detection may miss it."}
+        return {
+            "tables_found": 0,
+            "message": (
+                "No tables detected. If the PDF is a scan, OCR it first; "
+                "if the table has no ruling lines, detection may miss it."
+            ),
+        }
 
     if output == "xlsx":
         wb = Workbook()
