@@ -180,10 +180,32 @@ def list_item_user(root_path: str, tools: list[Tool]):
 
 
 pretty_printer = MyPrettyPrinter(indent=4, width=50)
+INDENT = "    "
+INLINE_WIDTH = 50
+
+
+def pretty(value: Any, depth: int = 0) -> str:
+    """Block-style repr: dicts always one entry per line with the closing bracket on its own line,
+    lists/tuples/sets the same when they do not fit on one line; scalars via the pretty printer."""
+    pad = INDENT * depth
+    inner = INDENT * (depth + 1)
+    if isinstance(value, dict):
+        if not value:
+            return "{}"
+        entries = [f"{inner}{pretty_printer.pformat(k)}: {pretty(v, depth + 1)}" for k, v in value.items()]
+        return "{\n" + ",\n".join(entries) + f"\n{pad}}}"
+    if isinstance(value, (list, tuple, set, frozenset)):
+        flat = pretty_printer.pformat(value)
+        if "\n" not in flat and len(flat) <= INLINE_WIDTH:
+            return flat
+        open_, close = {list: "[]", tuple: "()"}.get(type(value), "{}")
+        entries = [f"{inner}{pretty(v, depth + 1)}" for v in value]
+        return f"{open_}\n" + ",\n".join(entries) + f"\n{pad}{close}"
+    return pretty_printer.pformat(value)
 
 
 def render(results: Any):
-    return_string = pretty_printer.pformat(results)
+    return_string = pretty(results)
 
     sanatized = (
         sanitize_html(
