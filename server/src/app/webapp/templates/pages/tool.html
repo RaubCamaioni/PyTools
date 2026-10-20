@@ -70,14 +70,25 @@
         </div>
         <div style="height: 200px;"></div>
         <script>
-            // execution animation: a vim cursor line steps through the file while the run is in flight
+            // execution trace: the sandbox streams the line it is executing; the vim cursor line follows it
+            // and the loading bar grows to max(line)/total, never shrinking. Without events (older sandbox,
+            // trace error) the cursor falls back to stepping through the file over an indeterminate bar.
             (function () {
                 const form = document.getElementById("argument-form");
                 const cursor = document.getElementById("exec-cursor");
                 const mode = document.getElementById("vim-mode");
+                const bar = document.getElementById("loading-bar");
                 const pre = cursor.parentElement;
                 const total = {{ lines }};
-                let timer = null, line = 0;
+                const FALLBACK_AFTER_MS = 1000, DONE_VISIBLE_MS = 400;
+                let token = null, stream = null, stepper = null, fallbackTimer = null, frame = null;
+                let maxLine = 0, nextLine = 0, live = false;
+
+                function randomToken() {
+                    const bytes = new Uint8Array(24);
+                    crypto.getRandomValues(bytes);  // 24 bytes -> 32 base64url characters
+                    return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+                }
                 function place(n) {
                     const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
                     const top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight;
@@ -85,16 +96,54 @@
                     cursor.style.height = lineHeight + "px";
                     cursor.scrollIntoView({ block: "nearest" });
                 }
+                function progress(percent) {
+                    bar.classList.add("determinate");
+                    bar.style.setProperty("--progress", percent + "%");
+                }
+                function startStepping() {
+                    let line = 0;
+                    stepper = setInterval(function () { line = line % total + 1; place(line); }, 120);
+                }
+                function stopStream() {
+                    if (stream) { stream.close(); stream = null; }
+                    clearTimeout(fallbackTimer);
+                    clearInterval(stepper);
+                    stepper = null;
+                }
+                function onLine(event) {
+                    const n = parseInt(event.data, 10);
+                    if (!(n >= 1 && n <= total)) return;
+                    if (!live) { live = true; clearTimeout(fallbackTimer); clearInterval(stepper); stepper = null; }
+                    if (n > maxLine) { maxLine = n; progress(100 * maxLine / total); }
+                    nextLine = n;
+                    if (frame === null) {
+                        frame = requestAnimationFrame(function () { frame = null; place(nextLine); });
+                    }
+                }
+
+                form.addEventListener("htmx:configRequest", function (event) {
+                    token = randomToken();
+                    event.detail.parameters.trace = token;
+                });
                 form.addEventListener("htmx:beforeRequest", function () {
-                    line = 0;
+                    maxLine = 0; live = false;
+                    bar.classList.remove("determinate", "done");
+                    bar.style.setProperty("--progress", "0%");
                     cursor.classList.remove("hidden");
                     mode.textContent = "-- RUNNING --";
-                    timer = setInterval(function () { line = line % total + 1; place(line); }, 120);
+                    stream = new EventSource("{{ root_path }}/trace/" + token);
+                    stream.addEventListener("line", onLine);
+                    stream.addEventListener("end", stopStream);
+                    stream.onerror = function () { if (!live) stream.close(); };
+                    fallbackTimer = setTimeout(function () { if (!live) startStepping(); }, FALLBACK_AFTER_MS);
                 });
                 form.addEventListener("htmx:afterRequest", function () {
-                    clearInterval(timer);
+                    stopStream();
                     cursor.classList.add("hidden");
                     mode.textContent = "";
+                    progress(100);
+                    bar.classList.add("done");  // stays visible at 100% briefly after htmx hides it
+                    setTimeout(function () { bar.classList.remove("done", "determinate"); }, DONE_VISIBLE_MS);
                 });
             })();
 
