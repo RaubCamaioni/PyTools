@@ -1,4 +1,5 @@
 from sandbox import serializer
+from sandbox.trace import LineTracer, open_trace
 
 from typing import Any, Callable
 from functools import partial
@@ -9,8 +10,25 @@ import sys
 import os
 
 
-def runner(file: Path, workdir: Path) -> Any:
+def runner(file: Path, workdir: Path, trace: str | None = None) -> Any:
     os.chdir(workdir)
+
+    # optional line trace: 4-byte line numbers of the tool file to a FIFO the host reads
+    tracer = None
+    if trace is not None:
+        fd = open_trace(trace)
+        if fd is not None:
+            tracer = LineTracer(file, fd)
+            tracer.start()
+    try:
+        _run(file)
+    finally:
+        if tracer is not None:
+            tracer.stop()
+            os.close(tracer.fd)
+
+
+def _run(file: Path) -> None:
 
     with open("args.json", "r") as f:
         args = serializer.load(f)
@@ -49,12 +67,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", "-f", type=str, required=True)
     parser.add_argument("--workdir", "-w", type=str, required=True)
+    parser.add_argument("--trace", "-t", type=str, default=None)
     args = parser.parse_args()
 
     file = Path(args.file)
     workdir = Path(args.workdir)
 
-    runner(file, workdir)
+    runner(file, workdir, args.trace)
 
 
 if __name__ == "__main__":
