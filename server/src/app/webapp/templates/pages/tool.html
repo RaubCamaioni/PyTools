@@ -44,16 +44,17 @@
                         {{ form_groups | safe }}
                     </form>
 
-                    <div class="flex-grow"></div>
-
-                    {# actions, kept away from the arguments #}
-                    <div class="flex flex-col gap-1 mt-4">
-                        <button class="btn self-start" type="submit" form="argument-form">[ run ]</button>
-                        <div class="flex flex-wrap gap-x-1 text-dim">
+                    {# actions directly under the arguments: run on the left, the run count on the right,
+                       the secondary links on their own line #}
+                    <div class="args-actions">
+                        <div class="args-actions-row">
+                            <button class="btn" type="submit" form="argument-form">[ run ]</button>
+                            <span class="label">runs: {{ runs }}</span>
+                        </div>
+                        <div class="args-actions-row text-dim">
                             <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[download]</a>
                             <button id="share-link-button" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[share link]</button>
                         </div>
-                        <div class="label">runs: {{ runs }}</div>
                     </div>
                 </div>
             </div>
