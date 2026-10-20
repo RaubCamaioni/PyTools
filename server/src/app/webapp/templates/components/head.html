@@ -12,6 +12,29 @@
 <script src="/scripts/htmx.min.js"></script>
 <script src="/scripts/_hyperscript.min.js"></script>
 <script>
+    // the underscore of a console field marks the caret: measure the text before the caret and
+    // place the _ there (the native caret is invisible); re-placed on every edit, click or key
+    (function () {
+        const ctx = document.createElement("canvas").getContext("2d");
+        function placeCaret(input) {
+            const field = input.closest(".field");
+            if (!field) return;
+            ctx.font = getComputedStyle(input).font;
+            const pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+            const x = ctx.measureText(input.value.slice(0, pos)).width - input.scrollLeft;
+            field.style.setProperty("--caret", Math.max(0, x) + "px");
+        }
+        function placeAll() {
+            document.querySelectorAll(".field input").forEach(placeCaret);
+        }
+        ["input", "keyup", "click", "focus", "select", "mouseup"].forEach(function (type) {
+            document.addEventListener(type, function (event) {
+                if (event.target.matches && event.target.matches(".field input")) placeCaret(event.target);
+            }, true);
+        });
+        document.addEventListener("DOMContentLoaded", placeAll);
+        document.addEventListener("htmx:afterSettle", placeAll);
+    })();
     // console fields size to their text, so a click anywhere on a field's rule focuses its control
     document.addEventListener("click", function (event) {
         const field = event.target.closest && event.target.closest(".field, .pick");

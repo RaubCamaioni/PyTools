@@ -118,16 +118,21 @@
   }
   /* console field: no box; the caret is a blinking underscore drawn after the text */
   .field {
-    /* a dim rule under a minimum width shows there is a field even when it is empty */
-    @apply inline-flex items-baseline min-w-[10ch] border-b border-line cursor-text;
+    /* a dim rule under a minimum width shows there is a field even when it is empty;
+       the trailing 1ch keeps the caret underscore inside the rule at the end of the text */
+    @apply relative inline-flex items-baseline min-w-[10ch] pr-[1ch] border-b border-line cursor-text;
   }
   .field:focus-within {
     @apply border-dim;
   }
   .field::after {
     content: "_";
+    position: absolute;
+    bottom: 0;
+    left: var(--caret, 0px); /* set by the caret script from the text before the caret */
     color: var(--color-dim);
     animation: blink 1s steps(1) infinite;
+    pointer-events: none;
   }
   .field:focus-within::after {
     color: var(--color-paper);

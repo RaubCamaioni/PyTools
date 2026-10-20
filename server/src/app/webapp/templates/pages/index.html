@@ -16,6 +16,7 @@
                 id="filter"
                 hx-post="{{ root_path }}/tools?start=0&end=50"
                 hx-trigger="keyup[key=='Enter'], change[target.name=='tag']"
+                onsubmit="event.preventDefault()"
                 hx-target="#tool-list"
                 hx-indicator=".htmx-indicator"
                 hx-swap="innerHTML">
@@ -24,6 +25,8 @@
                     <span class="field flex-grow"><input
                         type="search"
                         name="search"
+                        autocomplete="off"
+                        spellcheck="false"
                         aria-label="filter tools"></span>
                 </label>
                 {{ tag_filters | safe }}
