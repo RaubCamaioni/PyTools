@@ -31,8 +31,7 @@ def pdf_to_markdown(
             parts = [doc[i].get_text("xhtml") for i in indexes]
             content = (
                 "<!doctype html>\n<html><head><meta charset='utf-8'><title>%s</title></head>"
-                "<body>\n%s\n</body></html>\n"
-                % (pdf.stem, "\n<hr>\n".join(parts))
+                "<body>\n%s\n</body></html>\n" % (pdf.stem, "\n<hr>\n".join(parts))
             )
             ext = "html"
         else:
