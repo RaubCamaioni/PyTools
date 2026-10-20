@@ -20,12 +20,11 @@
                 onsubmit="event.preventDefault();"
                 class="flex flex-wrap items-center gap-2 whitespace-nowrap">
                <label for="alias"><span class="text-dim">$</span> alias</label>
-               <input
-                class="flex-grow min-w-0 border-0 border-b border-line px-1 py-0 focus:border-paper"
+               <span class="field flex-grow"><input
                 id="alias"
                 type="text"
                 name="alias"
-                value="{{ alias }}">
+                value="{{ alias }}"></span>
                 <button class="btn">[ save ]</button>
             </form>
 

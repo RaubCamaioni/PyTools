@@ -1,12 +1,11 @@
 <div class="form-group flex items-center gap-2 py-0.5">
 	<span class="whitespace-pre text-dim select-none">{{ glyph }}</span>
 	<label class="text-dim whitespace-nowrap" for="{{ name }}">{{ name }}: <span class="text-paper">{{ py_type }}</span></label>
-	<select
-		class="ml-auto w-1/2 min-w-[8ch]"
+	<span class="field ml-auto max-w-[60%]"><select
 		id="{{ name }}"
 		name="{{ name }}">
 		{% for option in options %}
             <option value="{{ option.value }}">{{ option.label }}</option>
         {% endfor %}
-	</select>
+	</select></span>
 </div>
