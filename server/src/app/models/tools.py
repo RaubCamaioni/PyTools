@@ -13,6 +13,7 @@ from sqlmodel import (
     Column,
 )
 import hashlib
+from sqlalchemy import inspect, text
 from typing import Sequence
 import logging
 import ast
@@ -33,6 +34,9 @@ def hash_id(id: str) -> int:
 class User(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     alias: str = Field(default="annonymous")
+    # roles live in the database: an admin is made with an UPDATE, never named in code
+    admin: bool = Field(default=False)
+    banned: bool = Field(default=False)
     tools: Optional[list["Tool"]] = Relationship(back_populates="user")
 
     def __init__(self, **data: Any):
@@ -137,6 +141,28 @@ def get_tag_counts(session: Session, terms: Sequence[str] = ()) -> list[tuple[st
         return sorted(counts.items(), key=lambda item: (-item[1], item[0]))
 
 
+def get_users_with_tools(session: Session) -> list[tuple[User, list[Tool]]]:
+    """Every account with its tools (oldest account first), for the admin page."""
+    users = session.exec(select(User).order_by(User.id)).all()
+    listing = []
+    for user in users:
+        tools = session.exec(select(Tool).where(Tool.user_id == user.id).order_by(Tool.id)).all()
+        listing.append((user, list(tools)))
+    return listing
+
+
+def set_banned(session: Session, user_id: int, banned: bool) -> None:
+    """Ban (or unban) an account. Banning unpublishes its tools; unbanning leaves them private."""
+    user = session.get(User, user_id)
+    if user is None:
+        return
+    user.banned = banned
+    if banned:
+        for tool in session.exec(select(Tool).where(Tool.user_id == user_id)).all():
+            tool.public = False
+    session.commit()
+
+
 def get_user_tools(session: Session, user: User) -> list[Tool]:
     statement = select(Tool).where(Tool.user_id == user.id)
     result = session.exec(statement).all()
@@ -169,8 +195,27 @@ def get_tool_by_id(session: Session, tool_id: int) -> Tool | None:
     return result
 
 
+# columns added after the first release; create_all never alters existing tables
+MIGRATIONS = [
+    ("user", "admin", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("user", "banned", "BOOLEAN NOT NULL DEFAULT 0"),
+]
+
+
+def migrate(engine_) -> None:
+    """Add any missing columns from MIGRATIONS; safe to run on every start."""
+    inspector = inspect(engine_)
+    for table, column, definition in MIGRATIONS:
+        if table in inspector.get_table_names():
+            present = {c["name"] for c in inspector.get_columns(table)}
+            if column not in present:
+                with engine_.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {definition}"))
+
+
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
+    migrate(engine)
 
 
 def get_session():

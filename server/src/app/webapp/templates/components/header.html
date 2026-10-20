@@ -16,6 +16,7 @@
       {{ navlink('/privacy-policy', 'privacy', path == '/privacy-policy') }}
       {{ navlink('/terms-of-service', 'terms', path == '/terms-of-service') }}
       {{ navlink('/user', 'profile', path == '/user') }}
+      {% if session_admin(request) %}{{ navlink('/admin', 'admin', path == '/admin') }}{% endif %}
       <span
         class="text-dim px-1"
         hx-get="{{ root_path }}/login/button"

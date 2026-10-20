@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% with title="admin" %}
+            {% include 'components/head.html'%}
+        {% endwith %}
+    </head>
+    <body class="bg-ink text-paper font-mono">
+
+        {% set cwd = '/home' %}
+        {% include 'components/header.html'%}
+
+        <div class="max-w-4xl mx-auto px-4 flex flex-col gap-6">
+            <section>
+                <div class="prompt font-bold mb-1">ls -l /home/*/tools/ | column -t</div>
+                {# one table: an account row, then that account's tools indented under it #}
+                <ul class="tool-table">
+                    <li class="contents text-dim">
+                        <span class="px-1 py-0.5">NAME</span>
+                        <span class="px-1 py-0.5">MODE</span>
+                        <span class="px-1 py-0.5 text-right">RUNS</span>
+                        <span class="px-1 py-0.5">ACTIONS</span>
+                    </li>
+                    {% for account, tools in accounts %}
+                    <li class="contents">
+                        <span class="px-1 py-0.5 font-bold">{{ account.alias }}/ <span class="text-dim font-normal">{{ account.id }}</span></span>
+                        <span class="px-1 py-0.5 text-dim">{{ 'admin' if account.admin else '' }}</span>
+                        <span class="px-1 py-0.5 text-right text-dim">{{ tools | length }} tools</span>
+                        <span class="px-1 py-0.5">
+                            {% if not account.admin %}
+                            {# banning unpublishes the account's tools and refuses its logins #}
+                            <label class="switch" title="banned: this account cannot log in and its tools are unpublished.">
+                                <input type="checkbox" {% if account.banned %}checked{% endif %}
+                                    _="on change fetch `{{ root_path }}/admin/ban/{{ account.id }}?banned=${my.checked}` with method:'POST'
+                                       then set the next <.label-text/>'s innerText to (my.checked ? '[banned]' : '[ban]')">
+                                <span class="label-text">{{ '[banned]' if account.banned else '[ban]' }}</span>
+                            </label>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% for tool in tools %}
+                    <li class="contents">
+                        <span class="px-1 py-0.5 pl-4"><a href="{{ root_path }}/tool/{{ tool.id }}" class="no-underline hover:bg-paper hover:text-ink">{{ tool.name }}.py</a></span>
+                        <span class="px-1 py-0.5 text-dim">{{ 'public' if tool.public else 'private' }}{{ ' anonymous' if tool.annonymous else '' }}</span>
+                        <span class="px-1 py-0.5 text-right text-dim">{{ tool.usage }}</span>
+                        <span class="px-1 py-0.5 text-dim">{% if tool.reports %}{{ tool.reports | length }} reports{% endif %}</span>
+                    </li>
+                    {% endfor %}
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+    </body>
+</html>

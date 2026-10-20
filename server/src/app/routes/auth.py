@@ -89,13 +89,24 @@ def _session_user(request: Request) -> Optional[User]:
         return None
 
 
+def session_user(request: Request) -> Optional[User]:
+    """The logged-in user from the session cookie, or None."""
+    return _session_user(request)
+
+
 def session_alias(request: Request) -> str:
     """What the header centre shows: the logged-in alias, or 'anonymous'."""
     user = _session_user(request)
     return user.alias if user is not None else "anonymous"
 
 
+def session_admin(request: Request) -> bool:
+    user = _session_user(request)
+    return bool(user is not None and user.admin)
+
+
 TEMPLATES.env.globals["session_alias"] = session_alias
+TEMPLATES.env.globals["session_admin"] = session_admin
 
 
 def _login_button(request: Request) -> HTMLResponse:
@@ -136,6 +147,8 @@ async def auth_github(request: Request, code: str, state: str, session: SessionD
 
     user_id = OWNER_USER_ID if account["login"] == OWNER_GITHUB_LOGIN else hash_id(f"github:{account['id']}")
     user = get_user(session, user_id)
+    if user.banned:
+        raise HTTPException(status_code=403, detail="This account is banned")
     if user.alias == DEFAULT_ALIAS:
         user.alias = account["login"]
         session.commit()
