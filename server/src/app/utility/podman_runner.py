@@ -9,6 +9,7 @@ import os
 import shutil
 import stat
 import time
+from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
@@ -16,6 +17,7 @@ from typing import Any, Awaitable, Callable, Optional
 
 from app.utility import serializer
 from app.utility.sandbox_config import SandboxConfig
+from app.utility.trace import read_trace
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -48,6 +50,9 @@ TIMEOUT_RUN_EXIT_CODE = 255
 TIMEOUT_INSPECT_EXIT_CODE = -1
 # uid of the `app` user created in containers/Containerfile.sandbox
 SANDBOX_UID = 1001
+# the FIFO in the run directory that carries the sandbox's executed line numbers
+TRACE_NAME = "trace"
+TRACE_DRAIN_SECONDS = 1.0
 STARTING = "starting"
 
 
@@ -278,7 +283,7 @@ class PodmanRunner:
             f"--timeout={int(cfg.timeout_seconds)}",
         ]
 
-    def command(self, name: str, tool: Path, run_dir: Path) -> list[str]:
+    def command(self, name: str, tool: Path, run_dir: Path, trace: Optional[Path] = None) -> list[str]:
         flags = self._limit_flags()
         # keep the "--tmpfs <spec>" form the tests and operators expect
         i = flags.index("--tmpfs=/tmp:rw,size=64m")
@@ -298,9 +303,11 @@ class PodmanRunner:
             str(run_dir / tool.name),
             "--workdir",
             str(run_dir),
+            *(["--trace", str(trace)] if trace is not None else []),
         ]
 
-    async def run(self, tool: Path, run_dir: Path) -> RunResult:
+    async def run(self, tool: Path, run_dir: Path, on_line: Optional[Callable[[int], None]] = None) -> RunResult:
+        """Run `tool`; with `on_line`, forward the sandbox's executed line numbers as they happen."""
         if not self.available:
             raise SandboxUnavailable(self._unavailable_reason)
         try:
@@ -308,21 +315,25 @@ class PodmanRunner:
         except asyncio.TimeoutError:
             raise SandboxBusy()
         try:
-            return await self._supervise(tool, run_dir)
+            return await self._supervise(tool, run_dir, on_line)
         finally:
             self._slots.release()
 
-    async def _supervise(self, tool: Path, run_dir: Path) -> RunResult:
+    async def _supervise(self, tool: Path, run_dir: Path, on_line: Optional[Callable[[int], None]]) -> RunResult:
         name = self.container_name(run_dir)
         timed_out = False
         stderr = ""
         exit_code: Optional[int] = None
         oom_killed = False
+        trace = _open_trace(run_dir) if on_line is not None else None
+        reader = None
+        if trace is not None:
+            reader = asyncio.create_task(read_trace(trace.rfd, _line_count(tool), on_line))
         started = time.monotonic()
         try:
             try:
                 _, _, stderr = await self._exec(
-                    *self.command(name, tool, run_dir),
+                    *self.command(name, tool, run_dir, trace=trace.path if trace is not None else None),
                     timeout=self.config.timeout_seconds + SAFETY_NET_SECONDS,
                 )
             except asyncio.TimeoutError:
@@ -342,6 +353,8 @@ class PodmanRunner:
             # the sandbox owned its files; hand them back to the app user before anything reads or deletes them
             await self._podman("rm", "-f", name)
             await self._podman("unshare", "chown", "-R", "0:0", str(run_dir))
+            if trace is not None:
+                await trace.finish(reader)
         return self.classify(run_dir, exit_code, oom_killed, elapsed, stderr, timed_out)
 
     async def _podman(self, *args: str) -> tuple[int, str, str]:
@@ -393,6 +406,48 @@ class PodmanRunner:
         if timed_out or exit_code == TIMEOUT_INSPECT_EXIT_CODE or elapsed >= cfg.timeout_seconds - TIMEOUT_TOLERANCE:
             return RunResult(Outcome.TIMEOUT, message=f"Tool exceeded the {cfg.timeout_seconds:g} second limit", stderr_tail=tail)
         return RunResult(Outcome.CRASHED, message="Tool failed to run", stderr_tail=tail)
+
+
+@dataclass
+class _Trace:
+    path: Path
+    rfd: int
+    wfd: int  # the app's own write end: without one the read end reports EOF before the sandbox connects
+
+    async def finish(self, reader: Optional["asyncio.Task"]) -> None:
+        os.close(self.wfd)  # the container is gone, so this close delivers EOF to the reader
+        if reader is not None:
+            try:
+                await asyncio.wait_for(reader, TRACE_DRAIN_SECONDS)
+            except (asyncio.TimeoutError, Exception):
+                reader.cancel()
+                with suppress(BaseException):
+                    await reader
+        os.close(self.rfd)
+
+
+def _open_trace(run_dir: Path) -> Optional[_Trace]:
+    """Create the trace FIFO and hold both ends open; None (run without a trace) on any failure."""
+    path = run_dir / TRACE_NAME
+    rfd = None
+    try:
+        os.mkfifo(path, 0o666)
+        os.chmod(path, 0o666)  # the sandbox user must be able to open it for writing
+        rfd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+        wfd = os.open(path, os.O_WRONLY | os.O_NONBLOCK)
+        return _Trace(path, rfd, wfd)
+    except OSError as e:
+        logger.warning(f"trace FIFO unavailable for {run_dir.name}: {e}")
+        if rfd is not None:
+            os.close(rfd)
+        return None
+
+
+def _line_count(tool: Path) -> int:
+    try:
+        return tool.read_text(encoding="utf-8", errors="replace").count("\n") + 1
+    except OSError:
+        return 0
 
 
 def _read_results(path: Path):
