@@ -58,4 +58,4 @@ def test_user_tool_table_starts_with_a_header_row():
     assert html.index("a.py") < html.index("[public]")  # the name, the row's identifier, comes first
     assert html.index("ACTIONS") < html.index("[upload]") < html.index("a.py")  # the upload row leads the table
     assert html.count('<li class="contents') == 3  # header + upload row + one tool row, all grid rows
-    assert html.count(">n/a<") == 3  # mode, runs and actions do not apply to the upload row
+    assert html.count(">---<") == 3  # name, mode and runs do not apply to the upload row; [upload] is its action
