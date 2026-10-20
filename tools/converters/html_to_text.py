@@ -106,7 +106,9 @@ class Extractor(HTMLParser):
 
 
 def html_to_text(html_file: Path, output: Literal["plain_text", "markdown"] = "plain_text") -> Path:
-    """Strip the tags from an HTML file, producing plain text or simple Markdown (headings, lists, links, emphasis)."""
+    """Strip the tags from an HTML file, producing plain text or simple Markdown
+    (headings, lists, links, emphasis).
+    """
     text = html_file.read_text(encoding="utf-8", errors="replace")
     parser = Extractor(markdown=output == "markdown")
     parser.feed(text)

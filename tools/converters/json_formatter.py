@@ -10,8 +10,8 @@ def json_formatter(
     action: Literal["pretty_print", "minify", "sort_keys", "validate"],
     indent: int = 2,
 ) -> Path:
-    """Pretty-print, minify, sort the keys of, or validate a JSON file. Reports the line and column of any syntax
-    error.
+    """Pretty-print, minify, sort the keys of, or validate a JSON file. Reports the line
+    and column of any syntax error.
     """
     text = json_file.read_text(encoding="utf-8-sig", errors="replace")
     output = json_file.with_name(f"{json_file.stem}_{action}.json")

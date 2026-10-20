@@ -15,8 +15,8 @@ def markdown_to_epub(
     input_format: Literal["markdown", "plain_text", "html"] = "markdown",
     split_chapters_on: Literal["heading_1", "heading_2", "no_split"] = "heading_1",
 ) -> Path:
-    """Build an EPUB ebook from a Markdown, plain text or HTML file. Level-1 (or level-2) headings become chapters and
-    the table of contents.
+    """Build an EPUB ebook from a Markdown, plain text or HTML file. Level-1 (or
+    level-2) headings become chapters and the table of contents.
     """
     text = text_file.read_text(encoding="utf-8-sig", errors="replace")
     if input_format == "plain_text":

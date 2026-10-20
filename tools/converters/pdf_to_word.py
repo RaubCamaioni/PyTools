@@ -7,8 +7,9 @@ from pdf2docx import Converter
 
 
 def pdf_to_word(pdf: Path, pages: str = "all", layout: Literal["keep_layout", "text_only"] = "keep_layout") -> Path:
-    """Convert a PDF to an editable Word .docx, keeping text, tables, images and layout where possible. Scanned PDFs
-    (images of text) come out as images; run OCR first for those.
+    """Convert a PDF to an editable Word .docx, keeping text, tables, images and layout
+    where possible. Scanned PDFs (images of text) come out as images; run OCR first
+    for those.
     """
     logging.getLogger("pdf2docx").setLevel(logging.ERROR)
     out = pdf.with_suffix(".docx")
@@ -23,7 +24,8 @@ def pdf_to_word(pdf: Path, pages: str = "all", layout: Literal["keep_layout", "t
     converter = Converter(str(pdf))
     try:
         if layout == "text_only":
-            # fall back to plain paragraphs: no floating images, no multi-column detection
+            # fall back to plain paragraphs: no floating images, no multi-column
+            # detection
             converter.convert(
                 str(out),
                 start=start,

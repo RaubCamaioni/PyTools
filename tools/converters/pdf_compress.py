@@ -9,8 +9,8 @@ def pdf_compress(
     pdf: Path,
     level: Literal["lossless", "images_150dpi", "images_96dpi", "images_72dpi"] = "images_150dpi",
 ) -> dict:
-    """Shrink a PDF: lossless cleans unused objects and deflates streams; the image levels also downsample and
-    re-encode pictures as JPEG.
+    """Shrink a PDF: lossless cleans unused objects and deflates streams; the image
+    levels also downsample and re-encode pictures as JPEG.
     """
     before = pdf.stat().st_size
     out = Path(f"{pdf.stem}_compressed.pdf")

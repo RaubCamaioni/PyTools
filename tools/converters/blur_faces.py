@@ -16,8 +16,9 @@ def blur_faces(
     strength: int = 50,
     sensitivity: Literal["normal", "high"] = "normal",
 ) -> dict:
-    """Find faces in a photo and blur, pixelate or black them out. Uses OpenCV's frontal and profile face detectors (no
-    upload leaves the sandbox). Returns the image and how many faces were found.
+    """Find faces in a photo and blur, pixelate or black them out. Uses OpenCV's frontal
+    and profile face detectors (no upload leaves the sandbox). Returns the image and
+    how many faces were found.
     """
     with Image.open(image) as src:
         rgb = ImageOps.exif_transpose(src).convert("RGB")

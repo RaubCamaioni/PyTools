@@ -12,8 +12,8 @@ def pdf_watermark(
     font_size: int = 48,
     opacity: float = 0.25,
 ) -> Path:
-    """Stamp text on every page of a PDF as a large diagonal watermark, a header, a footer, or add 'Page X of Y'
-    numbering.
+    """Stamp text on every page of a PDF as a large diagonal watermark, a header, a
+    footer, or add 'Page X of Y' numbering.
     """
     opacity = max(0.05, min(opacity, 1.0))
     with pymupdf.open(pdf) as doc:

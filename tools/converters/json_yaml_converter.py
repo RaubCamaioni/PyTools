@@ -16,8 +16,8 @@ def json_yaml_converter(
     data_file: Path,
     output: Literal["yaml", "json", "toml"],
 ) -> Path:
-    """Convert between JSON, YAML and TOML. The input format is detected from the file extension (falls back to trying
-    each parser).
+    """Convert between JSON, YAML and TOML. The input format is detected from the file
+    extension (falls back to trying each parser).
     """
     text = data_file.read_text(encoding="utf-8-sig", errors="replace")
     suffix = data_file.suffix.lower()

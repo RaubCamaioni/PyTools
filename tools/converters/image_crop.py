@@ -17,8 +17,8 @@ def image_crop(
     width: int = 100,
     height: int = 100,
 ) -> Path:
-    """Crop an image to a centred aspect ratio (square, 16:9, 4:3...) or to an exact pixel box (left, top, width,
-    height).
+    """Crop an image to a centred aspect ratio (square, 16:9, 4:3...) or to an exact
+    pixel box (left, top, width, height).
     """
     with Image.open(image) as img:
         img = ImageOps.exif_transpose(img)

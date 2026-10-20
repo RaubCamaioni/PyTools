@@ -10,7 +10,9 @@ def text_diff(
     modified: Path,
     format: Literal["unified", "side_by_side_html", "context"] = "unified",
 ) -> Path:
-    """Compare two text files and produce a unified diff, a context diff or a side-by-side HTML report."""
+    """Compare two text files and produce a unified diff, a context diff or a
+    side-by-side HTML report.
+    """
     a = original.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
     b = modified.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
 

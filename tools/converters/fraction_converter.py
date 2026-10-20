@@ -6,8 +6,8 @@ import re
 
 
 def fraction_converter(input: str = "0.375", max_denominator: int = 10000) -> dict:
-    """Convert between fractions, mixed numbers, decimals, percentages and ratios: 3/8, 1 1/2, 0.375, 37.5%, 3:8 are
-    all accepted.
+    """Convert between fractions, mixed numbers, decimals, percentages and ratios: 3/8,
+    1 1/2, 0.375, 37.5%, 3:8 are all accepted.
     """
     text = input.strip().replace(" ", " ")
     try:

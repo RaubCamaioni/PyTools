@@ -6,8 +6,8 @@ from docx import Document
 
 
 def docx_to_text(docx_file: Path, output: Literal["plain_text", "markdown"] = "plain_text") -> Path:
-    """Extract the text of a Word .docx file (paragraphs and tables) as plain text or Markdown with headings, lists and
-    tables.
+    """Extract the text of a Word .docx file (paragraphs and tables) as plain text or
+    Markdown with headings, lists and tables.
     """
     doc = Document(str(docx_file))
     lines: list[str] = []

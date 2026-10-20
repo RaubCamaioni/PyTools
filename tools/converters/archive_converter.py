@@ -43,8 +43,8 @@ def archive_converter(
     archive: Path,
     output: Literal["zip", "tar_gz", "tar", "7z", "list_contents"] = "zip",
 ) -> dict:
-    """Convert between ZIP, TAR, TAR.GZ and 7Z archives (or decompress a .gz file), or list what an archive contains
-    without extracting.
+    """Convert between ZIP, TAR, TAR.GZ and 7Z archives (or decompress a .gz file), or
+    list what an archive contains without extracting.
     """
     with tempfile.TemporaryDirectory(dir=".") as tmp:
         work = Path(tmp)

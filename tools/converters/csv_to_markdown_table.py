@@ -11,7 +11,9 @@ def csv_to_markdown_table(
     direction: Literal["csv_to_markdown", "markdown_to_csv"],
     align_numbers_right: Literal["yes", "no"] = "yes",
 ) -> Path:
-    """Turn a CSV file into a Markdown table (padded columns), or a Markdown table back into CSV."""
+    """Turn a CSV file into a Markdown table (padded columns), or a Markdown table back
+    into CSV.
+    """
     text = data_file.read_text(encoding="utf-8-sig", errors="replace")
 
     if direction == "markdown_to_csv":

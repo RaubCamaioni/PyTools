@@ -27,8 +27,8 @@ def to_roman(n: int) -> str:
 
 
 def roman_numerals(input: str) -> str:
-    """Convert an integer (1-3999) to Roman numerals, or Roman numerals back to an integer. Direction is detected
-    automatically.
+    """Convert an integer (1-3999) to Roman numerals, or Roman numerals back to an
+    integer. Direction is detected automatically.
     """
     text = input.strip().upper()
     if text.isdigit():

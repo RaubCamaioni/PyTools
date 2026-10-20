@@ -11,8 +11,8 @@ def angle_converter(
         "degrees", "radians", "gradians", "turns", "arcminutes", "arcseconds", "degrees_minutes_seconds"
     ] = "degrees",
 ) -> dict:
-    """Convert an angle between degrees, radians (accepts 'pi/4'), gradians, turns, arcminutes, arcseconds and
-    degrees-minutes-seconds (45°30'15'').
+    """Convert an angle between degrees, radians (accepts 'pi/4'), gradians, turns,
+    arcminutes, arcseconds and degrees-minutes-seconds (45°30'15'').
     """
     text = value.strip().lower()
     try:

@@ -16,8 +16,9 @@ def video_converter(
     quality: Literal["medium", "small_file", "high"] = "medium",
     audio: Literal["keep", "remove"] = "keep",
 ) -> dict:
-    """Convert and compress a video (MP4, MOV, MKV, WEBM, AVI, 3GP...): choose the container, cap the resolution and
-    pick a quality. Clips longer than 2 minutes are cut at 2 minutes to fit the sandbox time limit.
+    """Convert and compress a video (MP4, MOV, MKV, WEBM, AVI, 3GP...): choose the
+    container, cap the resolution and pick a quality. Clips longer than 2 minutes are
+    cut at 2 minutes to fit the sandbox time limit.
     """
     crf = {"small_file": 30, "medium": 25, "high": 20}[quality]
     out = video.with_name(f"{video.stem}_{max_height}p.{output}")
@@ -52,7 +53,8 @@ def video_converter(
 
         limit = MAX_SECONDS
         for packet in src.demux([s for s in (in_v, in_a) if s is not None]):
-            # a packet without dts is the demuxer's flush packet: decoding it releases the delayed frames
+            # a packet without dts is the demuxer's flush packet: decoding it releases
+            # the delayed frames
             t = float(packet.pts * packet.stream.time_base) if packet.pts is not None else 0.0
             if t > limit:
                 continue

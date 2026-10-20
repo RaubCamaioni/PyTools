@@ -10,7 +10,9 @@ def uuid_generator(
     name: str = "example.com",
     format: Literal["lowercase", "UPPERCASE", "no_dashes", "braces", "urn"] = "lowercase",
 ) -> str:
-    """Generate UUIDs (GUIDs). v4 is random; v5/v3 hash the given name in the DNS namespace."""
+    """Generate UUIDs (GUIDs). v4 is random; v5/v3 hash the given name in the DNS
+    namespace.
+    """
     count = max(1, min(count, 200))
     out = []
     for _ in range(count):

@@ -13,7 +13,8 @@ def url_encoder(
     """Percent-encode text for URLs, or decode it back.
 
     keep_reserved=yes leaves / ? & = : characters untouched (encode a whole URL);
-    keep_reserved=no encodes everything except unreserved characters (encode a value).
+    keep_reserved=no encodes everything except unreserved characters (encode a
+    value).
     """
     if mode == "decode":
         return unquote_plus(input) if space == "plus" else unquote(input)

@@ -8,8 +8,8 @@ from pptx import Presentation
 def pptx_to_text(
     pptx_file: Path, output: Literal["markdown", "plain_text"] = "markdown", include_notes: Literal["yes", "no"] = "yes"
 ) -> Path:
-    """Extract all text from a PowerPoint .pptx (titles, bullets, tables and speaker notes), one section per slide, as
-    Markdown or plain text.
+    """Extract all text from a PowerPoint .pptx (titles, bullets, tables and speaker
+    notes), one section per slide, as Markdown or plain text.
     """
     prs = Presentation(str(pptx_file))
     md = output == "markdown"

@@ -8,8 +8,8 @@ pillow_heif.register_heif_opener()
 
 
 def image_strip_metadata(image: Path) -> dict:
-    """Remove EXIF, GPS location, camera and all other metadata from a photo (orientation is applied first so the
-    picture still looks right).
+    """Remove EXIF, GPS location, camera and all other metadata from a photo
+    (orientation is applied first so the picture still looks right).
     """
     before = image.stat().st_size
     with Image.open(image) as img:

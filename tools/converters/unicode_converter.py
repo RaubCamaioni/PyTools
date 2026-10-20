@@ -14,7 +14,9 @@ def unicode_converter(
     mode: Literal["text_to_codepoints", "codepoints_to_text", "inspect"],
     format: Literal["hex", "decimal", "python_escape", "html_entity"],
 ) -> str:
-    """Convert text to Unicode code points (U+0041, 65, \\u0041, &#65;) and back, or inspect each character's name."""
+    """Convert text to Unicode code points (U+0041, 65, \\u0041, &#65;) and back, or
+    inspect each character's name.
+    """
     if mode == "text_to_codepoints":
         parts = []
         for ch in input:

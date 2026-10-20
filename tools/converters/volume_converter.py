@@ -48,8 +48,8 @@ def volume_converter(
         "metric_cup",
     ] = "liter",
 ) -> dict:
-    """Convert a volume between litres, millilitres, cubic metres, US and imperial gallons, pints, cups, tablespoons
-    and teaspoons.
+    """Convert a volume between litres, millilitres, cubic metres, US and imperial
+    gallons, pints, cups, tablespoons and teaspoons.
     """
     litres = value * UNITS[unit]
     return {name: float(f"{litres / factor:.6g}") for name, factor in UNITS.items()}

@@ -18,8 +18,8 @@ def image_to_pdf(
     page_size: Literal["fit_image", "a4", "letter", "a4_landscape", "letter_landscape"] = "fit_image",
     margin_points: int = 36,
 ) -> Path:
-    """Put an image (JPG, PNG, WEBP, BMP, TIFF, GIF...) on a PDF page: either sized to the image or centred on
-    A4/Letter with a margin.
+    """Put an image (JPG, PNG, WEBP, BMP, TIFF, GIF...) on a PDF page: either sized to
+    the image or centred on A4/Letter with a margin.
     """
     doc = pymupdf.open()
     pix = pymupdf.Pixmap(str(image))

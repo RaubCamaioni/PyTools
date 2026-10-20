@@ -75,8 +75,9 @@ def parse_color(text: str) -> tuple[int, int, int]:
 
 
 def color_converter(color: str = "#ff8800") -> dict:
-    """Convert a color between HEX, RGB, HSL, HSV/HSB and CMYK, with luminance and contrast against black and white.
-    Accepts any of those formats or a CSS color name.
+    """Convert a color between HEX, RGB, HSL, HSV/HSB and CMYK, with luminance and
+    contrast against black and white. Accepts any of those formats or a CSS color
+    name.
     """
     r, g, b = parse_color(color)
     rf, gf, bf = r / 255, g / 255, b / 255

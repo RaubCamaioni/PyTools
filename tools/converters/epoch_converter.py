@@ -6,8 +6,9 @@ import re
 
 
 def epoch_converter(input: str = "now", timezone_name: str = "UTC") -> dict:
-    """Convert a Unix timestamp (seconds, milliseconds, microseconds or nanoseconds are auto-detected) to human dates,
-    or a date like 2026-10-19 14:30 to a timestamp. 'now' gives the current time.
+    """Convert a Unix timestamp (seconds, milliseconds, microseconds or nanoseconds are
+    auto-detected) to human dates, or a date like 2026-10-19 14:30 to a timestamp.
+    'now' gives the current time.
     """
     try:
         tz = ZoneInfo(timezone_name.strip() or "UTC")

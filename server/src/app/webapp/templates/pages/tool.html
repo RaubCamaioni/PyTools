@@ -90,10 +90,18 @@
                     return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
                 }
                 function place(n) {
-                    const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
-                    const top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight;
-                    cursor.style.top = top + "px";
-                    cursor.style.height = lineHeight + "px";
+                    // the line-number rows know each line's rendered height, including soft-wrapped lines
+                    const rows = pre.querySelector(".line-numbers-rows");
+                    const row = rows && rows.children[n - 1];
+                    if (row) {
+                        const preBox = pre.getBoundingClientRect(), rowBox = row.getBoundingClientRect();
+                        cursor.style.top = (rowBox.top - preBox.top) + "px";
+                        cursor.style.height = rowBox.height + "px";
+                    } else {
+                        const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
+                        cursor.style.top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight + "px";
+                        cursor.style.height = lineHeight + "px";
+                    }
                     cursor.scrollIntoView({ block: "nearest" });
                 }
                 function progress(percent) {

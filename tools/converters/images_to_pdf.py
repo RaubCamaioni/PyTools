@@ -24,8 +24,8 @@ def images_to_pdf(
     page_size: Literal["fit_each_image", "a4", "letter"] = "fit_each_image",
     margin_points: int = 24,
 ) -> dict:
-    """Combine many images into one PDF, one image per page, ordered by file name. Upload a .zip of
-    JPG/PNG/WEBP/HEIC/TIFF files (a single image works too).
+    """Combine many images into one PDF, one image per page, ordered by file name.
+    Upload a .zip of JPG/PNG/WEBP/HEIC/TIFF files (a single image works too).
     """
     with tempfile.TemporaryDirectory(dir=".") as tmp:
         work = Path(tmp)

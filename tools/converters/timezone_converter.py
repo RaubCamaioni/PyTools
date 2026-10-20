@@ -64,8 +64,9 @@ def timezone_converter(
     from_zone: str = "UTC",
     to_zone: str = "America/New_York",
 ) -> dict:
-    """Convert a date/time from one time zone to another and show it in the world's major cities. Accepts IANA names
-    (Europe/Paris), city names (Tokyo) or abbreviations (PST, CET).
+    """Convert a date/time from one time zone to another and show it in the world's
+    major cities. Accepts IANA names (Europe/Paris), city names (Tokyo) or
+    abbreviations (PST, CET).
     """
     src = find_zone(from_zone)
     dst = find_zone(to_zone)

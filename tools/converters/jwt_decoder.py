@@ -6,7 +6,9 @@ import json
 
 
 def jwt_decoder(token: str) -> dict:
-    """Decode a JSON Web Token's header and payload (no signature verification) and explain the standard time claims."""
+    """Decode a JSON Web Token's header and payload (no signature verification) and
+    explain the standard time claims.
+    """
     parts = token.strip().split(".")
     if len(parts) != 3:
         return {"error": "A JWT has three dot-separated parts: header.payload.signature"}

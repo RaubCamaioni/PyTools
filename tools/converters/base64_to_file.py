@@ -25,8 +25,8 @@ SIGNATURES = [
 
 
 def base64_to_file(base64_text: Path, file_name: str = "decoded") -> Path:
-    """Decode Base64 (raw or a data:...;base64, URI, pasted into a text file) back into the original file. The file
-    type is detected from the data: URI or the bytes.
+    """Decode Base64 (raw or a data:...;base64, URI, pasted into a text file) back into
+    the original file. The file type is detected from the data: URI or the bytes.
     """
     text = base64_text.read_text(encoding="utf-8", errors="ignore").strip()
     ext = ""

@@ -42,8 +42,8 @@ def data_size_converter(
         "gigabit_Gb",
     ] = "gigabyte_GB",
 ) -> dict:
-    """Convert data sizes between bits, bytes, decimal units (KB, MB, GB, TB) and binary units (KiB, MiB, GiB, TiB),
-    plus transfer time at common speeds.
+    """Convert data sizes between bits, bytes, decimal units (KB, MB, GB, TB) and binary
+    units (KiB, MiB, GiB, TiB), plus transfer time at common speeds.
     """
     total_bytes = value * UNITS[unit]
     result = {name: float(f"{total_bytes / factor:.6g}") for name, factor in UNITS.items()}

@@ -13,8 +13,8 @@ def video_to_frames(
     at_seconds: float = 1,
     max_frames: int = 20,
 ) -> Path:
-    """Grab a still from a video at a time, extract frames every N seconds (zip of JPGs), or build a contact sheet
-    thumbnail grid.
+    """Grab a still from a video at a time, extract frames every N seconds (zip of
+    JPGs), or build a contact sheet thumbnail grid.
     """
     max_frames = max(1, min(max_frames, 60))
     captured = []

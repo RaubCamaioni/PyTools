@@ -7,8 +7,8 @@ import mammoth
 
 
 def docx_to_html(docx: Path, output: Literal["html", "markdown"] = "html") -> Path:
-    """Convert a Word .docx to clean HTML (images embedded, headings/lists/tables kept) or to Markdown, using semantic
-    styles rather than pixel layout.
+    """Convert a Word .docx to clean HTML (images embedded, headings/lists/tables kept)
+    or to Markdown, using semantic styles rather than pixel layout.
     """
     with open(docx, "rb") as f:
         if output == "markdown":

@@ -6,8 +6,8 @@ import av
 
 
 def media_info(media: Path) -> dict:
-    """Show the container, duration, bit rate, codecs, resolution, frame rate, audio channels and metadata tags of a
-    video or audio file.
+    """Show the container, duration, bit rate, codecs, resolution, frame rate, audio
+    channels and metadata tags of a video or audio file.
     """
     with closing(av.open(str(media))) as c:
         duration = c.duration / av.time_base if c.duration else None

@@ -11,7 +11,9 @@ def csv_json_converter(
     output: Literal["json", "csv", "tsv"],
     numbers: Literal["convert", "keep_as_text"],
 ) -> Path:
-    """Convert CSV/TSV to JSON (list of objects) or JSON (list of objects) to CSV/TSV. Delimiters are auto-detected."""
+    """Convert CSV/TSV to JSON (list of objects) or JSON (list of objects) to CSV/TSV.
+    Delimiters are auto-detected.
+    """
     text = data_file.read_text(encoding="utf-8-sig", errors="replace")
 
     def coerce(value: str):

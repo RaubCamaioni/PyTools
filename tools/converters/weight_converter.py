@@ -34,7 +34,8 @@ def weight_converter(
         "grain",
     ] = "kilogram",
 ) -> dict:
-    """Convert a weight/mass between kg, g, mg, tonnes, pounds, ounces, stone and more."""
+    """Convert a weight/mass between kg, g, mg, tonnes, pounds, ounces, stone and more.
+    """
     kg = value * UNITS[unit]
     result = {name: float(f"{kg / factor:.6g}") for name, factor in UNITS.items()}
     total_ounces = kg / UNITS["ounce"]

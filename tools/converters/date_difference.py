@@ -26,7 +26,9 @@ def parse(text: str) -> datetime:
 
 
 def date_difference(start_date: str = "2000-01-01", end_date: str = "today") -> dict:
-    """Days, weeks, months, years and business days between two dates (age calculator, countdown, date diff)."""
+    """Days, weeks, months, years and business days between two dates (age calculator,
+    countdown, date diff).
+    """
     start = parse(start_date)
     end = parse(end_date)
     if end < start:

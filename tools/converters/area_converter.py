@@ -32,8 +32,8 @@ def area_converter(
         "square_mile",
     ] = "square_meter",
 ) -> dict:
-    """Convert an area between square metres, hectares, square kilometres, square feet, square yards, acres and square
-    miles.
+    """Convert an area between square metres, hectares, square kilometres, square feet,
+    square yards, acres and square miles.
     """
     m2 = value * UNITS[unit]
     return {name: float(f"{m2 / factor:.6g}") for name, factor in UNITS.items()}
