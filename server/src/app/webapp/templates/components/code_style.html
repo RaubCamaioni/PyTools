@@ -7,12 +7,14 @@
     /* The code pane is always 120 columns wide (uploads are capped at 120 characters per line) and never
        shrinks. The argument panel sits to its right while the window has room, otherwise it wraps below. */
     .tool-layout { display: flex; flex-wrap: wrap; align-items: stretch; }
+    /* the code column never shrinks; it grows only when it has a row to itself (grow 1 against the form's
+       999), so a wrapped form leaves no dead space beside the code */
     .code-column {
-        flex: 0 0 auto; display: flex; flex-direction: column;
+        flex: 1 0 auto; display: flex; flex-direction: column;
         border-right: 1px solid var(--color-line); margin-right: -1px;
     }
     #code-scroll {
-        width: max-content; scrollbar-gutter: stable;   /* the vertical scrollbar never squeezes the code */
+        width: auto; scrollbar-gutter: stable;   /* fills the column; the scrollbar never squeezes the code */
         max-height: 700px; overflow-y: auto; overflow-x: hidden;
     }
     /* 120 columns measured in the pre's own font (Chrome's ch runs a hair narrow, hence the 2-column slack),
@@ -20,7 +22,7 @@
     #code-scroll pre { width: calc(122ch + 3.8em + 1em); box-sizing: border-box; }
     #code-scroll pre { white-space: pre-wrap; overflow-wrap: anywhere; }
     .args-column {
-        flex: 1 1 18rem; min-width: 18rem;
+        flex: 999 1 18rem; min-width: 18rem;
         border-top: 1px solid var(--color-line); margin-top: -1px;
     }
     /* actions sit right under the argument tree, separated by a rule, instead of being pushed to the bottom */
