@@ -52,6 +52,7 @@ TIMEOUT_INSPECT_EXIT_CODE = -1
 SANDBOX_UID = 1001
 # the FIFO in the run directory that carries the sandbox's executed line numbers
 TRACE_NAME = "trace"
+TRACE_ENV = "PYWEBTOOLS_TRACE"
 TRACE_DRAIN_SECONDS = 1.0
 STARTING = "starting"
 
@@ -298,12 +299,14 @@ class PodmanRunner:
             *flags,
             "-v",
             f"{run_dir}:{run_dir}:U",
+            # the trace FIFO travels as an environment variable: a sandbox image that predates the
+            # trace ignores it (no events, page falls back), where an unknown flag would fail the run
+            *(["-e", f"{TRACE_ENV}={trace}"] if trace is not None else []),
             self.config.image,
             "--file",
             str(run_dir / tool.name),
             "--workdir",
             str(run_dir),
-            *(["--trace", str(trace)] if trace is not None else []),
         ]
 
     async def run(self, tool: Path, run_dir: Path, on_line: Optional[Callable[[int], None]] = None) -> RunResult:

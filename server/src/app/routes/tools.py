@@ -66,6 +66,7 @@ router = APIRouter(lifespan=lifespan)
 # line numbers from /trace/{token} (docs/superpowers/specs/2026-10-19-execution-trace-design.md)
 TRACES = TraceRegistry()
 TRACE_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
+TRACE_HEADER = "X-Trace-Token"
 TRACE_WAIT_SECONDS = 10.0  # how long a stream waits for its run to be registered
 TRACE_POLL_SECONDS = 0.05
 TRACE_IDLE_SECONDS = 1.0  # between checks that the stream was not superseded
@@ -127,7 +128,7 @@ async def trace_stream(token: str):
                     line = await asyncio.wait_for(channel.queue.get(), TRACE_IDLE_SECONDS)
                 except asyncio.TimeoutError:
                     superseded = channel.ticket != ticket or TRACES.get(token) not in (channel, None)
-                    if superseded:
+                    if superseded or channel.closed:  # closed: a later stream found the end marker already taken
                         break
                     continue
                 if line is None:
@@ -331,7 +332,7 @@ async def public_tool(
     return HTMLResponse(status_code=200)
 
 
-async def _run_tool(request: Request, id: int, temp_dir: Path, session, form_data: dict, channel):
+async def _run_tool(request: Request, id: int, temp_dir: Path, session, channel):
     if not runner.available:
         raise HTTPException(status_code=503, detail="Sandbox unavailable")
 
@@ -346,6 +347,11 @@ async def _run_tool(request: Request, id: int, temp_dir: Path, session, form_dat
         user: User = User.model_validate_json(request.session["user"])
         if tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool Not Found")
+
+    form_data = {}
+    if len(tool.arguments):
+        form = await request.form()
+        form_data = {k: v for k, v in form.items() if k in tool.arguments}  # stray fields are ignored
 
     kwargs = {}
     temp_tool = (temp_dir / tool.name).with_suffix(".py")
@@ -388,14 +394,14 @@ async def run_isolated(
     temp_dir: Tempdir,
     session: db_tools.SessionDep,
 ) -> str:
-    form = await request.form()
-    token = form.get("trace")
+    # the page sends its trace token as a header so it can never collide with a tool argument
+    token = request.headers.get(TRACE_HEADER, "")
     channel = None
-    if isinstance(token, str) and TRACE_TOKEN.fullmatch(token):
+    if TRACE_TOKEN.fullmatch(token):
         TRACES.expire()
         channel = TRACES.register(token)
     try:
-        result = await _run_tool(request, id, temp_dir, session, {k: v for k, v in form.items() if k != "trace"}, channel)
+        result = await _run_tool(request, id, temp_dir, session, channel)
     finally:
         if channel is not None:
             channel.close()  # every exit, including 404/503, ends the page's trace stream
