@@ -15,6 +15,20 @@ dependencies = [
     "pyparsing>=3.2.3",
     "requests>=2.32.3",
     "scipy>=1.15.2",
+    # converter tool support (added 2026-10-19)
+    "pillow>=11.0.0",
+    "pillow-heif>=0.20.0",
+    "pyyaml>=6.0.2",
+    "qrcode>=8.0",
+    "openpyxl>=3.1.5",
+    "python-docx>=1.1.2",
+    "python-pptx>=1.0.2",
+    "markdown>=3.7",
+    "tzdata>=2025.1",
+    "num2words>=0.5.14",
+    "xmltodict>=0.14.2",
+    "tomli-w>=1.1.0",
+    "py7zr>=0.22.0",
 ]
 
 [project.scripts]
