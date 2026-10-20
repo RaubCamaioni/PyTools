@@ -33,3 +33,6 @@ dependencies = [
 
 [project.scripts]
 sandbox = "sandbox.runner:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
