@@ -1,12 +1,15 @@
 <li class="flex items-center px-1 py-0.5 hover:bg-faint">
-    <label for="tool-upload" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[ upload file ]</label>
+    <label id="upload-label" for="tool-upload" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[upload]</label>
     <input
         id="tool-upload"
         type="file"
         name="file"
+        accept=".py"
         hx-post="{{ root_path }}/manage/tool/upload"
         hx-encoding="multipart/form-data"
         hx-trigger="change"
         hx-swap="none"
+        _="on change if my.files.length > 0 set #upload-label.innerText to '[' + my.files[0].name + ']' end
+           on htmx:afterRequest if event.detail.successful send refresh to #tool-rows end"
         style="display: none;" />
 </li>

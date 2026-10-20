@@ -31,14 +31,15 @@
 
             <section>
                 <div class="prompt font-bold mb-1">ls -l tools/</div>
-                <ul id="tool-list">
+                <ul>
                     {% include 'components/upload_tool_item.html'%}
-
-                    <li
-                        hx-post="{{ root_path }}/user/tools"
-                        hx-trigger="load"
-                        hx-swap="outerHTML"
-                        class="px-1 text-dim">...</li>
+                </ul>
+                {# the tool rows reload on page load and whenever an upload sends "refresh" #}
+                <ul id="tool-rows"
+                    hx-post="{{ root_path }}/user/tools"
+                    hx-trigger="load, refresh"
+                    hx-swap="innerHTML">
+                    <li class="px-1 text-dim">...</li>
                 </ul>
             </section>
         </div>
