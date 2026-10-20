@@ -42,4 +42,4 @@ def test_render_scalars_unchanged():
 
 def test_argument_inputs_are_console_fields():
     html = render.args_to_form({"count": ("int", "1"), "mode": ("Literal['a', 'b']", "a")})
-    assert html.count('<span class="field') == 2  # text input and select each sit in a blinking-underscore field
+    assert html.count('<span class="field') == 1 and html.count('<span class="pick') == 1  # text: underscore caret; list: arrow

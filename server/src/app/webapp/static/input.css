@@ -153,6 +153,36 @@
       opacity: 0;
     }
   }
+  /* argument tree rows: line-height 1 and no vertical padding so the tee glyphs touch */
+  .tree-row {
+    @apply flex items-center gap-2 py-0 leading-none;
+  }
+  .tree-row .field,
+  .tree-row .pick {
+    @apply leading-normal;
+  }
+  /* list pick: boxless select with a dim arrow; its popup is black with white text */
+  .pick {
+    @apply inline-flex items-baseline min-w-0;
+  }
+  .pick::after {
+    content: "\25BE";
+    color: var(--color-dim);
+    padding-left: 0.25rem;
+  }
+  .pick select {
+    @apply border-0 bg-ink text-paper p-0 min-w-[1ch] cursor-pointer;
+    appearance: none;
+    color-scheme: dark;
+  }
+  .pick select:focus,
+  .pick select:focus-visible {
+    @apply outline-none;
+  }
+  .pick option {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
   /* vim CursorLine while a run is in flight (positioned by the tool page script) */
   .exec-cursor {
     position: absolute;
