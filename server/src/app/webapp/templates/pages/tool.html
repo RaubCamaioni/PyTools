@@ -28,31 +28,31 @@
                         hx-target="#return"
                         hx-indicator="#loading-bar"
                         hx-swap="innerHTML">
-
+                        {# arguments as a tree under the function name #}
+                        <div class="font-bold mb-1">{{ tool }}()</div>
                         {{ form_groups | safe }}
-
-                        <button
-                            class="btn mt-2 self-start"
-                            type="submit"
-                            form="argument-form">[ run ]</button>
                     </form>
-
-                    <div class="flex flex-wrap gap-x-3 gap-y-1 text-dim">
-                        <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[download]</a>
-                        <button id="share-link-button" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[share link]</button>
-                    </div>
 
                     <div class="flex-grow"></div>
 
-                    <div class="label">runs: {{ runs }}</div>
+                    {# actions, kept away from the arguments #}
+                    <div class="flex flex-col gap-1 mt-4">
+                        <button class="btn self-start" type="submit" form="argument-form">[ run ]</button>
+                        <div class="flex flex-wrap gap-x-1 text-dim">
+                            <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[download]</a>
+                            <button id="share-link-button" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[share link]</button>
+                        </div>
+                        <div class="label">runs: {{ runs }}</div>
+                    </div>
                 </div>
             </div>
 
-            <div id="result_title" class="output font-bold mt-6 mb-2">results</div>
+            <div id="result_title" class="prompt font-bold mt-6 mb-2">cat results.txt</div>
             <div id="loading-bar" class="loadbar" aria-hidden="true"></div>
             <div class="panel p-3 overflow-x-auto" id="result">
                 <div id="return">
-                    <pre></pre>
+                    {# until a run writes a result, the file does not exist #}
+                    <pre class="text-dim">cat: results.txt: No such file or directory</pre>
                 </div>
             </div>
 
