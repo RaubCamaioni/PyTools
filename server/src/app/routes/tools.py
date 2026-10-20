@@ -142,8 +142,13 @@ async def trace_stream(token: str):
     )
 
 
-@router.route("/", methods=["GET", "POST"])
-async def read_root(request: Request):
+# tags carried by only one tool are folded behind [+N more] on the home page
+COMMON_TAG_MIN_TOOLS = 2
+
+
+@router.api_route("/", methods=["GET", "POST"])
+async def read_root(request: Request, session: db_tools.SessionDep):
+    tag_counts = db_tools.get_tag_counts(session)
     return TEMPLATES.TemplateResponse(
         request,
         "pages/index.html",
@@ -151,6 +156,8 @@ async def read_root(request: Request):
             "header_title": "PyTools",
             "request": request,
             "root_path": request.scope.get("root_path"),
+            "common_tags": [t for t, n in tag_counts if n >= COMMON_TAG_MIN_TOOLS],
+            "rare_tags": [t for t, n in tag_counts if n < COMMON_TAG_MIN_TOOLS],
         },
     )
 
@@ -168,7 +175,8 @@ async def get_tools(
     body = await request.body()
     search_string = unquote(body.decode())
     query_params = parse_qs(search_string)
-    tags = query_params.get("search", [""])[0].split()
+    # typed grep pattern plus the selected first-line hashtags, all ANDed by the query
+    tags = query_params.get("search", [""])[0].split() + [t for t in query_params.get("tag", []) if t.strip()]
 
     if tags:
         tools = db_tools.get_tools_by_tags(session, tags, start, end)

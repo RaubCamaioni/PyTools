@@ -10,21 +10,40 @@
         {% include 'components/header.html'%}
 
         <div class="max-w-4xl mx-auto px-4">
-            {# the command line: the search box is the grep pattern #}
-            <label class="flex items-center gap-2 whitespace-nowrap">
-                <span><span class="text-dim">$</span> ls tools/ | grep -i</span>
-                <input
-                    class="flex-grow min-w-0 border-0 border-b border-line px-1 py-0 focus:border-paper"
-                    type="search"
-                    name="search"
-                    placeholder="pattern"
-                    aria-label="filter tools"
-                    hx-post="{{ root_path }}/tools?start=0&end=50"
-                    hx-trigger="keyup[key=='Enter']"
-                    hx-target="#tool-list"
-                    hx-indicator=".htmx-indicator"
-                    hx-swap="innerHTML">
-            </label>
+            {# two commands feed one search: the grep pattern on file names and the hashtags grepped
+               from the first line of every file; any change re-lists the matching tools #}
+            <form
+                id="filter"
+                hx-post="{{ root_path }}/tools?start=0&end=50"
+                hx-trigger="keyup[key=='Enter'] from:input[name='search'], change from:input[name='tag']"
+                hx-target="#tool-list"
+                hx-indicator=".htmx-indicator"
+                hx-swap="innerHTML">
+                <label class="flex items-center gap-2 whitespace-nowrap">
+                    <span><span class="text-dim">$</span> ls tools/ | grep -i</span>
+                    <input
+                        class="flex-grow min-w-0 border-0 border-b border-line px-1 py-0 focus:border-paper"
+                        type="search"
+                        name="search"
+                        placeholder="pattern"
+                        aria-label="filter tools">
+                </label>
+                <div class="mt-2 flex flex-wrap items-baseline gap-y-1">
+                    <span class="whitespace-nowrap mr-2"><span class="text-dim">$</span> head -n1 tools/*.py | grep -i</span>
+                    {% for tag in common_tags %}
+                        <label class="switch"><input type="checkbox" name="tag" value="{{ tag }}"><span class="label-text">[{{ tag }}]</span></label>
+                    {% endfor %}
+                    {% if rare_tags %}
+                        {# tags carried by a single tool stay folded until asked for #}
+                        <span id="rare-tags" class="hidden">
+                            {% for tag in rare_tags %}
+                                <label class="switch"><input type="checkbox" name="tag" value="{{ tag }}"><span class="label-text">[{{ tag }}]</span></label>
+                            {% endfor %}
+                        </span>
+                        <button type="button" class="btn text-dim" _="on click remove .hidden from #rare-tags then add .contents to #rare-tags then remove me">[+{{ rare_tags | length }} more]</button>
+                    {% endif %}
+                </div>
+            </form>
 
             {# ls output: columns of file names #}
             <ul id="tool-list" class="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6">
