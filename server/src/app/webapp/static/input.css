@@ -212,6 +212,15 @@
     background: var(--color-ink);
     color: var(--color-paper);
   }
+  /* `column -t` table: each column as wide as its widest cell, rows are display: contents */
+  .tool-table {
+    display: grid;
+    grid-template-columns: repeat(4, max-content);
+    column-gap: 2ch;
+  }
+  .tool-table > li:hover > * {
+    background: var(--color-faint);
+  }
   /* vim CursorLine while a run is in flight (positioned by the tool page script) */
   .exec-cursor {
     position: absolute;

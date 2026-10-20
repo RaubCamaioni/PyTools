@@ -48,3 +48,11 @@ def test_number_arguments_are_typed_not_spun():
 def test_argument_inputs_are_console_fields():
     html = render.args_to_form({"count": ("int", "1"), "mode": ("Literal['a', 'b']", "a")})
     assert html.count('<span class="field') == 1 and html.count('<span class="pick') == 1  # text: underscore caret; list: arrow
+
+
+def test_user_tool_table_starts_with_a_header_row():
+    from app.models.tools import Tool
+
+    html = render.list_item_user("", [Tool(id=1, name="a", code="", public=True, annonymous=True, usage=3, tags=[])])
+    assert html.index("MODE") < html.index("RUNS") < html.index("NAME") < html.index("ACTIONS") < html.index("a.py")
+    assert html.count('<li class="contents') == 2  # header + one row, both grid rows
