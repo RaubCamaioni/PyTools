@@ -54,5 +54,6 @@ def test_user_tool_table_starts_with_a_header_row():
     from app.models.tools import Tool
 
     html = render.list_item_user("", [Tool(id=1, name="a", code="", public=True, annonymous=True, usage=3, tags=[])])
-    assert html.index("MODE") < html.index("RUNS") < html.index("NAME") < html.index("ACTIONS") < html.index("a.py")
+    assert html.index("NAME") < html.index("MODE") < html.index("RUNS") < html.index("ACTIONS") < html.index("a.py")
+    assert html.index("a.py") < html.index("[public]")  # the name, the row's identifier, comes first
     assert html.count('<li class="contents') == 2  # header + one row, both grid rows

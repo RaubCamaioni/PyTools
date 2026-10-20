@@ -1,6 +1,9 @@
 {# one row of the `ls -l tools/ | column -t` table: the list is a grid, so each cell lines up with its column #}
 <li class="contents">
 
+    {# name #}
+    <span class="px-1 py-0.5 min-w-0"><a href="{{ root_path }}/tool/{{ id }}" class="no-underline hover:bg-paper hover:text-ink">{{ name }}.py</a></span>
+
     {# mode column: the two switches #}
     <span class="flex items-center gap-1 px-1 py-0.5">
         <label class="switch">
@@ -27,9 +30,6 @@
 
     {# size column: run count #}
     <span class="text-right text-dim px-1 py-0.5" title="runs">{{ runs }}</span>
-
-    {# name #}
-    <span class="px-1 py-0.5 min-w-0"><a href="{{ root_path }}/tool/{{ id }}" class="no-underline hover:bg-paper hover:text-ink">{{ name }}.py</a></span>
 
     {# actions #}
     <span class="flex items-center gap-1 text-dim px-1 py-0.5">
