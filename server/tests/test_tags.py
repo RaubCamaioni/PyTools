@@ -35,7 +35,7 @@ def test_home_page_lists_tags_as_a_first_line_grep(monkeypatch):
     page = client(monkeypatch, StubRunner()).get("/").text
     assert "head -n1 tools/*.py | grep -i" in page
     assert page.index('value="converter"') < page.index('value="pdf"') < page.index('value="ring"')
-    assert "[+2 more]" in page  # single-use tags are folded away by default
+    assert "[+2 more]" in page and "[-2 less]" in page  # single-use tags fold; the toggle mirrors as -N less
 
 
 def test_tools_route_filters_by_selected_tags(monkeypatch):
