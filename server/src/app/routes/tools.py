@@ -161,7 +161,6 @@ async def read_root(request: Request, session: db_tools.SessionDep):
             "header_title": "PyTools",
             "request": request,
             "root_path": request.scope.get("root_path"),
-            "tag_filters": render.tag_filters(db_tools.get_tag_counts(session)),
         },
     )
 
@@ -179,8 +178,8 @@ async def get_tools(
     body = await request.body()
     search_string = unquote(body.decode())
     query_params = parse_qs(search_string)
-    # typed grep pattern plus the selected first-line hashtags, all ANDed by the query
-    tags = query_params.get("search", [""])[0].split() + [t for t in query_params.get("tag", []) if t.strip()]
+    # every typed word must match the tool's name or one of its first-line hashtags
+    tags = query_params.get("search", [""])[0].split()
 
     if tags:
         tools = db_tools.get_tools_by_tags(session, tags, start, end)
@@ -191,16 +190,6 @@ async def get_tools(
         end = None
 
     content = render.list_items(request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50)
-
-    if start == 0:
-        # a new filter (not a scrolled page): swap in the tags that overlap the matching tools
-        content += render.tag_filters(
-            db_tools.get_tag_counts(session, tags),
-            selected={t for t in query_params.get("tag", []) if t.strip()},
-            filtered=bool(tags),
-            oob=True,
-        )
-
     return HTMLResponse(content=content)
 
 
