@@ -4,8 +4,21 @@
 <script src="/scripts/prism-python.min.js"></script>
 <script src="/scripts/prism-line-numbers.min.js"></script>
 <style>
-    /* the code view never scrolls sideways: lines wider than the pane soft-wrap (uploads are capped at 120 columns,
-       so this only happens on narrow screens); Prism's line-number rows grow with wrapped lines */
-    #code-scroll { overflow-x: hidden; }
+    /* The code pane is always 120 columns wide (uploads are capped at 120 characters per line) and never
+       shrinks. The argument panel sits to its right while the window has room, otherwise it wraps below. */
+    .tool-layout { display: flex; flex-wrap: wrap; align-items: stretch; }
+    .code-column {
+        flex: 0 0 auto; display: flex; flex-direction: column;
+        border-right: 1px solid var(--color-line); margin-right: -1px;
+    }
+    #code-scroll {
+        font-size: 0.875rem;                         /* the pre is text-sm: ch below measures that font */
+        width: calc(120ch + 3.8em + 1em + 0.5ch);    /* columns + Prism's line-number gutter + right padding */
+        max-height: 700px; overflow-y: auto; overflow-x: hidden;
+    }
     #code-scroll pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .args-column {
+        flex: 1 1 18rem; min-width: 18rem;
+        border-top: 1px solid var(--color-line); margin-top: -1px;
+    }
 </style>

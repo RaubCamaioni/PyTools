@@ -11,13 +11,13 @@
         {% set cwd = '~/tools' %}
         {% include 'components/header.html'%}
 
-        <div class="w-11/12 max-w-7xl mx-auto flex flex-col">
+        <div class="w-11/12 mx-auto flex flex-col">
 
             <div class="prompt font-bold mb-2">vim {{ tool }}.py</div>
-            <div class="panel flex flex-col md:flex-row">
+            <div class="panel tool-layout">
 
-                <div class="md:w-3/4 flex flex-col border-b md:border-b-0 md:border-r border-line">
-                    <div id="code-scroll" class="max-h-[700px] overflow-auto">
+                <div class="code-column">
+                    <div id="code-scroll">
                         <pre class="line-numbers"><div id="exec-cursor" class="exec-cursor hidden" aria-hidden="true"></div><code class="language-python">{{ code }}</code></pre>
                     </div>
                     {# vim status line, inverse video; the mode shows -- RUNNING -- while a run is in flight #}
@@ -31,7 +31,7 @@
                     </div>
                 </div>
 
-                <div class="md:w-1/4 flex flex-col p-3 gap-3">
+                <div class="args-column flex flex-col p-3 gap-3">
                     <form
                         id="argument-form"
                         enctype="multipart/form-data"
