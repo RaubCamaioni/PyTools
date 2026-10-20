@@ -21,7 +21,8 @@
             if (!field) return;
             ctx.font = getComputedStyle(input).font;
             const pos = input.selectionStart == null ? input.value.length : input.selectionStart;
-            const x = ctx.measureText(input.value.slice(0, pos)).width - input.scrollLeft;
+            const offset = input.getBoundingClientRect().left - field.getBoundingClientRect().left;
+            const x = offset + ctx.measureText(input.value.slice(0, pos)).width - input.scrollLeft;
             field.style.setProperty("--caret", Math.max(0, x) + "px");
         }
         function placeAll() {

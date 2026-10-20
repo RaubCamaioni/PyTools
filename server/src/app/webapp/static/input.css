@@ -170,6 +170,17 @@
   .tree-row .pick {
     @apply leading-normal;
   }
+  /* argument values sit flush right, so no gap opens between the value and the panel edge */
+  .tree-row .field {
+    @apply justify-end;
+  }
+  .tree-row .field input {
+    text-align: right;
+  }
+  .tree-row .pick select {
+    text-align: right;
+    text-align-last: right;
+  }
   /* list pick: boxless select with a dim arrow; its popup is black with white text */
   .pick {
     @apply inline-flex items-baseline min-w-0 px-2 cursor-pointer;
@@ -179,10 +190,18 @@
     color: var(--color-dim);
     padding-left: 0.25rem;
   }
+  .pick:hover,
+  .pick:hover select {
+    @apply bg-paper text-ink;
+  }
+  .pick:hover::after {
+    color: var(--color-ink);
+  }
   .pick select {
     @apply border-0 bg-ink text-paper p-0 min-w-[1ch] cursor-pointer;
     appearance: none;
     color-scheme: dark;
+    field-sizing: content;
   }
   .pick select:focus,
   .pick select:focus-visible {
