@@ -7,8 +7,8 @@ import xmltodict
 
 
 def xml_json_converter(data_file: Path, output: Literal["json", "xml"], root_name: str = "root") -> Path:
-    """Convert XML to JSON or JSON to XML. Attributes become "@name" keys and text becomes "#text" (xmltodict
-    convention).
+    """Convert XML to JSON or JSON to XML. Attributes become "@name" keys and text
+    becomes "#text" (xmltodict convention).
     """
     text = data_file.read_text(encoding="utf-8-sig", errors="replace")
     out = data_file.with_suffix("." + output)

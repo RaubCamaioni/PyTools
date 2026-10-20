@@ -12,8 +12,8 @@ def pdf_to_images(
     dpi: int = 150,
     pages: str = "all",
 ) -> Path:
-    """Render PDF pages to PNG or JPG images at the chosen DPI. A single page returns the image; several pages return a
-    zip.
+    """Render PDF pages to PNG or JPG images at the chosen DPI. A single page returns
+    the image; several pages return a zip.
     """
     dpi = max(36, min(dpi, 300))
     with pymupdf.open(pdf) as doc:

@@ -19,8 +19,8 @@ def gif_converter(
     animation: Path,
     output: Literal["mp4", "webm", "webp", "apng", "png_frames_zip", "sprite_sheet"] = "mp4",
 ) -> Path:
-    """Convert an animated GIF (or animated WebP/APNG) to MP4, WebM, animated WebP, APNG, a zip of PNG frames or a
-    horizontal sprite sheet.
+    """Convert an animated GIF (or animated WebP/APNG) to MP4, WebM, animated WebP,
+    APNG, a zip of PNG frames or a horizontal sprite sheet.
     """
     frames = list(_frames(animation))
     if not frames:

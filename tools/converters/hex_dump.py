@@ -5,7 +5,9 @@ from typing import Literal
 
 
 def hex_dump(file: Path, max_bytes: int = 512, output: Literal["dump", "hex_string", "base64"] = "dump") -> str:
-    """Show the first bytes of any file as a classic hex dump (offset, hex, ASCII), a plain hex string or Base64."""
+    """Show the first bytes of any file as a classic hex dump (offset, hex, ASCII), a
+    plain hex string or Base64.
+    """
     import base64
 
     max_bytes = max(16, min(max_bytes, 65536))

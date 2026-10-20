@@ -8,8 +8,8 @@ pillow_heif.register_heif_opener()
 
 
 def image_info(image: Path) -> dict:
-    """Show an image's format, dimensions, colour mode, DPI, file size and EXIF metadata (camera, date, GPS,
-    orientation).
+    """Show an image's format, dimensions, colour mode, DPI, file size and EXIF metadata
+    (camera, date, GPS, orientation).
     """
     with Image.open(image) as img:
         info = {

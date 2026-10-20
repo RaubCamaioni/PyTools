@@ -9,7 +9,9 @@ def number_base_converter(
     number: str,
     from_base: Literal["10", "16", "2", "8", "36"],
 ) -> dict:
-    """Convert a number from binary, octal, decimal, hex or base 36 into all of them at once."""
+    """Convert a number from binary, octal, decimal, hex or base 36 into all of them at
+    once.
+    """
     text = number.strip().replace("_", "").replace(" ", "")
     base = int(from_base)
     lower = text.lower()

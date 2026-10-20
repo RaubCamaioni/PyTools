@@ -34,8 +34,8 @@ def power_converter(
         "dBm",
     ] = "kilowatt",
 ) -> dict:
-    """Convert power between watts, kW, MW, horsepower (mechanical and metric PS), BTU/h, tons of refrigeration and
-    dBm.
+    """Convert power between watts, kW, MW, horsepower (mechanical and metric PS),
+    BTU/h, tons of refrigeration and dBm.
     """
     watts = 10 ** ((value - 30) / 10) if unit == "dBm" else value * UNITS[unit]
     result = {name: float(f"{watts / factor:.6g}") for name, factor in UNITS.items()}

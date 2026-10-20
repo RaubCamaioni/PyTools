@@ -10,8 +10,8 @@ def pdf_password(
     action: Literal["protect", "unlock"] = "protect",
     password: str = "",
 ) -> Path:
-    """Protect a PDF with a password (AES-256, opening and editing) or remove the password from a PDF you know the
-    password for.
+    """Protect a PDF with a password (AES-256, opening and editing) or remove the
+    password from a PDF you know the password for.
     """
     if action == "protect":
         if not password:

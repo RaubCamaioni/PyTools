@@ -26,8 +26,8 @@ def speed_converter(
         "speed_of_light",
     ] = "kilometers_per_hour",
 ) -> dict:
-    """Convert a speed between km/h, mph, m/s, ft/s, knots and Mach, plus the minutes-per-km and minutes-per-mile
-    pace.
+    """Convert a speed between km/h, mph, m/s, ft/s, knots and Mach, plus the
+    minutes-per-km and minutes-per-mile pace.
     """
     mps = value * UNITS[unit]
     result = {name: float(f"{mps / factor:.6g}") for name, factor in UNITS.items()}

@@ -30,7 +30,9 @@ blockquote {{ border-left: 4px solid #ccc; margin-left: 0; padding-left: 1rem; c
 
 
 def markdown_to_html(markdown_file: Path, output: Literal["full_page", "fragment"] = "full_page") -> Path:
-    """Render a Markdown file to HTML (tables, fenced code, footnotes and task lists supported)."""
+    """Render a Markdown file to HTML (tables, fenced code, footnotes and task lists
+    supported).
+    """
     text = markdown_file.read_text(encoding="utf-8-sig", errors="replace")
     body = markdown.markdown(text, extensions=["extra", "sane_lists", "toc", "nl2br"])
     out = markdown_file.with_suffix(".html")

@@ -27,7 +27,9 @@ def text_case_converter(
         "iNVERSE",
     ],
 ) -> str:
-    """Convert text between upper, lower, title, sentence, snake, camel, pascal, kebab and more."""
+    """Convert text between upper, lower, title, sentence, snake, camel, pascal, kebab
+    and more.
+    """
     words = _words(input)
     if case == "UPPERCASE":
         return input.upper()

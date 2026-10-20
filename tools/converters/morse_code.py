@@ -62,7 +62,9 @@ REVERSE = {v: k for k, v in MORSE.items()}
 
 
 def morse_code(input: str, mode: Literal["text_to_morse", "morse_to_text"]) -> str:
-    """Translate text to International Morse code (letters separated by spaces, words by ' / ') and back."""
+    """Translate text to International Morse code (letters separated by spaces, words by
+    ' / ') and back.
+    """
     if mode == "text_to_morse":
         words = input.upper().split()
         return " / ".join(" ".join(MORSE.get(c, "?") for c in word) for word in words)

@@ -9,8 +9,8 @@ from pptx.util import Emu
 
 
 def pdf_to_powerpoint(pdf: Path, mode: Literal["page_images", "editable_text"] = "page_images", dpi: int = 120) -> Path:
-    """Turn each PDF page into a PowerPoint slide: as a full-slide image (looks identical) or as editable text boxes
-    (keeps the words, loses the layout).
+    """Turn each PDF page into a PowerPoint slide: as a full-slide image (looks
+    identical) or as editable text boxes (keeps the words, loses the layout).
     """
     dpi = max(50, min(dpi, 200))
     prs = Presentation()

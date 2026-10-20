@@ -10,8 +10,8 @@ from openpyxl.styles import Font
 
 
 def pdf_to_excel(pdf: Path, output: Literal["xlsx", "csv"] = "xlsx", pages: str = "all") -> dict:
-    """Extract the tables from a PDF into an Excel workbook (one sheet per table) or CSV files (zipped). Works on PDFs
-    with real text, not scans.
+    """Extract the tables from a PDF into an Excel workbook (one sheet per table) or CSV
+    files (zipped). Works on PDFs with real text, not scans.
     """
     with pymupdf.open(pdf) as doc:
         if pages.strip().lower() == "all":

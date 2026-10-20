@@ -13,7 +13,9 @@ def qr_code_generator(
     error_correction: Literal["medium", "low", "quartile", "high"] = "medium",
     output: Literal["png", "svg"] = "png",
 ) -> Path:
-    """Generate a QR code image for a URL, text, Wi-Fi string (WIFI:T:WPA;S:name;P:pass;;) or contact card."""
+    """Generate a QR code image for a URL, text, Wi-Fi string
+    (WIFI:T:WPA;S:name;P:pass;;) or contact card.
+    """
     levels = {
         "low": qrcode.constants.ERROR_CORRECT_L,
         "medium": qrcode.constants.ERROR_CORRECT_M,

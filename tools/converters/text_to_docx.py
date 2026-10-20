@@ -26,8 +26,8 @@ def add_inline(paragraph, text: str):
 def text_to_docx(
     text_file: Path, input_format: Literal["markdown", "plain_text"] = "markdown", font_size: int = 11
 ) -> Path:
-    """Create a Word .docx from a Markdown or plain text file (headings, bullet and numbered lists, bold/italic, code
-    blocks, simple tables).
+    """Create a Word .docx from a Markdown or plain text file (headings, bullet and
+    numbered lists, bold/italic, code blocks, simple tables).
     """
     text = text_file.read_text(encoding="utf-8-sig", errors="replace")
     doc = Document()

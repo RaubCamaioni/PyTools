@@ -4,8 +4,8 @@ import ipaddress
 
 
 def ip_converter(input: str = "192.168.1.10/24") -> dict:
-    """Convert an IPv4/IPv6 address to decimal, hex, binary and reverse-DNS form; a CIDR block (10.0.0.0/8) also gives
-    netmask, broadcast, host range and count.
+    """Convert an IPv4/IPv6 address to decimal, hex, binary and reverse-DNS form; a CIDR
+    block (10.0.0.0/8) also gives netmask, broadcast, host range and count.
     """
     text = input.strip()
     try:

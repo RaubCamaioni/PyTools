@@ -21,8 +21,8 @@ def image_rotate_flip(
     ] = "rotate_90_clockwise",
     angle: float = 0,
 ) -> Path:
-    """Rotate or mirror an image, or fix its orientation from the EXIF tag. custom_angle rotates by any angle
-    (counterclockwise) and expands the canvas.
+    """Rotate or mirror an image, or fix its orientation from the EXIF tag. custom_angle
+    rotates by any angle (counterclockwise) and expands the canvas.
     """
     with Image.open(image) as img:
         img.load()

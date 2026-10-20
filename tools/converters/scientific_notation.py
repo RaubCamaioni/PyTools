@@ -25,8 +25,8 @@ SI = {
 
 
 def scientific_notation(input: str = "6.02214076e23", significant_digits: int = 4) -> dict:
-    """Convert a number between plain decimal, scientific (1.23e5), engineering (123e3) notation and SI prefixes (123
-    k). Accepts any of those as input.
+    """Convert a number between plain decimal, scientific (1.23e5), engineering (123e3)
+    notation and SI prefixes (123 k). Accepts any of those as input.
     """
     text = (
         input.strip().replace(",", "").replace("×10^", "e").replace("x10^", "e").replace("*10^", "e").replace(" ", "")

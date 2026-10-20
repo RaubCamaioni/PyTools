@@ -38,7 +38,9 @@ def length_converter(
         "light_year",
     ] = "meter",
 ) -> dict:
-    """Convert a length or distance between metric and imperial units (mm, cm, m, km, in, ft, yd, mi and more)."""
+    """Convert a length or distance between metric and imperial units (mm, cm, m, km,
+    in, ft, yd, mi and more).
+    """
     metres = value * UNITS[unit]
     result = {name: float(f"{metres / factor:.6g}") for name, factor in UNITS.items()}
     total_inches = metres / 0.0254

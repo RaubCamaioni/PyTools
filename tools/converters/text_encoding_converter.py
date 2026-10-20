@@ -19,8 +19,8 @@ def text_encoding_converter(
     line_endings: Literal["keep", "unix_LF", "windows_CRLF", "classic_mac_CR"] = "keep",
     input_encoding: str = "auto",
 ) -> dict:
-    """Re-encode a text file (UTF-8 with/without BOM, UTF-16, Latin-1, Windows-1252, ASCII) and normalise its line
-    endings; the source encoding is auto-detected.
+    """Re-encode a text file (UTF-8 with/without BOM, UTF-16, Latin-1, Windows-1252,
+    ASCII) and normalise its line endings; the source encoding is auto-detected.
     """
     raw = text_file.read_bytes()
     detected = None

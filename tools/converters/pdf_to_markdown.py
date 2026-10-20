@@ -8,8 +8,8 @@ import pymupdf
 def pdf_to_markdown(
     pdf: Path, output: Literal["markdown", "html", "text_by_page"] = "markdown", pages: str = "all"
 ) -> Path:
-    """Convert a PDF to Markdown (headings, lists, tables and emphasis detected), to HTML, or to plain text with a
-    marker per page.
+    """Convert a PDF to Markdown (headings, lists, tables and emphasis detected), to
+    HTML, or to plain text with a marker per page.
     """
     with pymupdf.open(pdf) as doc:
         if pages.strip().lower() == "all":

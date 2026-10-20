@@ -16,8 +16,8 @@ def image_watermark(
     opacity_percent: int = 50,
     color: Literal["white", "black"] = "white",
 ) -> Path:
-    """Stamp a text watermark on a photo: pick a corner, the centre, or tile it diagonally across the whole image. Size
-    is a percentage of the image height.
+    """Stamp a text watermark on a photo: pick a corner, the centre, or tile it
+    diagonally across the whole image. Size is a percentage of the image height.
     """
     with Image.open(image) as src:
         img = ImageOps.exif_transpose(src).convert("RGBA")

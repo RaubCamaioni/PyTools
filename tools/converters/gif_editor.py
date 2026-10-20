@@ -14,8 +14,9 @@ def gif_editor(
     speed_percent: int = 200,
     colors: int = 128,
 ) -> dict:
-    """Edit an animated GIF: resize to a width, shrink the file (fewer colours, dropped frames), reverse it, change its
-    speed, make it loop once, or turn it into a boomerang.
+    """Edit an animated GIF: resize to a width, shrink the file (fewer colours, dropped
+    frames), reverse it, change its speed, make it loop once, or turn it into a
+    boomerang.
     """
     with Image.open(gif) as img:
         default = int(img.info.get("duration", 100)) or 100

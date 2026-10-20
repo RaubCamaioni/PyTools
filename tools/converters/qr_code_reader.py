@@ -10,7 +10,8 @@ pillow_heif.register_heif_opener()
 
 
 def qr_code_reader(image: Path) -> dict:
-    """Read every QR code in an image (photo or screenshot) and return the decoded text."""
+    """Read every QR code in an image (photo or screenshot) and return the decoded text.
+    """
     with Image.open(image) as img:
         img = ImageOps.exif_transpose(img).convert("RGB")
         frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)

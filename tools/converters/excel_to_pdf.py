@@ -21,8 +21,8 @@ def excel_to_pdf(
     font_size: int = 9,
     header_row: Literal["yes", "no"] = "yes",
 ) -> Path:
-    """Print an Excel workbook (every sheet) or a CSV file to a PDF table. Cell values and number formats are kept;
-    charts, merged-cell layouts and colours are not.
+    """Print an Excel workbook (every sheet) or a CSV file to a PDF table. Cell values
+    and number formats are kept; charts, merged-cell layouts and colours are not.
     """
     sheets: list[tuple[str, list[list[str]]]] = []
     if spreadsheet.suffix.lower() in (".csv", ".tsv", ".txt"):

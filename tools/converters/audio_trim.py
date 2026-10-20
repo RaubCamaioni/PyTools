@@ -12,8 +12,8 @@ def audio_trim(
     end_seconds: float = 30,
     output: Literal["same_as_input", "mp3", "wav", "aac", "ogg", "flac"] = "same_as_input",
 ) -> Path:
-    """Cut a section out of an audio file (or the audio track of a video) between two times, optionally converting the
-    format.
+    """Cut a section out of an audio file (or the audio track of a video) between two
+    times, optionally converting the format.
     """
     codecs = {
         "mp3": "mp3",

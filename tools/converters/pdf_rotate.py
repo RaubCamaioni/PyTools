@@ -10,7 +10,9 @@ def pdf_rotate(
     angle: Literal["90", "180", "270"] = "90",
     pages: str = "all",
 ) -> Path:
-    """Rotate all pages of a PDF, or only the listed pages (1,3,5-7), clockwise by 90, 180 or 270 degrees."""
+    """Rotate all pages of a PDF, or only the listed pages (1,3,5-7), clockwise by 90,
+    180 or 270 degrees.
+    """
     degrees = int(angle)
     with pymupdf.open(pdf) as doc:
         targets = set(range(doc.page_count))

@@ -10,8 +10,8 @@ def regex_tester(
     ignore_case: Literal["no", "yes"] = "no",
     replacement: str = "",
 ) -> dict:
-    """Run a Python regular expression against text: lists every match with its position and groups, and shows the
-    result of re.sub when a replacement is given.
+    """Run a Python regular expression against text: lists every match with its position
+    and groups, and shows the result of re.sub when a replacement is given.
     """
     flags = re.IGNORECASE if ignore_case == "yes" else 0
     try:

@@ -14,8 +14,9 @@ def image_resize(
     height: int = 0,
     mode: Literal["fit_inside", "exact", "fill_and_crop", "percent"] = "fit_inside",
 ) -> Path:
-    """Resize an image. fit_inside keeps the aspect ratio within width x height (0 = unlimited); exact stretches;
-    fill_and_crop covers the box and crops the centre; percent scales by width%.
+    """Resize an image. fit_inside keeps the aspect ratio within width x height (0 =
+    unlimited); exact stretches; fill_and_crop covers the box and crops the centre;
+    percent scales by width%.
     """
     with Image.open(image) as img:
         img = ImageOps.exif_transpose(img)

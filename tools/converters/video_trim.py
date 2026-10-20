@@ -14,8 +14,8 @@ def video_trim(
     rotate: Literal["none", "90_clockwise", "90_counterclockwise", "180"] = "none",
     audio: Literal["keep", "remove"] = "keep",
 ) -> Path:
-    """Cut a clip out of a video between two times (max 60 s), optionally rotating it and dropping the sound. Output is
-    MP4 (H.264/AAC).
+    """Cut a clip out of a video between two times (max 60 s), optionally rotating it
+    and dropping the sound. Output is MP4 (H.264/AAC).
     """
     start = max(0.0, start_seconds)
     end = min(max(start + 0.2, end_seconds), start + 60)
@@ -45,7 +45,8 @@ def video_trim(
         audio_done = in_a is None
         frames_written = 0
         for packet in src.demux([s for s in (in_v, in_a) if s is not None]):
-            # packets without dts are flush packets; decoding them releases the delayed frames
+            # packets without dts are flush packets; decoding them releases the delayed
+            # frames
             is_video = packet.stream.type == "video"
             if (is_video and video_done) or (not is_video and audio_done):
                 if video_done and audio_done:

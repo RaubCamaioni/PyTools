@@ -47,8 +47,8 @@ def subtitle_converter(
     output: Literal["vtt", "srt", "plain_text", "csv"] = "vtt",
     shift_seconds: float = 0,
 ) -> Path:
-    """Convert subtitles between SRT and WebVTT, strip them to plain text or CSV, and optionally shift all timings by a
-    number of seconds (negative to move earlier).
+    """Convert subtitles between SRT and WebVTT, strip them to plain text or CSV, and
+    optionally shift all timings by a number of seconds (negative to move earlier).
     """
     text = subtitle_file.read_text(encoding="utf-8-sig", errors="replace")
     cues = parse_cues(text)

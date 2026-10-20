@@ -14,7 +14,9 @@ def password_generator(
     symbols: Literal["yes", "no"] = "yes",
     exclude_ambiguous: Literal["no", "yes"] = "no",
 ) -> dict:
-    """Generate random passwords with a cryptographically secure generator and report their entropy."""
+    """Generate random passwords with a cryptographically secure generator and report
+    their entropy.
+    """
     length = max(4, min(length, 128))
     count = max(1, min(count, 50))
     pool = string.ascii_lowercase

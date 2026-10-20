@@ -19,8 +19,8 @@ def time_duration_converter(
     value: float = 90,
     unit: Literal["minute", "second", "millisecond", "hour", "day", "week", "month_30d", "year_365d"] = "minute",
 ) -> dict:
-    """Convert a duration between milliseconds, seconds, minutes, hours, days, weeks, months and years, with an
-    hh:mm:ss breakdown.
+    """Convert a duration between milliseconds, seconds, minutes, hours, days, weeks,
+    months and years, with an hh:mm:ss breakdown.
     """
     seconds = value * UNITS[unit]
     result = {name: float(f"{seconds / factor:.6g}") for name, factor in UNITS.items()}

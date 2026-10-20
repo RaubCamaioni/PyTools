@@ -11,8 +11,8 @@ def number_to_words(
     ] = "cardinal",
     language: Literal["en", "es", "fr", "de", "it", "pt", "nl"] = "en",
 ) -> str:
-    """Spell out a number in words (one thousand two hundred...), as an ordinal, a year or a currency amount, in
-    several languages.
+    """Spell out a number in words (one thousand two hundred...), as an ordinal, a year
+    or a currency amount, in several languages.
     """
     text = number.strip().replace(",", "").replace(" ", "")
     try:

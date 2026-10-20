@@ -11,8 +11,9 @@ SIZES = [16, 32, 48, 64, 128, 180, 192, 512]
 
 
 def favicon_generator(image: Path) -> Path:
-    """Build a favicon set from any image: multi-size favicon.ico plus PNGs (16 to 512 px, including apple-touch-icon
-    180 and android 192/512) and a ready-to-paste HTML snippet, zipped.
+    """Build a favicon set from any image: multi-size favicon.ico plus PNGs (16 to 512
+    px, including apple-touch-icon 180 and android 192/512) and a ready-to-paste HTML
+    snippet, zipped.
     """
     with Image.open(image) as img:
         img = ImageOps.exif_transpose(img).convert("RGBA")

@@ -14,8 +14,8 @@ def csv_to_xlsx(
     input_format: Literal["csv_or_tsv", "json"] = "csv_or_tsv",
     numbers: Literal["convert", "keep_as_text"] = "convert",
 ) -> Path:
-    """Convert a CSV/TSV file or a JSON list of objects into an Excel .xlsx workbook with a bold header row, auto-sized
-    columns and real numbers.
+    """Convert a CSV/TSV file or a JSON list of objects into an Excel .xlsx workbook
+    with a bold header row, auto-sized columns and real numbers.
     """
     text = data_file.read_text(encoding="utf-8-sig", errors="replace")
 
