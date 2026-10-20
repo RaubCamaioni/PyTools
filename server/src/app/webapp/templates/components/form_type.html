@@ -7,6 +7,17 @@
 		{{ name }}:
 	</label>
 
+	{% if type == "file" %}
+	{# Path argument: a [upload] bracket that shows the chosen file name; the real input stays hidden #}
+	<label id="{{ name }}-label" for="{{ name }}" class="block w-2/3 truncate cursor-pointer px-1 hover:bg-paper hover:text-ink">[upload]</label>
+	<input
+		class="sr-only"
+		required
+		type="file"
+		id="{{ name }}"
+		name="{{ name }}"
+		_="on change if my.files.length > 0 set #{{ name }}-label.innerText to '[' + my.files[0].name + ']' end">
+	{% else %}
 	<input
 		class="block w-2/3"
 		required
@@ -15,4 +26,5 @@
 		name="{{ name }}"
 		value="{{ default }}"
 		step=".01">
+	{% endif %}
 </div>
