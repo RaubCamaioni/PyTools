@@ -17,7 +17,13 @@
         const field = event.target.closest && event.target.closest(".field, .pick");
         if (field && !event.target.matches("input, select")) {
             const control = field.querySelector("input, select");
-            if (control) control.focus();
+            if (control) {
+                control.focus();
+                if (control.setSelectionRange) {  // type at the end, like a prompt
+                    const end = control.value.length;
+                    try { control.setSelectionRange(end, end); } catch (e) {}
+                }
+            }
         }
     });
 </script>
