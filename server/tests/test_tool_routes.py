@@ -124,3 +124,32 @@ def test_run_dir_created_under_configured_root(monkeypatch, public_tool, tmp_pat
     client(monkeypatch, stub).post("/tool/8")
     tool, run_dir = stub.calls[0]
     assert run_dir.parent == tmp_path and tool == run_dir / "byte_converter.py"
+
+
+def test_tool_page_names_the_author_as_alias_and_id(monkeypatch, tmp_path):
+    import dataclasses
+
+    monkeypatch.setattr(
+        db,
+        "get_tool_by_id",
+        lambda session, id: db.Tool(id=8, name="t", code="", arguments={}, public=True, annonymous=False, user_id=49600918, tags=[]),
+    )
+    monkeypatch.setattr(tools_routes.db_tools, "get_user_by_id", lambda session, id: db.User(id=49600918, alias="rob"))
+    env = tools_routes.ENVIRONMENT
+    monkeypatch.setattr(tools_routes, "ENVIRONMENT", dataclasses.replace(env, sandbox=dataclasses.replace(env.sandbox, run_dir=tmp_path)))
+    assert "author: rob#49600918" in client(monkeypatch, StubRunner()).get("/tool/8").text
+
+
+def test_anonymous_tool_hides_the_alias_but_keeps_the_id(monkeypatch, tmp_path):
+    import dataclasses
+
+    monkeypatch.setattr(
+        db,
+        "get_tool_by_id",
+        lambda session, id: db.Tool(id=8, name="t", code="", arguments={}, public=True, annonymous=True, user_id=49600918, tags=[]),
+    )
+    monkeypatch.setattr(tools_routes.db_tools, "get_user_by_id", lambda session, id: db.User(id=49600918, alias="rob"))
+    env = tools_routes.ENVIRONMENT
+    monkeypatch.setattr(tools_routes, "ENVIRONMENT", dataclasses.replace(env, sandbox=dataclasses.replace(env.sandbox, run_dir=tmp_path)))
+    page = client(monkeypatch, StubRunner()).get("/tool/8").text
+    assert "author: anonymous#49600918" in page and "rob#" not in page

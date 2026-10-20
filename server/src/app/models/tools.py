@@ -261,6 +261,10 @@ def has_reported(session: Session, user_id: int, tool_id: int) -> bool:
     return session.exec(select(Report).where(Report.user_id == user_id, Report.tool_id == tool_id)).first() is not None
 
 
+def get_user_by_id(session: Session, user_id: int) -> Optional[User]:
+    return session.get(User, user_id)
+
+
 def get_user_tools(session: Session, user: User) -> list[Tool]:
     statement = select(Tool).where(Tool.user_id == user.id)
     result = session.exec(statement).all()

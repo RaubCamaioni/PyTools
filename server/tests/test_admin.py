@@ -205,3 +205,16 @@ def test_banned_user_cannot_log_in(monkeypatch):
 def test_session_user_json_carries_admin_flag():
     user = db.User(id=1, alias="rob", admin=True)
     assert json.loads(user.model_dump_json())["admin"] is True
+
+
+def test_admin_page_folds_each_accounts_tools_behind_its_row(monkeypatch):
+    from app.routes import admin as admin_routes
+
+    monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    eve = db.User(id=2, alias="eve")
+    b = db.Tool(id=6, name="b", code="", user_id=2, public=True, tags=[])
+    monkeypatch.setattr(db, "get_users_with_tools", lambda session: [db.AccountSummary(eve, [db.ToolSummary(b, 0, 0, 0)], 0, 0, 0)])
+    page = client(monkeypatch, StubRunner()).get("/admin").text
+    # the tool rows are a hidden group the account row toggles
+    assert 'id="tools-2"' in page and "tools-2" in page[page.index("eve/ ") - 400 : page.index("eve/ ")]
+    assert page[page.index('id="tools-2"') : page.index('id="tools-2"') + 60].count("hidden") == 1

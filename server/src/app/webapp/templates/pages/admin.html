@@ -27,7 +27,13 @@
                     {% for account in accounts %}
                     {# the account row carries the totals over all of its tools #}
                     <li class="contents">
-                        <span class="px-1 py-0.5 font-bold">{{ account.user.alias }}/ <span class="text-dim font-normal">{{ account.user.id }}</span></span>
+                        {# the account row folds its tools: click the name to expand #}
+                        <span class="px-1 py-0.5 font-bold">
+                            <button class="cursor-pointer hover:bg-paper hover:text-ink px-1"
+                                _="on click toggle .hidden on #tools-{{ account.user.id }}
+                                    then if #tools-{{ account.user.id }} matches .hidden set my innerText to '[+]' else set my innerText to '[-]' end">[+]</button>
+                            {{ account.user.alias }}/ <span class="text-dim font-normal">{{ account.user.id }}</span>
+                        </span>
                         <span class="px-1 py-0.5 text-dim">{{ 'admin' if account.user.admin else '' }}{% if account.user.banned %}banned until {{ account.user.banned_until.strftime('%Y-%m-%d') if account.user.banned_until else 'further notice' }}{% endif %}</span>
                         <span class="px-1 py-0.5 text-right text-dim">{{ account.tools | length }} tools</span>
                         <span class="px-1 py-0.5 text-right">{{ account.up }}</span>
@@ -52,6 +58,7 @@
                             {% endif %}
                         </span>
                     </li>
+                    <li id="tools-{{ account.user.id }}" class="contents hidden"><ul class="contents">
                     {% for item in account.tools %}
                     <li class="contents">
                         <span class="px-1 py-0.5 pl-4"><a href="{{ root_path }}/tool/{{ item.tool.id }}" class="no-underline hover:bg-paper hover:text-ink">{{ item.tool.name }}.py</a></span>
@@ -67,6 +74,7 @@
                         </span>
                     </li>
                     {% endfor %}
+                    </ul></li>
                     {% endfor %}
                 </ul>
             </section>

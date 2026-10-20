@@ -282,8 +282,16 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "form_groups": render.args_to_form(tool.arguments),
             "time": time.time(),
             "votes": _votes_block(request, session, tool.id),
+            "author": _author_label(session, tool),
         },
     )
+
+
+def _author_label(session, tool) -> str:
+    """alias#id of the uploader; an anonymous tool shows only the id."""
+    author = db_tools.get_user_by_id(session, tool.user_id) if tool.user_id is not None else None
+    alias = "anonymous" if tool.annonymous or author is None else author.alias
+    return f"{alias}#{tool.user_id}"
 
 
 REPORT_REASON_MAX = 1000
