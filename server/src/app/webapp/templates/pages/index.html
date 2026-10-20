@@ -11,11 +11,12 @@
 
         <div class="max-w-4xl mx-auto px-4">
             {# two commands feed one search: the grep pattern on file names and the hashtags grepped
-               from the first line of every file; any change re-lists the matching tools #}
+               from the first line of every file; the list refilters as you type (debounced), when the
+               field is cleared, and when a tag is toggled #}
             <form
                 id="filter"
                 hx-post="{{ root_path }}/tools?start=0&end=50"
-                hx-trigger="keyup[key=='Enter'], change[target.name=='tag']"
+                hx-trigger="input delay:200ms, search, change[target.name=='tag']"
                 onsubmit="event.preventDefault()"
                 hx-target="#tool-list"
                 hx-indicator=".htmx-indicator"

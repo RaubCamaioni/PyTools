@@ -94,3 +94,12 @@ def test_home_page_search_field_takes_any_typing(monkeypatch):
     page = TestClient(app).get("/").text
     assert "autofocus" in page.split('name="search"')[1].split(">")[0]  # focused on load
     assert 'document.addEventListener("keydown"' in page and "search.focus()" in page  # and on any key
+
+
+def test_home_page_filters_as_you_type(monkeypatch):
+    from app.app import app
+    from fastapi.testclient import TestClient
+
+    page = TestClient(app).get("/").text
+    trigger = page.split('id="filter"')[1].split("hx-trigger=\"")[1].split('"')[0]
+    assert "input delay:" in trigger and "search" in trigger and "Enter" not in trigger
