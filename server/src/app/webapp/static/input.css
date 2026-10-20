@@ -127,10 +127,10 @@
   .field::after {
     content: "_";
     color: var(--color-dim);
+    animation: blink 1s steps(1) infinite;
   }
   .field:focus-within::after {
     color: var(--color-paper);
-    animation: blink 1s steps(1) infinite;
   }
   .field input,
   .field select {
