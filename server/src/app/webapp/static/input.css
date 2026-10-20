@@ -146,4 +146,14 @@
       left: 100%;
     }
   }
+  /* determinate: the trace drives the width; .done keeps it visible at 100% after the request ends */
+  .loadbar.determinate::after {
+    animation: none;
+    left: 0;
+    width: var(--progress, 0%);
+    transition: width 0.15s linear;
+  }
+  .loadbar.done {
+    @apply block;
+  }
 }
