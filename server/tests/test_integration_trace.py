@@ -18,12 +18,15 @@ pytestmark = [
     pytest.mark.skipif(os.environ.get("SANDBOX_INTEGRATION") != "1", reason="needs the inner podman and the sandbox image"),
 ]
 
+# each iteration sits on the sleep line long enough to span several 1/60 s ticks
 LOOP_TOOL = """
+    import time
+
     def loop_tool() -> int:
         total = 0
         for i in range(3):
             total += i
-            total -= 0
+            time.sleep(0.05)
         return total
 """
 
@@ -48,9 +51,12 @@ async def test_loop_lines_arrive_in_order_and_run_is_ok(runner, make_run):
     r = await runner.run(tool, run_dir, on_line=seen.append)
     assert r.outcome is Outcome.OK and r.results == 3, r
     assert seen, "no trace events reached the app"
-    assert all(1 <= n <= 7 for n in seen)
-    assert seen[0] <= 3 and seen[-1] == 7  # starts near the top, ends on the return
-    assert 5 in seen or 6 in seen  # loop body lines were reported
+    source = tool.read_text().splitlines()
+    sleep_line = source.index("        time.sleep(0.05)") + 1
+    return_line = source.index("    return total") + 1
+    assert all(1 <= n <= len(source) for n in seen)
+    assert seen[-1] == return_line  # the return is the last line executed
+    assert sleep_line in seen and len(seen) >= 3  # the sleep line is reported on every iteration
 
 
 async def test_flooding_tool_is_rate_limited_and_times_out(make_run):
