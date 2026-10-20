@@ -85,3 +85,12 @@ def test_scrolling_pages_do_not_swap_the_tags(monkeypatch):
     monkeypatch.setattr(db, "get_tools_by_tags", lambda session, tags, start, end: [(1, "pdf_merge")])
     r = client(monkeypatch, StubRunner()).post("/tools?start=50&end=100", data={"tag": ["pdf"]})
     assert 'id="tag-filters"' not in r.text
+
+
+def test_home_page_search_field_takes_any_typing(monkeypatch):
+    from app.app import app
+    from fastapi.testclient import TestClient
+
+    page = TestClient(app).get("/").text
+    assert "autofocus" in page.split('name="search"')[1].split(">")[0]  # focused on load
+    assert 'document.addEventListener("keydown"' in page and "search.focus()" in page  # and on any key

@@ -25,6 +25,7 @@
                     <span class="field flex-grow"><input
                         type="search"
                         name="search"
+                        autofocus
                         autocomplete="off"
                         spellcheck="false"
                         aria-label="filter tools"></span>
@@ -40,5 +41,22 @@
             </ul>
         </div>
 
+        <script>
+            // typing anywhere on the page goes into the search field: a printable key (or Backspace) pressed
+            // while no text field has focus moves focus there first, so the key lands in the field
+            (function () {
+                const search = document.querySelector('input[name="search"]');
+                document.addEventListener("keydown", function (event) {
+                    if (event.ctrlKey || event.metaKey || event.altKey) return;
+                    if (event.key.length !== 1 && event.key !== "Backspace") return;
+                    const target = event.target;
+                    const typing = target.isContentEditable
+                        || target.tagName === "TEXTAREA" || target.tagName === "SELECT"
+                        || (target.tagName === "INPUT" && !["checkbox", "radio", "button", "submit", "file"].includes(target.type));
+                    if (typing) return;
+                    search.focus();
+                });
+            })();
+        </script>
     </body>
 </html>
