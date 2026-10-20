@@ -127,7 +127,9 @@ def list_items(
     tools: list[tuple[str, str]],
     end: Optional[int] = None,
     tags: Optional[list[str]] = None,
+    page: int = 50,
 ):
+    """Render the ls-style tool list; `end` (if any) is where the next page of `page` tools starts."""
     tags = tags or []
 
     htmlx = []
@@ -149,7 +151,7 @@ def list_items(
         form = template.render(
             {
                 "start": end,
-                "end": end + 1,
+                "end": end + page,
                 "tags": " ".join(tags),
             },
         )

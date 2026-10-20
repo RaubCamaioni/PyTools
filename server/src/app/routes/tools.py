@@ -178,7 +178,7 @@ async def get_tools(
     if len(tools) < (end - start):
         end = None
 
-    content = render.list_items(request.scope.get("root_path"), tools, end, tags)
+    content = render.list_items(request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50)
 
     return HTMLResponse(content=content)
 
