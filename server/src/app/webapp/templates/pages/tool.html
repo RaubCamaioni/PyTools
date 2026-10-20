@@ -16,8 +16,18 @@
             <div class="prompt font-bold mb-2">cat {{ tool }}.py</div>
             <div class="panel flex flex-col md:flex-row">
 
-                <div class="md:w-3/4 max-h-[700px] overflow-auto border-b md:border-b-0 md:border-r border-line">
-                    <pre class="line-numbers"><code class="language-python">{{ code }}</code></pre>
+                <div class="md:w-3/4 flex flex-col border-b md:border-b-0 md:border-r border-line">
+                    <div class="max-h-[700px] overflow-auto">
+                        <pre class="line-numbers"><code class="language-python">{{ code }}</code></pre>
+                    </div>
+                    {# vim status line, inverse video #}
+                    <div class="flex items-center gap-4 px-2 bg-paper text-ink whitespace-nowrap overflow-hidden">
+                        <span class="font-bold">{{ tool }}.py</span>
+                        <span class="flex-grow"></span>
+                        <span>{{ lines }}L</span>
+                        <span>python</span>
+                        <span>utf-8</span>
+                    </div>
                 </div>
 
                 <div class="md:w-1/4 flex flex-col p-3 gap-3">

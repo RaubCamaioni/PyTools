@@ -217,6 +217,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.id}",
             "code": tool.code,
+            "lines": tool.code.count("\n") + 1,
             "form_groups": render.args_to_form(tool.arguments),
             "time": time.time(),
         },

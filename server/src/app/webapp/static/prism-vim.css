@@ -1,4 +1,4 @@
-/* Monochrome Prism theme: emphasis through weight and shade, not hue. */
+/* Prism theme after vim's default dark colours (:highlight on a black terminal). */
 code[class*="language-"],
 pre[class*="language-"] {
   color: #ffffff;
@@ -18,51 +18,51 @@ pre[class*="language-"] {
   margin: 0;
   overflow: auto;
 }
+/* Comment */
 .token.comment,
 .token.prolog,
 .token.doctype,
 .token.cdata {
-  color: #737373;
-  font-style: italic;
+  color: #80a0ff;
 }
-.token.punctuation {
-  color: #a3a3a3;
-}
+/* Statement / keywords */
 .token.keyword,
 .token.boolean,
-.token.builtin,
 .token.important {
-  color: #ffffff;
-  font-weight: 700;
+  color: #ffff60;
 }
+/* Constant: strings and numbers */
 .token.string,
 .token.char,
 .token.triple-quoted-string,
-.token.string-interpolation {
-  color: #a3a3a3;
+.token.string-interpolation,
+.token.number {
+  color: #ffa0a0;
 }
-.token.number,
+/* Identifier: functions */
+.token.function {
+  color: #40ffff;
+}
+/* Type */
+.token.class-name,
+.token.builtin {
+  color: #60ff60;
+}
+/* PreProc: decorators */
+.token.decorator,
+.token.annotation {
+  color: #ff80ff;
+}
 .token.operator,
+.token.punctuation,
 .token.entity,
 .token.url {
   color: #d4d4d4;
 }
-.token.function,
-.token.class-name {
-  color: #ffffff;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  text-decoration-color: #525252;
-}
-.token.decorator,
-.token.annotation {
-  color: #d4d4d4;
-  font-style: italic;
-}
-/* line numbers */
+/* LineNr */
 .line-numbers .line-numbers-rows {
   border-right: 1px solid #525252;
 }
 .line-numbers-rows > span:before {
-  color: #525252;
+  color: #d7d700;
 }
