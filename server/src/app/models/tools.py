@@ -16,7 +16,6 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from sqlalchemy import func, inspect, text
-from typing import Sequence
 import logging
 import ast
 
