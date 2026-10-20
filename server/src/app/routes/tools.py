@@ -273,7 +273,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "header_title": "PyTools",
             "tool": tool.name,
             "tool_id": tool.id,
-            "runs": tool.usage,
+            "runs": render.format_runs(tool.usage),
             "request": request,
             "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.id}",

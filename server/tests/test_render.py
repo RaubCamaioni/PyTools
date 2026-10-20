@@ -1,3 +1,4 @@
+import pytest
 import re
 
 from app.utility import render
@@ -59,3 +60,12 @@ def test_user_tool_table_starts_with_a_header_row():
     assert html.index("ACTIONS") < html.index("[upload]") < html.index("a.py")  # the upload row leads the table
     assert html.count('<li class="contents') == 3  # header + upload row + one tool row, all grid rows
     assert html.count(">---<") == 3  # name, mode and runs do not apply to the upload row; [upload] is its action
+
+
+@pytest.mark.parametrize(
+    "count, text",
+    [(0, "0"), (9999, "9999"), (10000, "10K"), (12345, "12K"), (999999, "999K"), (1000000, "1.0M"),
+     (1234567, "1.2M"), (9999999, "9.9M"), (10000000, "10M"), (999999999, "999M"), (1000000000, "1.0B")],
+)
+def test_format_runs_fits_four_characters(count, text):
+    assert render.format_runs(count) == text and len(text) <= 4
