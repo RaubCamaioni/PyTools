@@ -25,12 +25,26 @@ UNITS = {
 def data_size_converter(
     value: float = 1,
     unit: Literal[
-        "gigabyte_GB", "megabyte_MB", "kilobyte_KB", "terabyte_TB", "petabyte_PB", "byte", "bit",
-        "gibibyte_GiB", "mebibyte_MiB", "kibibyte_KiB", "tebibyte_TiB", "pebibyte_PiB",
-        "kilobit_kb", "megabit_Mb", "gigabit_Gb",
+        "gigabyte_GB",
+        "megabyte_MB",
+        "kilobyte_KB",
+        "terabyte_TB",
+        "petabyte_PB",
+        "byte",
+        "bit",
+        "gibibyte_GiB",
+        "mebibyte_MiB",
+        "kibibyte_KiB",
+        "tebibyte_TiB",
+        "pebibyte_PiB",
+        "kilobit_kb",
+        "megabit_Mb",
+        "gigabit_Gb",
     ] = "gigabyte_GB",
 ) -> dict:
-    """Convert data sizes between bits, bytes, decimal units (KB, MB, GB, TB) and binary units (KiB, MiB, GiB, TiB), plus transfer time at common speeds."""
+    """Convert data sizes between bits, bytes, decimal units (KB, MB, GB, TB) and binary units (KiB, MiB, GiB, TiB),
+    plus transfer time at common speeds.
+    """
     total_bytes = value * UNITS[unit]
     result = {name: float(f"{total_bytes / factor:.6g}") for name, factor in UNITS.items()}
     bits = total_bytes * 8

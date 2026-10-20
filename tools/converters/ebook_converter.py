@@ -12,7 +12,9 @@ def ebook_converter(
     output: Literal["pdf", "text", "html", "markdown"] = "pdf",
     page_size: Literal["a5", "a4", "letter", "kindle_6in"] = "a5",
 ) -> Path:
-    """Convert an EPUB, MOBI, FB2, XPS or CBZ ebook to PDF (reflowed to the chosen page size), plain text, HTML or Markdown. DRM-protected books cannot be converted."""
+    """Convert an EPUB, MOBI, FB2, XPS or CBZ ebook to PDF (reflowed to the chosen page size), plain text, HTML or
+    Markdown. DRM-protected books cannot be converted.
+    """
     with pymupdf.open(ebook) as doc:
         if doc.is_encrypted:
             raise ValueError("This book is encrypted/DRM protected")
@@ -38,7 +40,10 @@ def ebook_converter(
             ext = "md"
         elif output == "html":
             parts = [page.get_text("xhtml") for page in doc]
-            content = "<!doctype html>\n<html><head><meta charset='utf-8'></head><body>\n%s\n</body></html>\n" % "\n".join(parts)
+            content = (
+                "<!doctype html>\n<html><head><meta charset='utf-8'></head><body>\n%s\n</body></html>\n"
+                % "\n".join(parts)
+            )
             ext = "html"
         else:
             content = "\n".join(page.get_text() for page in doc)

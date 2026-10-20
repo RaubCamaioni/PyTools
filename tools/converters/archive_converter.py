@@ -43,7 +43,9 @@ def archive_converter(
     archive: Path,
     output: Literal["zip", "tar_gz", "tar", "7z", "list_contents"] = "zip",
 ) -> dict:
-    """Convert between ZIP, TAR, TAR.GZ and 7Z archives (or decompress a .gz file), or list what an archive contains without extracting."""
+    """Convert between ZIP, TAR, TAR.GZ and 7Z archives (or decompress a .gz file), or list what an archive contains
+    without extracting.
+    """
     with tempfile.TemporaryDirectory(dir=".") as tmp:
         work = Path(tmp)
         safe_extract_dir(archive, work)
@@ -51,7 +53,12 @@ def archive_converter(
         listing = [{"path": str(p.relative_to(work)).replace("\\", "/"), "bytes": p.stat().st_size} for p in files]
 
         if output == "list_contents":
-            return {"archive": archive.name, "files": len(listing), "total_bytes": sum(f["bytes"] for f in listing), "contents": listing[:500]}
+            return {
+                "archive": archive.name,
+                "files": len(listing),
+                "total_bytes": sum(f["bytes"] for f in listing),
+                "contents": listing[:500],
+            }
 
         stem = archive.name.split(".")[0] or "archive"
         if output == "zip":
@@ -68,4 +75,9 @@ def archive_converter(
             with tarfile.open(out, "w:gz" if output == "tar_gz" else "w") as tf:
                 for p in files:
                     tf.add(p, arcname=str(p.relative_to(work)))
-    return {"file": out, "files": len(listing), "input_bytes": archive.stat().st_size, "output_bytes": out.stat().st_size}
+    return {
+        "file": out,
+        "files": len(listing),
+        "input_bytes": archive.stat().st_size,
+        "output_bytes": out.stat().st_size,
+    }

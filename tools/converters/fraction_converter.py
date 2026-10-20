@@ -6,7 +6,9 @@ import re
 
 
 def fraction_converter(input: str = "0.375", max_denominator: int = 10000) -> dict:
-    """Convert between fractions, mixed numbers, decimals, percentages and ratios: 3/8, 1 1/2, 0.375, 37.5%, 3:8 are all accepted."""
+    """Convert between fractions, mixed numbers, decimals, percentages and ratios: 3/8, 1 1/2, 0.375, 37.5%, 3:8 are
+    all accepted.
+    """
     text = input.strip().replace(" ", " ")
     try:
         if "%" in text:
@@ -53,7 +55,9 @@ def fraction_converter(input: str = "0.375", max_denominator: int = 10000) -> di
         "reciprocal": str(1 / simplified) if simplified else "undefined",
         "approximation_used": simplified != value,
         "nearest_common_fractions": {
-            f"1/{d}ths": str(value.limit_denominator(d)) for d in (2, 4, 8, 16, 32, 64) if value.limit_denominator(d) != simplified
+            f"1/{d}ths": str(value.limit_denominator(d))
+            for d in (2, 4, 8, 16, 32, 64)
+            if value.limit_denominator(d) != simplified
         },
         "gcd_of_terms_before_simplifying": math.gcd(value.numerator, value.denominator),
     }

@@ -21,7 +21,17 @@ UNITS = {
 def weight_converter(
     value: float = 1,
     unit: Literal[
-        "kilogram", "gram", "milligram", "metric_ton", "pound", "ounce", "stone", "us_ton", "imperial_ton", "carat", "grain",
+        "kilogram",
+        "gram",
+        "milligram",
+        "metric_ton",
+        "pound",
+        "ounce",
+        "stone",
+        "us_ton",
+        "imperial_ton",
+        "carat",
+        "grain",
     ] = "kilogram",
 ) -> dict:
     """Convert a weight/mass between kg, g, mg, tonnes, pounds, ounces, stone and more."""

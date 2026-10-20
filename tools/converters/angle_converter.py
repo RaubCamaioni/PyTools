@@ -7,9 +7,13 @@ import re
 
 def angle_converter(
     value: str = "45",
-    unit: Literal["degrees", "radians", "gradians", "turns", "arcminutes", "arcseconds", "degrees_minutes_seconds"] = "degrees",
+    unit: Literal[
+        "degrees", "radians", "gradians", "turns", "arcminutes", "arcseconds", "degrees_minutes_seconds"
+    ] = "degrees",
 ) -> dict:
-    """Convert an angle between degrees, radians (accepts 'pi/4'), gradians, turns, arcminutes, arcseconds and degrees-minutes-seconds (45°30'15'')."""
+    """Convert an angle between degrees, radians (accepts 'pi/4'), gradians, turns, arcminutes, arcseconds and
+    degrees-minutes-seconds (45°30'15'').
+    """
     text = value.strip().lower()
     try:
         if unit == "degrees_minutes_seconds":
@@ -31,7 +35,14 @@ def angle_converter(
                     number = -number
             else:
                 number = float(text)
-            factors = {"degrees": 1, "radians": 180 / math.pi, "gradians": 0.9, "turns": 360, "arcminutes": 1 / 60, "arcseconds": 1 / 3600}
+            factors = {
+                "degrees": 1,
+                "radians": 180 / math.pi,
+                "gradians": 0.9,
+                "turns": 360,
+                "arcminutes": 1 / 60,
+                "arcseconds": 1 / 3600,
+            }
             degrees = number * factors[unit]
     except (ValueError, SyntaxError, ZeroDivisionError):
         return {"error": f"Could not parse '{value}' as {unit}."}

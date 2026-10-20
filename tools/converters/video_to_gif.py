@@ -13,7 +13,9 @@ def video_to_gif(
     fps: int = 10,
     width: int = 480,
 ) -> Path:
-    """Turn a clip of a video (MP4, MOV, WEBM, AVI...) into an animated GIF: choose start time, length (max 15 s), frame rate and width."""
+    """Turn a clip of a video (MP4, MOV, WEBM, AVI...) into an animated GIF: choose start time, length (max 15 s),
+    frame rate and width.
+    """
     fps = max(1, min(fps, 30))
     duration = max(0.1, min(duration_seconds, 15))
     width = max(32, min(width, 800))

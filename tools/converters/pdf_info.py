@@ -5,7 +5,9 @@ import pymupdf
 
 
 def pdf_info(pdf: Path) -> dict:
-    """Show a PDF's metadata (title, author, dates, producer), page count and sizes, encryption, fonts, images, links and text/word counts."""
+    """Show a PDF's metadata (title, author, dates, producer), page count and sizes, encryption, fonts, images, links
+    and text/word counts.
+    """
     with pymupdf.open(pdf) as doc:
         meta = {k: v for k, v in (doc.metadata or {}).items() if v}
         sizes = {}

@@ -6,8 +6,12 @@ import base64
 import mimetypes
 
 
-def image_to_base64(file: Path, output: Literal["data_uri", "raw_base64", "html_img_tag", "css_background"] = "data_uri") -> str:
-    """Encode an image (or any file) as Base64, as a data: URI, or wrapped in an HTML <img> tag or CSS background rule."""
+def image_to_base64(
+    file: Path, output: Literal["data_uri", "raw_base64", "html_img_tag", "css_background"] = "data_uri"
+) -> str:
+    """Encode an image (or any file) as Base64, as a data: URI, or wrapped in an HTML <img> tag or CSS
+    background rule.
+    """
     data = file.read_bytes()
     encoded = base64.b64encode(data).decode("ascii")
     mime = mimetypes.guess_type(file.name)[0] or "application/octet-stream"

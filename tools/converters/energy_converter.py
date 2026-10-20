@@ -22,10 +22,22 @@ UNITS = {
 def energy_converter(
     value: float = 1,
     unit: Literal[
-        "kilowatt_hour", "joule", "kilojoule", "megajoule", "calorie", "kilocalorie_food_Calorie", "watt_hour",
-        "btu", "therm", "electronvolt", "foot_pound", "erg",
+        "kilowatt_hour",
+        "joule",
+        "kilojoule",
+        "megajoule",
+        "calorie",
+        "kilocalorie_food_Calorie",
+        "watt_hour",
+        "btu",
+        "therm",
+        "electronvolt",
+        "foot_pound",
+        "erg",
     ] = "kilowatt_hour",
 ) -> dict:
-    """Convert energy between joules, calories, kilocalories (food Calories), watt-hours, kWh, BTU, therms, electronvolts and foot-pounds."""
+    """Convert energy between joules, calories, kilocalories (food Calories), watt-hours, kWh, BTU, therms,
+    electronvolts and foot-pounds.
+    """
     joules = value * UNITS[unit]
     return {name: float(f"{joules / factor:.6g}") for name, factor in UNITS.items()}

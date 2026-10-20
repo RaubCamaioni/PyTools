@@ -16,7 +16,9 @@ def image_watermark(
     opacity_percent: int = 50,
     color: Literal["white", "black"] = "white",
 ) -> Path:
-    """Stamp a text watermark on a photo: pick a corner, the centre, or tile it diagonally across the whole image. Size is a percentage of the image height."""
+    """Stamp a text watermark on a photo: pick a corner, the centre, or tile it diagonally across the whole image. Size
+    is a percentage of the image height.
+    """
     with Image.open(image) as src:
         img = ImageOps.exif_transpose(src).convert("RGBA")
     w, h = img.size
@@ -44,8 +46,11 @@ def image_watermark(
                 layer.alpha_composite(tile, (x, y))
     else:
         spots = {
-            "bottom_right": (w - tw - pad, h - th - pad), "bottom_left": (pad, h - th - pad),
-            "top_right": (w - tw - pad, pad), "top_left": (pad, pad), "center": ((w - tw) // 2, (h - th) // 2),
+            "bottom_right": (w - tw - pad, h - th - pad),
+            "bottom_left": (pad, h - th - pad),
+            "top_right": (w - tw - pad, pad),
+            "top_left": (pad, pad),
+            "center": ((w - tw) // 2, (h - th) // 2),
         }
         x, y = spots[position]
         draw.text((x - left + 2, y - top + 2), text, font=font, fill=shadow)

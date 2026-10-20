@@ -8,7 +8,9 @@ pillow_heif.register_heif_opener()
 
 
 def image_info(image: Path) -> dict:
-    """Show an image's format, dimensions, colour mode, DPI, file size and EXIF metadata (camera, date, GPS, orientation)."""
+    """Show an image's format, dimensions, colour mode, DPI, file size and EXIF metadata (camera, date, GPS,
+    orientation).
+    """
     with Image.open(image) as img:
         info = {
             "file": image.name,
@@ -38,7 +40,15 @@ def image_info(image: Path) -> dict:
             detail = raw.get_ifd(ExifTags.IFD.Exif)
             for tag, value in detail.items():
                 name = ExifTags.TAGS.get(tag, str(tag))
-                if name in ("DateTimeOriginal", "ExposureTime", "FNumber", "ISOSpeedRatings", "FocalLength", "LensModel", "ExposureBiasValue"):
+                if name in (
+                    "DateTimeOriginal",
+                    "ExposureTime",
+                    "FNumber",
+                    "ISOSpeedRatings",
+                    "FocalLength",
+                    "LensModel",
+                    "ExposureBiasValue",
+                ):
                     exif[name] = str(value)
         except Exception:  # noqa: BLE001 - metadata is best effort
             pass

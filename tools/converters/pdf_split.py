@@ -28,7 +28,9 @@ def pdf_split(
     action: Literal["extract_pages", "remove_pages", "split_every_page", "split_in_two"] = "extract_pages",
     pages: str = "1-3",
 ) -> Path:
-    """Extract or remove pages from a PDF (pages like 1-3,5,8-), split every page into its own file (zipped), or cut the document in two at the given page."""
+    """Extract or remove pages from a PDF (pages like 1-3,5,8-), split every page into its own file (zipped), or cut
+    the document in two at the given page.
+    """
     with pymupdf.open(pdf) as doc:
         count = doc.page_count
 

@@ -19,7 +19,9 @@ def gif_converter(
     animation: Path,
     output: Literal["mp4", "webm", "webp", "apng", "png_frames_zip", "sprite_sheet"] = "mp4",
 ) -> Path:
-    """Convert an animated GIF (or animated WebP/APNG) to MP4, WebM, animated WebP, APNG, a zip of PNG frames or a horizontal sprite sheet."""
+    """Convert an animated GIF (or animated WebP/APNG) to MP4, WebM, animated WebP, APNG, a zip of PNG frames or a
+    horizontal sprite sheet.
+    """
     frames = list(_frames(animation))
     if not frames:
         raise ValueError("No frames found")
@@ -44,7 +46,10 @@ def gif_converter(
             index = 0
             for frame, duration in frames:
                 rgb = background.copy()
-                rgb.paste(frame.resize((stream.width, stream.height)), mask=frame.resize((stream.width, stream.height)).getchannel("A"))
+                rgb.paste(
+                    frame.resize((stream.width, stream.height)),
+                    mask=frame.resize((stream.width, stream.height)).getchannel("A"),
+                )
                 repeat = max(1, round(duration / (1000 / fps)))
                 for _ in range(repeat):
                     video_frame = av.VideoFrame.from_image(rgb)
@@ -60,7 +65,16 @@ def gif_converter(
     if output in ("webp", "apng"):
         out = animation.with_suffix(".webp" if output == "webp" else ".png")
         first = frames[0][0]
-        first.save(out, "WEBP" if output == "webp" else "PNG", save_all=True, append_images=[f for f, _ in frames[1:]], duration=[d for _, d in frames], loop=0, lossless=False, quality=85)
+        first.save(
+            out,
+            "WEBP" if output == "webp" else "PNG",
+            save_all=True,
+            append_images=[f for f, _ in frames[1:]],
+            duration=[d for _, d in frames],
+            loop=0,
+            lossless=False,
+            quality=85,
+        )
         return out
 
     if output == "sprite_sheet":

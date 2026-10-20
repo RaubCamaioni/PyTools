@@ -17,7 +17,9 @@ def image_crop(
     width: int = 100,
     height: int = 100,
 ) -> Path:
-    """Crop an image to a centred aspect ratio (square, 16:9, 4:3...) or to an exact pixel box (left, top, width, height)."""
+    """Crop an image to a centred aspect ratio (square, 16:9, 4:3...) or to an exact pixel box (left, top, width,
+    height).
+    """
     with Image.open(image) as img:
         img = ImageOps.exif_transpose(img)
         w, h = img.size
@@ -33,7 +35,11 @@ def image_crop(
             x0, y0 = (w - new_w) // 2, (h - new_h) // 2
             box = (x0, y0, x0 + new_w, y0 + new_h)
         result = img.crop(box)
-        suffix = image.suffix.lower() if image.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff") else ".png"
+        suffix = (
+            image.suffix.lower()
+            if image.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")
+            else ".png"
+        )
         out = image.with_name(f"{image.stem}_crop_{result.size[0]}x{result.size[1]}{suffix}")
         if suffix in (".jpg", ".jpeg") and result.mode not in ("RGB", "L"):
             result = result.convert("RGB")

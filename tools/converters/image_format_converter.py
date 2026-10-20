@@ -7,7 +7,16 @@ import pillow_heif
 
 pillow_heif.register_heif_opener()
 
-FORMATS = {"png": "PNG", "jpg": "JPEG", "webp": "WEBP", "gif": "GIF", "bmp": "BMP", "tiff": "TIFF", "ico": "ICO", "pdf": "PDF"}
+FORMATS = {
+    "png": "PNG",
+    "jpg": "JPEG",
+    "webp": "WEBP",
+    "gif": "GIF",
+    "bmp": "BMP",
+    "tiff": "TIFF",
+    "ico": "ICO",
+    "pdf": "PDF",
+}
 
 
 def image_format_converter(
@@ -15,7 +24,9 @@ def image_format_converter(
     output: Literal["png", "jpg", "webp", "gif", "bmp", "tiff", "ico", "pdf"],
     quality: int = 90,
 ) -> Path:
-    """Convert an image between PNG, JPG, WEBP, GIF, BMP, TIFF, ICO and PDF. Reads HEIC/HEIF (iPhone photos), AVIF, PSD and most other formats too."""
+    """Convert an image between PNG, JPG, WEBP, GIF, BMP, TIFF, ICO and PDF. Reads HEIC/HEIF (iPhone photos), AVIF, PSD
+    and most other formats too.
+    """
     with Image.open(image) as img:
         img.load()
         fmt = FORMATS[output]

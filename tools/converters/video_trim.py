@@ -14,7 +14,9 @@ def video_trim(
     rotate: Literal["none", "90_clockwise", "90_counterclockwise", "180"] = "none",
     audio: Literal["keep", "remove"] = "keep",
 ) -> Path:
-    """Cut a clip out of a video between two times (max 60 s), optionally rotating it and dropping the sound. Output is MP4 (H.264/AAC)."""
+    """Cut a clip out of a video between two times (max 60 s), optionally rotating it and dropping the sound. Output is
+    MP4 (H.264/AAC).
+    """
     start = max(0.0, start_seconds)
     end = min(max(start + 0.2, end_seconds), start + 60)
     out = video.with_name(f"{video.stem}_{start:g}s_{end:g}s.mp4")
@@ -65,7 +67,13 @@ def video_trim(
                         from PIL import Image
 
                         img = frame.to_image()
-                        img = img.transpose({"90_clockwise": Image.Transpose.ROTATE_270, "90_counterclockwise": Image.Transpose.ROTATE_90, "180": Image.Transpose.ROTATE_180}[rotate])
+                        img = img.transpose(
+                            {
+                                "90_clockwise": Image.Transpose.ROTATE_270,
+                                "90_counterclockwise": Image.Transpose.ROTATE_90,
+                                "180": Image.Transpose.ROTATE_180,
+                            }[rotate]
+                        )
                         frame = av.VideoFrame.from_image(img.resize((w, h)))
                     frame = frame.reformat(width=w, height=h, format="yuv420p")
                     frame.pts = frames_written

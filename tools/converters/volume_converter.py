@@ -28,11 +28,28 @@ UNITS = {
 def volume_converter(
     value: float = 1,
     unit: Literal[
-        "liter", "milliliter", "cubic_meter", "cubic_centimeter", "cubic_inch", "cubic_foot",
-        "us_teaspoon", "us_tablespoon", "us_fluid_ounce", "us_cup", "us_pint", "us_quart", "us_gallon",
-        "imperial_fluid_ounce", "imperial_pint", "imperial_quart", "imperial_gallon", "metric_cup",
+        "liter",
+        "milliliter",
+        "cubic_meter",
+        "cubic_centimeter",
+        "cubic_inch",
+        "cubic_foot",
+        "us_teaspoon",
+        "us_tablespoon",
+        "us_fluid_ounce",
+        "us_cup",
+        "us_pint",
+        "us_quart",
+        "us_gallon",
+        "imperial_fluid_ounce",
+        "imperial_pint",
+        "imperial_quart",
+        "imperial_gallon",
+        "metric_cup",
     ] = "liter",
 ) -> dict:
-    """Convert a volume between litres, millilitres, cubic metres, US and imperial gallons, pints, cups, tablespoons and teaspoons."""
+    """Convert a volume between litres, millilitres, cubic metres, US and imperial gallons, pints, cups, tablespoons
+    and teaspoons.
+    """
     litres = value * UNITS[unit]
     return {name: float(f"{litres / factor:.6g}") for name, factor in UNITS.items()}

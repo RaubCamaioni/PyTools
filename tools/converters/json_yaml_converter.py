@@ -16,7 +16,9 @@ def json_yaml_converter(
     data_file: Path,
     output: Literal["yaml", "json", "toml"],
 ) -> Path:
-    """Convert between JSON, YAML and TOML. The input format is detected from the file extension (falls back to trying each parser)."""
+    """Convert between JSON, YAML and TOML. The input format is detected from the file extension (falls back to trying
+    each parser).
+    """
     text = data_file.read_text(encoding="utf-8-sig", errors="replace")
     suffix = data_file.suffix.lower()
 
@@ -44,7 +46,9 @@ def json_yaml_converter(
     if output == "json":
         out.write_text(json.dumps(data, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
     elif output == "yaml":
-        out.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+        out.write_text(
+            yaml.safe_dump(data, sort_keys=False, allow_unicode=True, default_flow_style=False), encoding="utf-8"
+        )
     else:
         if not isinstance(data, dict):
             raise ValueError("TOML output requires a top-level object (table), not a list or scalar")

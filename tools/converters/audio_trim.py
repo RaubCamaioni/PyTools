@@ -12,8 +12,18 @@ def audio_trim(
     end_seconds: float = 30,
     output: Literal["same_as_input", "mp3", "wav", "aac", "ogg", "flac"] = "same_as_input",
 ) -> Path:
-    """Cut a section out of an audio file (or the audio track of a video) between two times, optionally converting the format."""
-    codecs = {"mp3": "mp3", "wav": "pcm_s16le", "aac": "aac", "ogg": "libopus", "flac": "flac", "m4a": "aac", "opus": "libopus"}
+    """Cut a section out of an audio file (or the audio track of a video) between two times, optionally converting the
+    format.
+    """
+    codecs = {
+        "mp3": "mp3",
+        "wav": "pcm_s16le",
+        "aac": "aac",
+        "ogg": "libopus",
+        "flac": "flac",
+        "m4a": "aac",
+        "opus": "libopus",
+    }
     ext = audio.suffix.lstrip(".").lower() if output == "same_as_input" else output
     if ext not in codecs:
         ext = "mp3"

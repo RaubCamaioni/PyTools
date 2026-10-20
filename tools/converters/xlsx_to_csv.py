@@ -13,7 +13,9 @@ def xlsx_to_csv(
     output: Literal["csv", "tsv", "json", "markdown"] = "csv",
     sheet: str = "all",
 ) -> Path:
-    """Convert an Excel .xlsx workbook to CSV, TSV, JSON (list of row objects) or a Markdown table. One sheet gives one file; all sheets give a zip (or one JSON object keyed by sheet)."""
+    """Convert an Excel .xlsx workbook to CSV, TSV, JSON (list of row objects) or a Markdown table. One sheet gives one
+    file; all sheets give a zip (or one JSON object keyed by sheet).
+    """
     wb = load_workbook(str(spreadsheet), read_only=True, data_only=True)
     names = wb.sheetnames if sheet.strip().lower() == "all" else [sheet]
     if sheet.strip().lower() != "all" and sheet not in wb.sheetnames:

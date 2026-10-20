@@ -23,8 +23,12 @@ def add_inline(paragraph, text: str):
             paragraph.add_run(token)
 
 
-def text_to_docx(text_file: Path, input_format: Literal["markdown", "plain_text"] = "markdown", font_size: int = 11) -> Path:
-    """Create a Word .docx from a Markdown or plain text file (headings, bullet and numbered lists, bold/italic, code blocks, simple tables)."""
+def text_to_docx(
+    text_file: Path, input_format: Literal["markdown", "plain_text"] = "markdown", font_size: int = 11
+) -> Path:
+    """Create a Word .docx from a Markdown or plain text file (headings, bullet and numbered lists, bold/italic, code
+    blocks, simple tables).
+    """
     text = text_file.read_text(encoding="utf-8-sig", errors="replace")
     doc = Document()
     doc.styles["Normal"].font.size = Pt(max(6, min(font_size, 24)))
@@ -78,7 +82,11 @@ def text_to_docx(text_file: Path, input_format: Literal["markdown", "plain_text"
             doc.add_paragraph("_" * 40)
         elif line.strip():
             para = [line.strip()]
-            while i + 1 < len(lines) and lines[i + 1].strip() and not re.match(r"^(#|\s*[-*+]\s|\s*\d+[.)]\s|```|\||>)", lines[i + 1]):
+            while (
+                i + 1 < len(lines)
+                and lines[i + 1].strip()
+                and not re.match(r"^(#|\s*[-*+]\s|\s*\d+[.)]\s|```|\||>)", lines[i + 1])
+            ):
                 i += 1
                 para.append(lines[i].strip())
             add_inline(doc.add_paragraph(), " ".join(para))
