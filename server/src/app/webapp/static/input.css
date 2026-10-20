@@ -16,7 +16,8 @@
     background: var(--color-ink);
   }
   body {
-    @apply bg-ink text-paper font-mono text-sm antialiased;
+    /* every page ends in black space, so the end of a listing is always visible */
+    @apply bg-ink text-paper font-mono text-sm antialiased pb-48;
   }
   a {
     @apply underline underline-offset-2 decoration-line;
