@@ -1,5 +1,5 @@
 {# the hashtags grepped from the first line of every file; after a filter only the overlapping ones remain #}
-<div id="tag-filters" class="mt-2 flex flex-wrap items-baseline gap-y-1"{% if oob %} hx-swap-oob="true"{% endif %}>
+<div id="tag-filters" class="mt-2 flex flex-wrap items-baseline gap-x-1 gap-y-1"{% if oob %} hx-swap-oob="true"{% endif %}>
     <span class="whitespace-nowrap mr-2"><span class="text-dim">$</span> head -n1 tools/*.py | grep -i</span>
     {% for tag in common_tags %}
         <label class="switch"><input type="checkbox" name="tag" value="{{ tag }}"{% if tag in selected %} checked{% endif %}><span class="label-text">[{{ tag }}]</span></label>
