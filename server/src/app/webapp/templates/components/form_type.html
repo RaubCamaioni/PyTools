@@ -1,15 +1,10 @@
-<div class="form-group mb-2 flex items-center gap-2">
-
-	<label
-		class="block w-1/3 text-dim truncate"
-		for="{{ name }}"
-		title="{{ name }}">
-		{{ name }}:
-	</label>
+<div class="form-group flex items-center gap-2 py-0.5">
+	<span class="whitespace-pre text-dim select-none">{{ glyph }}</span>
+	<label class="text-dim whitespace-nowrap" for="{{ name }}">{{ name }}: <span class="text-paper">{{ py_type }}</span></label>
 
 	{% if type == "file" %}
 	{# Path argument: a [upload] bracket that shows the chosen file name; the real input stays hidden #}
-	<label id="{{ name }}-label" for="{{ name }}" class="block w-2/3 truncate cursor-pointer px-1 hover:bg-paper hover:text-ink">[upload]</label>
+	<label id="{{ name }}-label" for="{{ name }}" class="ml-auto truncate cursor-pointer px-1 hover:bg-paper hover:text-ink">[upload]</label>
 	<input
 		class="sr-only"
 		required
@@ -19,7 +14,7 @@
 		_="on change if my.files.length > 0 set #{{ name }}-label.innerText to '[' + my.files[0].name + ']' end">
 	{% else %}
 	<input
-		class="block w-2/3"
+		class="ml-auto w-1/2 min-w-[8ch]"
 		required
 		type="{{ type }}"
 		id="{{ name }}"
