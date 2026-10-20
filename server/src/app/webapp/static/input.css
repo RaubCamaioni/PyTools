@@ -119,7 +119,7 @@
   /* console field: no box; the caret is a blinking underscore drawn after the text */
   .field {
     /* a dim rule under a minimum width shows there is a field even when it is empty */
-    @apply inline-flex items-baseline min-w-[10ch] border-b border-line;
+    @apply inline-flex items-baseline min-w-[10ch] border-b border-line cursor-text;
   }
   .field:focus-within {
     @apply border-dim;
@@ -167,7 +167,7 @@
   }
   /* list pick: boxless select with a dim arrow; its popup is black with white text */
   .pick {
-    @apply inline-flex items-baseline min-w-0;
+    @apply inline-flex items-baseline min-w-0 px-2 cursor-pointer;
   }
   .pick::after {
     content: "\25BE";

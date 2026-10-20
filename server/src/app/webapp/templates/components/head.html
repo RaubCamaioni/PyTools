@@ -11,6 +11,16 @@
 {# Interactivity #}
 <script src="/scripts/htmx.min.js"></script>
 <script src="/scripts/_hyperscript.min.js"></script>
+<script>
+    // console fields size to their text, so a click anywhere on a field's rule focuses its control
+    document.addEventListener("click", function (event) {
+        const field = event.target.closest && event.target.closest(".field, .pick");
+        if (field && !event.target.matches("input, select")) {
+            const control = field.querySelector("input, select");
+            if (control) control.focus();
+        }
+    });
+</script>
 
 {# ResponseError Alert #}
 <script type="text/hyperscript">
