@@ -55,7 +55,14 @@ that the upload parser enforces are worth knowing when writing new ones:
 The sandbox image (`sandbox/pyproject.toml`) provides numpy, scipy, pandas,
 opencv (headless, 4.x), av, pymupdf (+pymupdf4llm), cadquery, ezdxf, Pillow (+HEIF),
 PyYAML, qrcode, openpyxl, python-docx, python-pptx, pdf2docx, mammoth, ebooklib, rawpy,
-markdown, tzdata, num2words, xmltodict, tomli-w and py7zr.
+markdown, tzdata, num2words, xmltodict, tomli-w, py7zr, cryptography, bcrypt,
+cron-descriptor, croniter, jmespath, jsonschema, sqlparse, jsbeautifier, cssbeautifier,
+rcssmin, rjsmin, black, python-stdnum, phonenumbers, faker, python-barcode, mutagen,
+fonttools, brotli, trimesh (+networkx), striprtf, pyzipper, pyfiglet, zxcvbn, astral,
+ua-parser and scour.
+
+Docstrings and comments are wrapped at 88 columns so the code view reads comfortably;
+only code lines go out to 120.
 
 Converter ideas that are not built yet, and why, are kept in
 `docs/converter-backlog.md`.
