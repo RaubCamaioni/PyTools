@@ -109,6 +109,11 @@ class TraceChannel:
         self.closed = False
         self.created = time.monotonic()
         self.closed_at: Optional[float] = None
+        self.ticket = 0  # the stream holding the latest ticket is the only one served
+
+    def attach(self) -> int:
+        self.ticket += 1
+        return self.ticket
 
     def _put(self, item):
         if self.queue.full():

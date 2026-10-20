@@ -29,10 +29,12 @@ import os
 
 from app.utility import render, serializer, security
 from app.utility.podman_runner import PodmanRunner, Outcome, SandboxBusy, SandboxUnavailable
+from app.utility.trace import TraceRegistry
 from app import TEMPLATES, ALLOWED_CHARACTERS, logger, ENVIRONMENT
 from app.models import tools as db_tools
 from app.routes.auth import User
 import json
+import re
 from pathlib import PosixPath
 
 
@@ -59,6 +61,14 @@ async def lifespan(app: FastAPI):
 
 runner = PodmanRunner(ENVIRONMENT.sandbox)
 router = APIRouter(lifespan=lifespan)
+
+# execution trace: the tool page registers a random token with its run and streams the run's
+# line numbers from /trace/{token} (docs/superpowers/specs/2026-10-19-execution-trace-design.md)
+TRACES = TraceRegistry()
+TRACE_TOKEN = re.compile(r"[A-Za-z0-9_-]{32}")
+TRACE_WAIT_SECONDS = 10.0  # how long a stream waits for its run to be registered
+TRACE_POLL_SECONDS = 0.05
+TRACE_IDLE_SECONDS = 1.0  # between checks that the stream was not superseded
 
 
 def secret_dir_name(length=32):
@@ -95,6 +105,41 @@ async def healthz():
     if runner.available:
         return JSONResponse({"sandbox": "ready"})
     return JSONResponse({"sandbox": "unavailable", "reason": runner.unavailable_reason}, status_code=503)
+
+
+@router.get("/trace/{token}")
+async def trace_stream(token: str):
+    if not TRACE_TOKEN.fullmatch(token):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    async def wait_for_channel():
+        deadline = time.monotonic() + TRACE_WAIT_SECONDS
+        while (channel := TRACES.get(token)) is None and time.monotonic() < deadline:
+            await asyncio.sleep(TRACE_POLL_SECONDS)
+        return channel
+
+    async def stream():
+        channel = await wait_for_channel()
+        if channel is not None:
+            ticket = channel.attach()
+            while True:
+                try:
+                    line = await asyncio.wait_for(channel.queue.get(), TRACE_IDLE_SECONDS)
+                except asyncio.TimeoutError:
+                    superseded = channel.ticket != ticket or TRACES.get(token) not in (channel, None)
+                    if superseded:
+                        break
+                    continue
+                if line is None:
+                    break
+                yield f"event: line\ndata: {line}\n\n"
+        yield "event: end\ndata:\n\n"
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.route("/", methods=["GET", "POST"])
@@ -278,13 +323,7 @@ async def public_tool(
     return HTMLResponse(status_code=200)
 
 
-@router.post("/tool/{id}", response_class=HTMLResponse)
-async def run_isolated(
-    request: Request,
-    id: int,
-    temp_dir: Tempdir,
-    session: db_tools.SessionDep,
-) -> str:
+async def _run_tool(request: Request, id: int, temp_dir: Path, session, form_data: dict, channel):
     if not runner.available:
         raise HTTPException(status_code=503, detail="Sandbox unavailable")
 
@@ -299,14 +338,6 @@ async def run_isolated(
         user: User = User.model_validate_json(request.session["user"])
         if tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool Not Found")
-
-    form_data = {}
-    if len(tool.arguments):
-        form_data = await request.form()
-
-    # overwrite form params with query params
-    # query_params = dict(request.query_params)
-    # form_data.update(query_params)
 
     kwargs = {}
     temp_tool = (temp_dir / tool.name).with_suffix(".py")
@@ -335,16 +366,36 @@ async def run_isolated(
 
     # !DANGER! user submitted code
     try:
-        result = await runner.run(temp_tool, temp_dir)
+        return await runner.run(temp_tool, temp_dir, on_line=channel.put if channel is not None else None)
     except SandboxBusy:
         raise HTTPException(status_code=503, detail="Server busy, try again")
     except SandboxUnavailable:
         raise HTTPException(status_code=503, detail="Sandbox unavailable")
 
+
+@router.post("/tool/{id}", response_class=HTMLResponse)
+async def run_isolated(
+    request: Request,
+    id: int,
+    temp_dir: Tempdir,
+    session: db_tools.SessionDep,
+) -> str:
+    form = await request.form()
+    token = form.get("trace")
+    channel = None
+    if isinstance(token, str) and TRACE_TOKEN.fullmatch(token):
+        TRACES.expire()
+        channel = TRACES.register(token)
+    try:
+        result = await _run_tool(request, id, temp_dir, session, {k: v for k, v in form.items() if k != "trace"}, channel)
+    finally:
+        if channel is not None:
+            channel.close()  # every exit, including 404/503, ends the page's trace stream
+
     htmx = request.headers.get("HX-Request") == "true"
 
     if result.outcome is not Outcome.OK:
-        logger.warning(f"tool {tool.id} {result.outcome.name}: {result.stderr_tail}")
+        logger.warning(f"tool {id} {result.outcome.name}: {result.stderr_tail}")
         if htmx:
             text = result.message + (f"\n{result.stderr_tail}" if result.stderr_tail else "")
             return HTMLResponse(content=render.render(text))
