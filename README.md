@@ -39,6 +39,22 @@ def lower_case_text(input: Path) -> Path:
   return output
 ```
 
+## Converter Tools
+`tools/converters/` holds the converter scripts published on the site (text and
+encoding, data formats, units, colour/time/network, image, PDF, Office documents,
+media, subtitles, archives). They follow the rules above; a few extra constraints
+that the upload parser enforces are worth knowing when writing new ones:
+
+- form inputs are single-line, so multi-line content is taken as a `Path` upload
+- `Literal` option values may only contain letters, digits, `_` and `.` (no hyphens),
+  and the function receives them as strings
+- numeric arguments should carry a default, the form submits every field
+- tags on line 1 are plain alphanumeric words
+
+The sandbox image (`sandbox/pyproject.toml`) provides numpy, scipy, pandas,
+opencv, av, pymupdf, cadquery, ezdxf, Pillow (+HEIF), PyYAML, qrcode, openpyxl,
+python-docx, python-pptx, markdown, tzdata, num2words, xmltodict, tomli-w and py7zr.
+
 ## Demo Website
 The application is hosted at https://pywebtools.com.  
 Currently hosted under Linode server, lowest resources.  
