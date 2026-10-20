@@ -252,6 +252,7 @@ def check_line_lengths(tool_source: str) -> None:
 
 
 def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
+    tool_source = tool_source.replace("\r\n", "\n").replace("\r", "\n")
     check_line_lengths(tool_source)
     tags = get_tags(tool_source.split("\n")[0])
     tags.append(tool_name)

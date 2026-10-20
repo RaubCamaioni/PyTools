@@ -30,8 +30,8 @@ def video_converter(
         in_a = src.streams.audio[0] if (audio == "keep" and src.streams.audio) else None
 
         scale = min(1.0, max(144, max_height) / in_v.codec_context.height)
-        width = int(in_v.codec_context.width * scale) // 2 * 2
-        height = int(in_v.codec_context.height * scale) // 2 * 2
+        width = max(2, int(in_v.codec_context.width * scale) // 2 * 2)
+        height = max(2, int(in_v.codec_context.height * scale) // 2 * 2)
         fps = min(30, float(in_v.average_rate or 30))
 
         vcodec = "libvpx-vp9" if output == "webm" else "libx264"

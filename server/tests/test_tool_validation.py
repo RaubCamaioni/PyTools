@@ -28,6 +28,11 @@ def test_length_check_runs_before_syntax_check():
     assert "Line Too Long" in info.value.detail
 
 
+def test_windows_line_endings_are_normalised():
+    tool = db.create_tool(1, "demo", source("x = 1").replace("\n", "\r\n"))
+    assert "\r" not in tool.code and tool.tags == ["tag", "demo"]
+
+
 @pytest.mark.parametrize("name", ["byte_converter", "sha256"])
 def test_shipped_tools_pass(name):
     from pathlib import Path

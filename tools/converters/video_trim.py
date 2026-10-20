@@ -29,7 +29,7 @@ def video_trim(
         w, h = in_v.codec_context.width, in_v.codec_context.height
         if rotate in ("90_clockwise", "90_counterclockwise"):
             w, h = h, w
-        w, h = w // 2 * 2, h // 2 * 2
+        w, h = max(2, w // 2 * 2), max(2, h // 2 * 2)
         fps = min(60, float(in_v.average_rate or 30))
         out_v = dst.add_stream("libx264", rate=round(fps))
         out_v.width, out_v.height, out_v.pix_fmt = w, h, "yuv420p"
