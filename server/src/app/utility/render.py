@@ -37,7 +37,7 @@ class MyPrettyPrinter(PrettyPrinter):
     def format(self, object, context, maxlevels, level):
         if isinstance(object, (Path, PosixPath)):
             hyper_link = Path("/download") / object.relative_to(object.anchor)
-            download = f'<a href="{hyper_link}" style="white-space: pre;">{object}</a>'
+            download = f'<a href="{hyper_link}" download="{object.name}" style="white-space: pre;">{object}</a>'
 
             viewer = ""
             if hyper_link.suffix == ".stl":
@@ -236,7 +236,7 @@ def render(results: Any):
         sanitize_html(
             return_string,
             tags={"a", "stl-viewer"},
-            attributes={"a": {"href", "style"}, "stl-viewer": {"url"}},
+            attributes={"a": {"href", "download", "style"}, "stl-viewer": {"url"}},
         )
         .replace("\\n", "<br>")
         .replace("\n", "<br>")

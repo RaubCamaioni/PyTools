@@ -464,19 +464,16 @@ async def run_isolated(
 @security.constant_time_with_random_delay(0.2, 1)
 @router.get("/download/{file_str:path}", response_class=FileResponse)
 async def download_file(file_str: str):
-    file_path = Path("/") / Path(file_str)
-    file_path = file_path.resolve()
+    file_path = (Path("/") / Path(file_str)).resolve()
+    run_root = ENVIRONMENT.sandbox.run_dir.resolve()
 
-    forbidden = HTTPException(status_code=403, detail="Forbidden File Access")
-
-    if not str(file_path).startswith("/tmp/"):
-        raise forbidden
-
-    if not file_path.exists():
-        raise forbidden
+    # only files inside a run directory are served
+    if not file_path.is_relative_to(run_root) or file_path == run_root:
+        raise HTTPException(status_code=403, detail="Forbidden File Access")
 
     if not file_path.is_file():
-        raise forbidden
+        # run directories are removed ten minutes after the run (and on a restart of the app)
+        raise HTTPException(status_code=404, detail="This result has expired: files are kept for 10 minutes after a run.")
 
     return FileResponse(
         file_path,

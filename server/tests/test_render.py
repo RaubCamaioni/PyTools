@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 import re
 
@@ -69,3 +70,9 @@ def test_user_tool_table_starts_with_a_header_row():
 )
 def test_format_runs_fits_four_characters(count, text):
     assert render.format_runs(count) == text and len(text) <= 4
+
+
+def test_result_paths_render_as_download_links():
+    html = render.render(Path("/tmp/pywebtools-runs/abc/qr_code.png"))
+    assert 'href="/download/tmp/pywebtools-runs/abc/qr_code.png"' in html.replace("\\", "/")
+    assert 'download="qr_code.png"' in html

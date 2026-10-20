@@ -156,3 +156,33 @@ def test_anonymous_tool_hides_the_alias_and_the_id(monkeypatch, tmp_path):
     monkeypatch.setattr(tools_routes, "ENVIRONMENT", dataclasses.replace(env, sandbox=dataclasses.replace(env.sandbox, run_dir=tmp_path)))
     page = client(monkeypatch, StubRunner()).get("/tool/8").text
     assert "anonymous#00000000" in page and "rob#" not in page and "49600918" not in page
+
+
+def download_url(path):
+    return "/download/" + str(path.resolve().relative_to(path.resolve().anchor)).replace("\\", "/")
+
+
+def test_download_serves_a_file_from_a_run_directory(monkeypatch, public_tool, tmp_path):
+    run = tmp_path / "abc"
+    run.mkdir()
+    (run / "qr_code.png").write_bytes(b"png")
+    r = client(monkeypatch, StubRunner()).get(download_url(run / "qr_code.png"))
+    assert r.status_code == 200 and r.content == b"png"
+    assert "qr_code.png" in r.headers["content-disposition"]
+
+
+def test_download_of_an_expired_result_is_404_with_a_reason(monkeypatch, public_tool, tmp_path):
+    r = client(monkeypatch, StubRunner()).get(download_url(tmp_path / "gone" / "qr_code.png"))
+    assert r.status_code == 404 and "expired" in r.json()["detail"]
+
+
+def test_download_outside_the_run_root_is_forbidden(monkeypatch, public_tool, tmp_path):
+    outside = tmp_path.parent / "elsewhere.txt"
+    outside.write_text("x")
+    assert client(monkeypatch, StubRunner()).get(download_url(outside)).status_code == 403
+    assert client(monkeypatch, StubRunner()).get(download_url(tmp_path)).status_code == 403  # the root itself
+
+
+def test_tool_page_downloads_results_in_place(monkeypatch, public_tool):
+    page = client(monkeypatch, StubRunner()).get("/tool/8").text
+    assert """closest('a[href^="/download/"]')""" in page and "event.preventDefault()" in page
