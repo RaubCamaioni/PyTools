@@ -16,7 +16,6 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from sqlalchemy import func, inspect, text
-from typing import Sequence
 import logging
 import ast
 
@@ -128,20 +127,6 @@ def get_tools_by_tags(
             conditions.append(Tool.public == True)
         statement = select(Tool.id, Tool.name).where(*conditions).offset(start).limit(end - start)
         return session.exec(statement).all()
-
-
-def get_tag_counts(session: Session, terms: Sequence[str] = ()) -> list[tuple[str, int]]:
-    """Hashtags from the first line of every public tool with how many tools carry each,
-    most used first then alphabetical; a tool's own name (stored with its tags) is left out.
-    With `terms` only the tools matching all of them (as get_tools_by_tags does) are counted."""
-    with session:
-        counts: dict[str, int] = {}
-        conditions = [Tool.public == True, *(Tool.tags.ilike(f"%{term}%") for term in terms)]
-        for name, tags in session.exec(select(Tool.name, Tool.tags).where(*conditions)).all():
-            for tag in {t.strip().lower() for t in (tags or [])}:
-                if tag and tag != name.lower():
-                    counts[tag] = counts.get(tag, 0) + 1
-        return sorted(counts.items(), key=lambda item: (-item[1], item[0]))
 
 
 @dataclass

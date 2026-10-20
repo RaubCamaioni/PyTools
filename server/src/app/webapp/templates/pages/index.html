@@ -10,12 +10,12 @@
         {% include 'components/header.html'%}
 
         <div class="max-w-4xl mx-auto px-4">
-            {# two commands feed one search: the grep pattern on file names and the hashtags grepped
-               from the first line of every file; any change re-lists the matching tools #}
+            {# one grep over file names and the hashtags on the first line of every file; the list
+               refilters as you type (debounced) and when the field is cleared #}
             <form
                 id="filter"
                 hx-post="{{ root_path }}/tools?start=0&end=50"
-                hx-trigger="keyup[key=='Enter'], change[target.name=='tag']"
+                hx-trigger="input delay:200ms, search"
                 onsubmit="event.preventDefault()"
                 hx-target="#tool-list"
                 hx-indicator=".htmx-indicator"
@@ -25,11 +25,11 @@
                     <span class="field flex-grow"><input
                         type="search"
                         name="search"
+                        autofocus
                         autocomplete="off"
                         spellcheck="false"
                         aria-label="filter tools"></span>
                 </label>
-                {{ tag_filters | safe }}
             </form>
 
             {# ls output: columns of file names #}
@@ -40,5 +40,22 @@
             </ul>
         </div>
 
+        <script>
+            // typing anywhere on the page goes into the search field: a printable key (or Backspace) pressed
+            // while no text field has focus moves focus there first, so the key lands in the field
+            (function () {
+                const search = document.querySelector('input[name="search"]');
+                document.addEventListener("keydown", function (event) {
+                    if (event.ctrlKey || event.metaKey || event.altKey) return;
+                    if (event.key.length !== 1 && event.key !== "Backspace") return;
+                    const target = event.target;
+                    const typing = target.isContentEditable
+                        || target.tagName === "TEXTAREA" || target.tagName === "SELECT"
+                        || (target.tagName === "INPUT" && !["checkbox", "radio", "button", "submit", "file"].includes(target.type));
+                    if (typing) return;
+                    search.focus();
+                });
+            })();
+        </script>
     </body>
 </html>

@@ -137,10 +137,13 @@ def test_tool_page_names_the_author_as_alias_and_id(monkeypatch, tmp_path):
     monkeypatch.setattr(tools_routes.db_tools, "get_user_by_id", lambda session, id: db.User(id=49600918, alias="rob"))
     env = tools_routes.ENVIRONMENT
     monkeypatch.setattr(tools_routes, "ENVIRONMENT", dataclasses.replace(env, sandbox=dataclasses.replace(env.sandbox, run_dir=tmp_path)))
-    assert "author: rob#49600918" in client(monkeypatch, StubRunner()).get("/tool/8").text
+    page = client(monkeypatch, StubRunner()).get("/tool/8").text
+    assert "rob#49600918" in page
+    assert page.index("t.py</span>") < page.index("rob#49600918") < page.index('id="vim-mode"')  # status bar, after the name
+    assert "vim t.py" not in page  # no heading above the code
 
 
-def test_anonymous_tool_hides_the_alias_but_keeps_the_id(monkeypatch, tmp_path):
+def test_anonymous_tool_hides_the_alias_and_the_id(monkeypatch, tmp_path):
     import dataclasses
 
     monkeypatch.setattr(
@@ -152,4 +155,4 @@ def test_anonymous_tool_hides_the_alias_but_keeps_the_id(monkeypatch, tmp_path):
     env = tools_routes.ENVIRONMENT
     monkeypatch.setattr(tools_routes, "ENVIRONMENT", dataclasses.replace(env, sandbox=dataclasses.replace(env.sandbox, run_dir=tmp_path)))
     page = client(monkeypatch, StubRunner()).get("/tool/8").text
-    assert "author: anonymous#49600918" in page and "rob#" not in page
+    assert "anonymous#00000000" in page and "rob#" not in page and "49600918" not in page

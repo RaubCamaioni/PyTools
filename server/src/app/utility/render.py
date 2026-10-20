@@ -160,21 +160,6 @@ def list_items(
     return "".join(htmlx)
 
 
-# tags carried by only one tool are folded behind [+N more] until a filter is active
-COMMON_TAG_MIN_TOOLS = 2
-
-
-def tag_filters(tag_counts, selected=frozenset(), filtered=False, oob=False) -> str:
-    """The `$ head -n1 tools/*.py | grep -i [tag]...` row; `oob` marks it for an htmx out-of-band swap."""
-    if filtered:
-        common, rare = [t for t, _ in tag_counts], []
-    else:
-        common = [t for t, n in tag_counts if n >= COMMON_TAG_MIN_TOOLS]
-        rare = [t for t, n in tag_counts if n < COMMON_TAG_MIN_TOOLS]
-    template: Template = TEMPLATES.get_template("components/tag_filters.html")
-    return template.render(common_tags=common, rare_tags=rare, selected=selected, oob=oob)
-
-
 def format_runs(count: int) -> str:
     """A run count in at most four characters: 9999, 10K, 999K, 1.2M, 12M, 999M, 1.2B."""
     count = max(0, int(count))

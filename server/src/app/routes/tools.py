@@ -161,7 +161,6 @@ async def read_root(request: Request, session: db_tools.SessionDep):
             "header_title": "PyTools",
             "request": request,
             "root_path": request.scope.get("root_path"),
-            "tag_filters": render.tag_filters(db_tools.get_tag_counts(session)),
         },
     )
 
@@ -179,8 +178,8 @@ async def get_tools(
     body = await request.body()
     search_string = unquote(body.decode())
     query_params = parse_qs(search_string)
-    # typed grep pattern plus the selected first-line hashtags, all ANDed by the query
-    tags = query_params.get("search", [""])[0].split() + [t for t in query_params.get("tag", []) if t.strip()]
+    # every typed word must match the tool's name or one of its first-line hashtags
+    tags = query_params.get("search", [""])[0].split()
 
     if tags:
         tools = db_tools.get_tools_by_tags(session, tags, start, end)
@@ -191,16 +190,6 @@ async def get_tools(
         end = None
 
     content = render.list_items(request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50)
-
-    if start == 0:
-        # a new filter (not a scrolled page): swap in the tags that overlap the matching tools
-        content += render.tag_filters(
-            db_tools.get_tag_counts(session, tags),
-            selected={t for t in query_params.get("tag", []) if t.strip()},
-            filtered=bool(tags),
-            oob=True,
-        )
-
     return HTMLResponse(content=content)
 
 
@@ -288,10 +277,11 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
 
 
 def _author_label(session, tool) -> str:
-    """alias#id of the uploader; an anonymous tool shows only the id."""
+    """alias#id of the uploader; an anonymous tool shows neither (the id would identify the account)."""
     author = db_tools.get_user_by_id(session, tool.user_id) if tool.user_id is not None else None
-    alias = "anonymous" if tool.annonymous or author is None else author.alias
-    return f"{alias}#{tool.user_id}"
+    if tool.annonymous or author is None:
+        return "anonymous#" + "0" * len(str(tool.user_id or 0))
+    return f"{author.alias}#{tool.user_id}"
 
 
 REPORT_REASON_MAX = 1000

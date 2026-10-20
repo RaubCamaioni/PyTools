@@ -13,7 +13,6 @@
 
         <div class="w-11/12 mx-auto flex flex-col">
 
-            <div class="prompt font-bold mb-2">vim {{ tool }}.py</div>
             <div class="panel tool-layout">
 
                 <div class="code-column">
@@ -23,6 +22,7 @@
                     {# vim status line, inverse video; the mode shows -- RUNNING -- while a run is in flight #}
                     <div class="flex items-center gap-4 px-2 bg-paper text-ink whitespace-nowrap overflow-hidden">
                         <span class="font-bold">{{ tool }}.py</span>
+                        <span title="uploader: alias#account id (an anonymous upload shows a zero id)">{{ author }}</span>
                         <span id="vim-mode"></span>
                         <span class="flex-grow"></span>
                         <span>{{ lines }}L</span>
@@ -50,7 +50,6 @@
                         <div class="args-actions-row">
                             <button class="btn" type="submit" form="argument-form">[ run ]</button>
                             <span class="label">runs: {{ runs }}</span>
-                            <span class="label" title="uploader: alias#account id">author: {{ author }}</span>
                         </div>
                         <div class="args-actions-row text-dim">
                             <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[download]</a>
