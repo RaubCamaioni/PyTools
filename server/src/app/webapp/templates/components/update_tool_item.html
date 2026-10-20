@@ -6,7 +6,7 @@
 
     {# mode column: the two switches #}
     <span class="flex items-center gap-1 px-1 py-0.5">
-        <label class="switch">
+        <label class="switch" title="public: listed on the home page and runnable by anyone. Off: only you can see and run it.">
             <input
                 type="checkbox"
                 {{ public }}
@@ -16,7 +16,7 @@
                 end"/>
             <span class="label-text">[public]</span>
         </label>
-        <label class="switch">
+        <label class="switch" title="anonymous: your alias is not shown as the author of this tool.">
             <input
                 type="checkbox"
                 {{ anonymous }}
