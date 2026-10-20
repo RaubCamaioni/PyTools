@@ -11,13 +11,13 @@
         {% set cwd = '~/tools' %}
         {% include 'components/header.html'%}
 
-        <div class="w-11/12 max-w-7xl mx-auto flex flex-col">
+        <div class="w-11/12 mx-auto flex flex-col">
 
             <div class="prompt font-bold mb-2">vim {{ tool }}.py</div>
-            <div class="panel flex flex-col md:flex-row">
+            <div class="panel tool-layout">
 
-                <div class="md:w-3/4 flex flex-col border-b md:border-b-0 md:border-r border-line">
-                    <div id="code-scroll" class="max-h-[700px] overflow-auto">
+                <div class="code-column">
+                    <div id="code-scroll">
                         <pre class="line-numbers"><div id="exec-cursor" class="exec-cursor hidden" aria-hidden="true"></div><code class="language-python">{{ code }}</code></pre>
                     </div>
                     {# vim status line, inverse video; the mode shows -- RUNNING -- while a run is in flight #}
@@ -31,7 +31,7 @@
                     </div>
                 </div>
 
-                <div class="md:w-1/4 flex flex-col p-3 gap-3">
+                <div class="args-column flex flex-col p-3 gap-3">
                     <form
                         id="argument-form"
                         enctype="multipart/form-data"
@@ -44,16 +44,17 @@
                         {{ form_groups | safe }}
                     </form>
 
-                    <div class="flex-grow"></div>
-
-                    {# actions, kept away from the arguments #}
-                    <div class="flex flex-col gap-1 mt-4">
-                        <button class="btn self-start" type="submit" form="argument-form">[ run ]</button>
-                        <div class="flex flex-wrap gap-x-1 text-dim">
+                    {# actions directly under the arguments: run on the left, the run count on the right,
+                       the secondary links on their own line #}
+                    <div class="args-actions">
+                        <div class="args-actions-row">
+                            <button class="btn" type="submit" form="argument-form">[ run ]</button>
+                            <span class="label">runs: {{ runs }}</span>
+                        </div>
+                        <div class="args-actions-row text-dim">
                             <a href="{{ root_path }}/download/tool/{{ tool_id }}" class="no-underline px-1 hover:bg-paper hover:text-ink">[download]</a>
                             <button id="share-link-button" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[share link]</button>
                         </div>
-                        <div class="label">runs: {{ runs }}</div>
                     </div>
                 </div>
             </div>
@@ -68,7 +69,6 @@
             </div>
 
         </div>
-        <div style="height: 200px;"></div>
         <script>
             // execution trace: the sandbox streams the line it is executing; the vim cursor line follows it
             // and the loading bar grows to max(line)/total, never shrinking. Without events (older sandbox,
@@ -81,8 +81,12 @@
                 const pre = cursor.parentElement;
                 const total = {{ lines }};
                 const FALLBACK_AFTER_MS = 1000, DONE_VISIBLE_MS = 400;
-                let token = null, stream = null, stepper = null, fallbackTimer = null, frame = null;
-                let maxLine = 0, nextLine = 0, live = false;
+                // every reported line is shown for at least MIN_LINE_MS so the run can be followed;
+                // a backlog plays faster, and whatever is left when the result arrives drains in DRAIN_MS
+                const MIN_LINE_MS = 60, FASTEST_LINE_MS = 15, DRAIN_MS = 2000;
+                let token = null, stream = null, stepper = null, fallbackTimer = null;
+                let maxLine = 0, live = false, done = false;
+                let queue = [], playing = false, lastQueued = 0;
 
                 function randomToken() {
                     const bytes = new Uint8Array(24);
@@ -90,18 +94,10 @@
                     return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
                 }
                 function place(n) {
-                    // the line-number rows know each line's rendered height, including soft-wrapped lines
-                    const rows = pre.querySelector(".line-numbers-rows");
-                    const row = rows && rows.children[n - 1];
-                    if (row) {
-                        const preBox = pre.getBoundingClientRect(), rowBox = row.getBoundingClientRect();
-                        cursor.style.top = (rowBox.top - preBox.top) + "px";
-                        cursor.style.height = rowBox.height + "px";
-                    } else {
-                        const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
-                        cursor.style.top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight + "px";
-                        cursor.style.height = lineHeight + "px";
-                    }
+                    const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
+                    const top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight;
+                    cursor.style.top = top + "px";
+                    cursor.style.height = lineHeight + "px";
                     cursor.scrollIntoView({ block: "nearest" });
                 }
                 function progress(percent) {
@@ -118,15 +114,34 @@
                     clearInterval(stepper);
                     stepper = null;
                 }
+                function finish() {
+                    cursor.classList.add("hidden");
+                    mode.textContent = "";
+                    progress(100);
+                    bar.classList.add("done");  // stays visible at 100% briefly after htmx hides it
+                    setTimeout(function () { bar.classList.remove("done", "determinate"); }, DONE_VISIBLE_MS);
+                }
+                function play() {
+                    if (queue.length === 0) {
+                        playing = false;
+                        if (done) finish();
+                        return;
+                    }
+                    playing = true;
+                    const n = queue.shift();
+                    place(n);
+                    if (n > maxLine) { maxLine = n; progress(100 * maxLine / total); }
+                    const interval = done
+                        ? Math.min(MIN_LINE_MS, DRAIN_MS / (queue.length + 1))
+                        : Math.max(FASTEST_LINE_MS, MIN_LINE_MS - queue.length * 2);
+                    setTimeout(play, interval);
+                }
                 function onLine(event) {
                     const n = parseInt(event.data, 10);
                     if (!(n >= 1 && n <= total)) return;
                     if (!live) { live = true; clearTimeout(fallbackTimer); clearInterval(stepper); stepper = null; }
-                    if (n > maxLine) { maxLine = n; progress(100 * maxLine / total); }
-                    nextLine = n;
-                    if (frame === null) {
-                        frame = requestAnimationFrame(function () { frame = null; place(nextLine); });
-                    }
+                    if (n !== lastQueued) { queue.push(n); lastQueued = n; }
+                    if (!playing) play();
                 }
 
                 form.addEventListener("htmx:configRequest", function (event) {
@@ -134,7 +149,8 @@
                     event.detail.headers["X-Trace-Token"] = token;  // a header: never collides with a tool argument
                 });
                 form.addEventListener("htmx:beforeRequest", function () {
-                    maxLine = 0; live = false;
+                    maxLine = 0; live = false; done = false;
+                    queue = []; playing = false; lastQueued = 0;
                     bar.classList.remove("determinate", "done");
                     bar.style.setProperty("--progress", "0%");
                     cursor.classList.remove("hidden");
@@ -146,14 +162,20 @@
                     fallbackTimer = setTimeout(function () { if (!live) startStepping(); }, FALLBACK_AFTER_MS);
                 });
                 form.addEventListener("htmx:afterRequest", function () {
+                    done = true;
                     stopStream();
-                    cursor.classList.add("hidden");
-                    mode.textContent = "";
-                    progress(100);
-                    bar.classList.add("done");  // stays visible at 100% briefly after htmx hides it
-                    setTimeout(function () { bar.classList.remove("done", "determinate"); }, DONE_VISIBLE_MS);
+                    if (!playing) finish();  // otherwise the queue drains and finishes the run view
                 });
             })();
+
+            // numeric arguments are plain text fields: keep only digits, sign and point as the user types
+            document.addEventListener("input", function (event) {
+                const field = event.target;
+                if (field.matches && field.matches("input[data-numeric]")) {
+                    const clean = field.value.replace(/[^0-9.\-]/g, "");
+                    if (clean !== field.value) field.value = clean;
+                }
+            });
 
             function copy_form_to_clipboard() {
                 event.preventDefault();

@@ -1,7 +1,8 @@
-<div class="form-group flex items-center gap-2 py-0.5">
+<div class="form-group tree-row">
 	<span class="whitespace-pre text-dim select-none">{{ glyph }}</span>
 	<label class="text-dim whitespace-nowrap" for="{{ name }}">{{ name }}: <span class="text-paper">{{ py_type }}</span></label>
-	<span class="field ml-auto max-w-[60%]"><select
+	{# a pick from a list: no underscore caret, a dim arrow instead #}
+	<span class="pick ml-auto max-w-[60%]"><select
 		id="{{ name }}"
 		name="{{ name }}">
 		{% for option in options %}

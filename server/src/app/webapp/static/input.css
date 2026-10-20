@@ -16,7 +16,8 @@
     background: var(--color-ink);
   }
   body {
-    @apply bg-ink text-paper font-mono text-sm antialiased;
+    /* every page ends in black space, so the end of a listing is always visible */
+    @apply bg-ink text-paper font-mono text-sm antialiased pb-48;
   }
   a {
     @apply underline underline-offset-2 decoration-line;
@@ -118,15 +119,24 @@
   }
   /* console field: no box; the caret is a blinking underscore drawn after the text */
   .field {
-    @apply inline-flex items-baseline min-w-0;
+    /* a dim rule under a minimum width shows there is a field even when it is empty;
+       the trailing 1ch keeps the caret underscore inside the rule at the end of the text */
+    @apply relative inline-flex items-baseline min-w-[10ch] pr-[1ch] border-b border-line cursor-text;
+  }
+  .field:focus-within {
+    @apply border-dim;
   }
   .field::after {
     content: "_";
+    position: absolute;
+    bottom: 0;
+    left: var(--caret, 0px); /* set by the caret script from the text before the caret */
     color: var(--color-dim);
+    animation: blink 1s steps(1) infinite;
+    pointer-events: none;
   }
   .field:focus-within::after {
     color: var(--color-paper);
-    animation: blink 1s steps(1) infinite;
   }
   .field input,
   .field select {
@@ -134,6 +144,13 @@
     caret-color: transparent;
     field-sizing: content;
     appearance: none;
+  }
+  /* no clear (x) button on search fields: backspace is the console way */
+  .field input[type="search"]::-webkit-search-cancel-button,
+  .field input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
   }
   .field input:focus,
   .field select:focus,
@@ -146,12 +163,71 @@
       opacity: 0;
     }
   }
+  /* argument tree rows: line-height 1 and no vertical padding so the tee glyphs touch */
+  .tree-row {
+    @apply flex items-center gap-2 py-0 leading-none;
+  }
+  .tree-row .field,
+  .tree-row .pick {
+    @apply leading-normal;
+  }
+  /* argument values sit flush right, so no gap opens between the value and the panel edge */
+  .tree-row .field {
+    @apply justify-end;
+  }
+  .tree-row .field input {
+    text-align: right;
+  }
+  .tree-row .pick select {
+    text-align: right;
+    text-align-last: right;
+  }
+  /* list pick: boxless select with a dim arrow; its popup is black with white text */
+  .pick {
+    @apply inline-flex items-baseline min-w-0 px-2 cursor-pointer;
+  }
+  .pick::after {
+    content: "\25BE";
+    color: var(--color-dim);
+    padding-left: 0.25rem;
+  }
+  .pick:hover,
+  .pick:hover select {
+    @apply bg-paper text-ink;
+  }
+  .pick:hover::after {
+    color: var(--color-ink);
+  }
+  .pick select {
+    @apply border-0 bg-ink text-paper p-0 min-w-[1ch] cursor-pointer;
+    appearance: none;
+    color-scheme: dark;
+    field-sizing: content;
+  }
+  .pick select:focus,
+  .pick select:focus-visible {
+    @apply outline-none;
+  }
+  .pick option {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  /* `column -t` table: each column as wide as its widest cell, rows are display: contents */
+  .tool-table {
+    display: grid;
+    grid-template-columns: repeat(4, max-content);
+    column-gap: 2ch;
+  }
+  .tool-table > li:hover > * {
+    background: var(--color-faint);
+  }
   /* vim CursorLine while a run is in flight (positioned by the tool page script) */
   .exec-cursor {
     position: absolute;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(0, 255, 100, 0.22); /* the one colour on the page: the line being executed */
+    box-shadow: inset 3px 0 0 rgb(0, 255, 100);
     pointer-events: none;
   }
   /* indeterminate loading bar; htmx adds .htmx-request to the hx-indicator element while a request runs */

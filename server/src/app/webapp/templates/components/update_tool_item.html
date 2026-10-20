@@ -1,8 +1,12 @@
-<li class="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 py-0.5 hover:bg-faint">
+{# one row of the `ls -l tools/ | column -t` table: the list is a grid, so each cell lines up with its column #}
+<li class="contents">
+
+    {# name #}
+    <span class="px-1 py-0.5 min-w-0"><a href="{{ root_path }}/tool/{{ id }}" class="no-underline hover:bg-paper hover:text-ink">{{ name }}.py</a></span>
 
     {# mode column: the two switches #}
-    <span class="w-[22ch] flex items-center gap-1 shrink-0">
-        <label class="switch">
+    <span class="flex items-center gap-1 px-1 py-0.5">
+        <label class="switch" title="public: listed on the home page and runnable by anyone. Off: only you can see and run it.">
             <input
                 type="checkbox"
                 {{ public }}
@@ -12,7 +16,7 @@
                 end"/>
             <span class="label-text">[public]</span>
         </label>
-        <label class="switch">
+        <label class="switch" title="anonymous: your alias is not shown as the author of this tool.">
             <input
                 type="checkbox"
                 {{ anonymous }}
@@ -25,13 +29,10 @@
     </span>
 
     {# size column: run count #}
-    <span class="w-[6ch] text-right text-dim shrink-0" title="runs">{{ runs }}</span>
-
-    {# name #}
-    <a href="{{ root_path }}/tool/{{ id }}" class="flex-1 min-w-[12ch] truncate no-underline px-1 hover:bg-paper hover:text-ink">{{ name }}.py</a>
+    <span class="text-right text-dim px-1 py-0.5" title="runs">{{ runs }}</span>
 
     {# actions #}
-    <span class="w-[20ch] flex items-center justify-end gap-1 text-dim shrink-0">
+    <span class="flex items-center gap-1 text-dim px-1 py-0.5">
         <input
             id="tool-update-{{ id }}"
             type="file"
