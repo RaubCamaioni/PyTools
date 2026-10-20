@@ -135,6 +135,13 @@
     field-sizing: content;
     appearance: none;
   }
+  /* no clear (x) button on search fields: backspace is the console way */
+  .field input[type="search"]::-webkit-search-cancel-button,
+  .field input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
   .field input:focus,
   .field select:focus,
   .field input:focus-visible,
