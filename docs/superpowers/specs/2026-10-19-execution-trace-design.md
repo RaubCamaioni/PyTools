@@ -42,7 +42,10 @@ its own 30-second budget.
 
 ## Sandbox side
 
-`sandbox/src/sandbox/runner.py` gains `--trace <path>`. When given, the runner installs
+`sandbox/src/sandbox/runner.py` gains `--trace <path>`, defaulting to the `PYWEBTOOLS_TRACE`
+environment variable, which is how the app passes it (`podman run -e PYWEBTOOLS_TRACE=<fifo>`):
+an older sandbox image ignores the variable, so the two images never have to be deployed in
+lock-step. When given, the runner installs
 a `sys.monitoring` LINE callback (Python 3.12, cheaper than `sys.settrace`) restricted
 to code objects whose filename is the tool file, so library code (numpy, cadquery…) is
 not traced. The callback writes the 4-byte record with `os.write` on the non-blocking
@@ -60,8 +63,9 @@ today.
   (against `tool` line count) and calls `on_line` at most 60 times per second with the
   latest line. The reader stops when the container exits; it is wrapped so it can never
   raise into the run.
-- **Run token:** the tool page's form carries a hidden field `trace` with a random
-  32-character token generated per page load (`crypto.getRandomValues`). The run route
+- **Run token:** the tool page sends a random 32-character token (`crypto.getRandomValues`,
+  generated per run) in the `X-Trace-Token` request header of the run POST, so it can never
+  collide with a tool argument or leak into the share link. The run route
   registers a `TraceChannel` (an `asyncio.Queue` of line numbers) under that token for
   the run's duration, passes `on_line` = `channel.put`, and closes the channel with an
   `end` marker when the run finishes. Tokens are capabilities: 192 bits of randomness,
@@ -69,7 +73,8 @@ today.
 - **SSE endpoint:** `GET /trace/{token}` streams `text/event-stream` events
   `line: <n>` and finally `end`. If the channel is not registered yet it waits up to
   10 s for the run to start, then ends. One connection per token; a second connection
-  for the same token ends the first. Connections end when the run ends.
+  for the same token ends the first. Connections end when the run ends, and any stream
+  attached to an already finished channel ends at once.
 - **Ordering:** the page opens the EventSource on `htmx:beforeRequest` (before the POST
   is sent), so the stream is normally attached before the first line executes; events
   that arrive before the browser attaches are kept in the queue (bounded at 1,000;

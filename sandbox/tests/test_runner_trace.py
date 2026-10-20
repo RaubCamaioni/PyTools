@@ -45,3 +45,20 @@ def test_runner_without_trace_is_unchanged(tmp_path):
     subprocess.run(RUNNER + ["--file", str(tool), "--workdir", str(tmp_path)], check=True, timeout=30)
     assert (tmp_path / "result.json").read_text() == '"hello"'
     assert not (tmp_path / "trace").exists()
+
+
+def test_runner_takes_the_trace_path_from_the_environment(tmp_path):
+    tool = write_tool(tmp_path)
+    fifo = tmp_path / "trace"
+    os.mkfifo(fifo)
+    rfd = os.open(fifo, os.O_RDONLY | os.O_NONBLOCK)
+    wfd = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
+    subprocess.run(
+        RUNNER + ["--file", str(tool), "--workdir", str(tmp_path)],
+        check=True,
+        timeout=30,
+        env={**os.environ, "PYWEBTOOLS_TRACE": str(fifo)},
+    )
+    os.close(wfd)
+    assert len(os.read(rfd, 4096)) >= 4  # at least one line record arrived
+    os.close(rfd)

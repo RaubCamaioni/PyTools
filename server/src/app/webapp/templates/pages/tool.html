@@ -123,7 +123,7 @@
 
                 form.addEventListener("htmx:configRequest", function (event) {
                     token = randomToken();
-                    event.detail.parameters.trace = token;
+                    event.detail.headers["X-Trace-Token"] = token;  // a header: never collides with a tool argument
                 });
                 form.addEventListener("htmx:beforeRequest", function () {
                     maxLine = 0; live = false;

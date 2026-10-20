@@ -67,7 +67,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", "-f", type=str, required=True)
     parser.add_argument("--workdir", "-w", type=str, required=True)
-    parser.add_argument("--trace", "-t", type=str, default=None)
+    # the host passes the trace FIFO in the environment; the flag exists for local use
+    parser.add_argument("--trace", "-t", type=str, default=os.environ.get("PYWEBTOOLS_TRACE"))
     args = parser.parse_args()
 
     file = Path(args.file)

@@ -43,6 +43,9 @@ def test_command_name_and_volume_with_leading_dash():
     assert cmd[cmd.index("-v") + 1].startswith("/tmp/pywebtools-runs/-_weird:")
 
 
-def test_command_adds_trace_flag_after_workdir():
+def test_command_passes_trace_path_as_environment_not_a_flag():
+    # an older sandbox image ignores the variable where an unknown --trace flag would crash the run
     cmd = PodmanRunner(CFG).command("run-x", Path("/r/x/t.py"), Path("/r/x"), trace=Path("/r/x/trace"))
-    assert cmd[-2:] == ["--trace", "/r/x/trace"] and cmd[-4:-2] == ["--workdir", "/r/x"]
+    assert "--trace" not in cmd and cmd[-2:] == ["--workdir", "/r/x"]
+    image_at = cmd.index(CFG.image)
+    assert "PYWEBTOOLS_TRACE=/r/x/trace" in cmd[:image_at] and cmd[cmd.index("PYWEBTOOLS_TRACE=/r/x/trace") - 1] == "-e"
