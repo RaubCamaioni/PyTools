@@ -281,8 +281,53 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "lines": tool.code.count("\n") + 1,
             "form_groups": render.args_to_form(tool.arguments),
             "time": time.time(),
+            "votes": _votes_block(request, session, tool.id),
         },
     )
+
+
+REPORT_REASON_MAX = 1000
+
+
+def _votes_block(request: Request, session, tool_id: int, login_needed: Optional[str] = None) -> str:
+    """Render the vote/report block for the current viewer."""
+    user = session_user(request)
+    up, down = db_tools.vote_counts(session, tool_id)
+    my_vote = db_tools.user_vote(session, user.id, tool_id) if user else None
+    reported = db_tools.has_reported(session, user.id, tool_id) if user else False
+    return render.tool_votes(request.scope.get("root_path"), tool_id, up, down, my_vote, reported, login_needed)
+
+
+@router.post("/tool/{id}/vote", response_class=HTMLResponse)
+async def vote_tool(request: Request, id: int, direction: str, session: db_tools.SessionDep):
+    if direction not in ("up", "down"):
+        raise HTTPException(status_code=400, detail="direction must be up or down")
+    tool = db_tools.get_tool_by_id(session, id)
+    if tool is None:
+        raise HTTPException(status_code=404, detail="Tool Not Found")
+    _require_view(request, tool)
+    user = session_user(request)
+    if user is None:
+        return HTMLResponse(_votes_block(request, session, id, login_needed="vote"))
+    db_tools.set_vote(session, user.id, id, direction)
+    return HTMLResponse(_votes_block(request, session, id))
+
+
+@router.post("/tool/{id}/report", response_class=HTMLResponse)
+async def report_tool(request: Request, id: int, session: db_tools.SessionDep):
+    tool = db_tools.get_tool_by_id(session, id)
+    if tool is None:
+        raise HTTPException(status_code=404, detail="Tool Not Found")
+    _require_view(request, tool)
+    user = session_user(request)
+    if user is None:
+        return HTMLResponse(_votes_block(request, session, id, login_needed="report"))
+    form = await request.form()
+    reason = str(form.get("reason", "")).strip()
+    if not reason or len(reason) > REPORT_REASON_MAX:
+        raise HTTPException(status_code=400, detail=f"A reason of 1 to {REPORT_REASON_MAX} characters is required")
+    db_tools.add_report(session, user.id, id, reason)
+    return HTMLResponse(_votes_block(request, session, id))
 
 
 @router.get("/download/tool/{id}", response_class=HTMLResponse)

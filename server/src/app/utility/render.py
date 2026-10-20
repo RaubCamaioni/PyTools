@@ -188,6 +188,14 @@ def format_runs(count: int) -> str:
     return str(count)
 
 
+def tool_votes(root_path, tool_id, up, down, my_vote=None, reported=False, login_needed=None) -> str:
+    """The [up N] [down N] [report] block of a tool page (components/tool_votes.html)."""
+    template: Template = TEMPLATES.get_template("components/tool_votes.html")
+    return template.render(
+        root_path=root_path or "", tool_id=tool_id, up=up, down=down, my_vote=my_vote, reported=reported, login_needed=login_needed
+    )
+
+
 def list_item_user(root_path: str, tools: list[Tool]):
     template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     # the rows are cells of one grid (`ls -l | column -t`): the header row aligns with them
