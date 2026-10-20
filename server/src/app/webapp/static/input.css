@@ -215,7 +215,7 @@
   /* `column -t` table: each column as wide as its widest cell, rows are display: contents */
   .tool-table {
     display: grid;
-    grid-template-columns: repeat(4, max-content);
+    grid-template-columns: repeat(var(--cols, 4), max-content);
     column-gap: 2ch;
   }
   .tool-table > li:hover > * {

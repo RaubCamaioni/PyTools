@@ -14,36 +14,46 @@
             <section>
                 <div class="prompt font-bold mb-1">ls -l /home/*/tools/ | column -t</div>
                 {# one table: an account row, then that account's tools indented under it #}
-                <ul class="tool-table">
+                <ul class="tool-table" style="--cols: 7">
                     <li class="contents text-dim">
                         <span class="px-1 py-0.5">NAME</span>
                         <span class="px-1 py-0.5">MODE</span>
                         <span class="px-1 py-0.5 text-right">RUNS</span>
+                        <span class="px-1 py-0.5 text-right">UP</span>
+                        <span class="px-1 py-0.5 text-right">DOWN</span>
+                        <span class="px-1 py-0.5 text-right">REPORTS</span>
                         <span class="px-1 py-0.5">ACTIONS</span>
                     </li>
-                    {% for account, tools in accounts %}
+                    {% for account in accounts %}
+                    {# the account row carries the totals over all of its tools #}
                     <li class="contents">
-                        <span class="px-1 py-0.5 font-bold">{{ account.alias }}/ <span class="text-dim font-normal">{{ account.id }}</span></span>
-                        <span class="px-1 py-0.5 text-dim">{{ 'admin' if account.admin else '' }}</span>
-                        <span class="px-1 py-0.5 text-right text-dim">{{ tools | length }} tools</span>
+                        <span class="px-1 py-0.5 font-bold">{{ account.user.alias }}/ <span class="text-dim font-normal">{{ account.user.id }}</span></span>
+                        <span class="px-1 py-0.5 text-dim">{{ 'admin' if account.user.admin else '' }}{{ 'banned' if account.user.banned else '' }}</span>
+                        <span class="px-1 py-0.5 text-right text-dim">{{ account.tools | length }} tools</span>
+                        <span class="px-1 py-0.5 text-right">{{ account.up }}</span>
+                        <span class="px-1 py-0.5 text-right">{{ account.down }}</span>
+                        <span class="px-1 py-0.5 text-right {{ 'font-bold' if account.reports else '' }}">{{ account.reports }}</span>
                         <span class="px-1 py-0.5">
-                            {% if not account.admin %}
+                            {% if not account.user.admin %}
                             {# banning unpublishes the account's tools and refuses its logins #}
                             <label class="switch" title="banned: this account cannot log in and its tools are unpublished.">
-                                <input type="checkbox" {% if account.banned %}checked{% endif %}
-                                    _="on change fetch `{{ root_path }}/admin/ban/{{ account.id }}?banned=${my.checked}` with method:'POST'
+                                <input type="checkbox" {% if account.user.banned %}checked{% endif %}
+                                    _="on change fetch `{{ root_path }}/admin/ban/{{ account.user.id }}?banned=${my.checked}` with method:'POST'
                                        then set the next <.label-text/>'s innerText to (my.checked ? '[banned]' : '[ban]')">
-                                <span class="label-text">{{ '[banned]' if account.banned else '[ban]' }}</span>
+                                <span class="label-text">{{ '[banned]' if account.user.banned else '[ban]' }}</span>
                             </label>
                             {% endif %}
                         </span>
                     </li>
-                    {% for tool in tools %}
+                    {% for item in account.tools %}
                     <li class="contents">
-                        <span class="px-1 py-0.5 pl-4"><a href="{{ root_path }}/tool/{{ tool.id }}" class="no-underline hover:bg-paper hover:text-ink">{{ tool.name }}.py</a></span>
-                        <span class="px-1 py-0.5 text-dim">{{ 'public' if tool.public else 'private' }}{{ ' anonymous' if tool.annonymous else '' }}</span>
-                        <span class="px-1 py-0.5 text-right text-dim">{{ tool.usage }}</span>
-                        <span class="px-1 py-0.5 text-dim">{% if tool.reports %}{{ tool.reports | length }} reports{% endif %}</span>
+                        <span class="px-1 py-0.5 pl-4"><a href="{{ root_path }}/tool/{{ item.tool.id }}" class="no-underline hover:bg-paper hover:text-ink">{{ item.tool.name }}.py</a></span>
+                        <span class="px-1 py-0.5 text-dim">{{ 'public' if item.tool.public else 'private' }}{{ ' anonymous' if item.tool.annonymous else '' }}</span>
+                        <span class="px-1 py-0.5 text-right text-dim">{{ item.tool.usage }}</span>
+                        <span class="px-1 py-0.5 text-right text-dim">{{ item.up }}</span>
+                        <span class="px-1 py-0.5 text-right text-dim">{{ item.down }}</span>
+                        <span class="px-1 py-0.5 text-right {{ 'font-bold' if item.reports else 'text-dim' }}">{{ item.reports }}</span>
+                        <span class="px-1 py-0.5"></span>
                     </li>
                     {% endfor %}
                     {% endfor %}

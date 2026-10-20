@@ -13,7 +13,8 @@ from sqlmodel import (
     Column,
 )
 import hashlib
-from sqlalchemy import inspect, text
+from dataclasses import dataclass
+from sqlalchemy import func, inspect, text
 from typing import Sequence
 import logging
 import ast
@@ -141,14 +142,43 @@ def get_tag_counts(session: Session, terms: Sequence[str] = ()) -> list[tuple[st
         return sorted(counts.items(), key=lambda item: (-item[1], item[0]))
 
 
-def get_users_with_tools(session: Session) -> list[tuple[User, list[Tool]]]:
-    """Every account with its tools (oldest account first), for the admin page."""
-    users = session.exec(select(User).order_by(User.id)).all()
-    listing = []
-    for user in users:
-        tools = session.exec(select(Tool).where(Tool.user_id == user.id).order_by(Tool.id)).all()
-        listing.append((user, list(tools)))
-    return listing
+@dataclass
+class ToolSummary:
+    tool: Tool
+    up: int
+    down: int
+    reports: int
+
+
+@dataclass
+class AccountSummary:
+    """An account with its tools and the votes/reports totalled over them (admin page)."""
+
+    user: User
+    tools: list[ToolSummary]
+    up: int
+    down: int
+    reports: int
+
+
+def _counts(session: Session, model, column) -> dict[int, int]:
+    rows = session.exec(select(column, func.count()).select_from(model).group_by(column)).all()
+    return {tool_id: n for tool_id, n in rows}
+
+
+def get_users_with_tools(session: Session) -> list[AccountSummary]:
+    """Every account (oldest first) with its tools and vote/report totals, for the admin page."""
+    ups, downs, reports = (_counts(session, M, M.tool_id) for M in (UpVote, DownVote, Report))
+    accounts = []
+    for user in session.exec(select(User).order_by(User.id)).all():
+        tools = [
+            ToolSummary(t, ups.get(t.id, 0), downs.get(t.id, 0), reports.get(t.id, 0))
+            for t in session.exec(select(Tool).where(Tool.user_id == user.id).order_by(Tool.id)).all()
+        ]
+        accounts.append(
+            AccountSummary(user, tools, sum(t.up for t in tools), sum(t.down for t in tools), sum(t.reports for t in tools))
+        )
+    return accounts
 
 
 def set_banned(session: Session, user_id: int, banned: bool) -> None:
