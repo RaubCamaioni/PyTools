@@ -34,7 +34,7 @@ def gif_converter(
         with av.open(str(out), mode="w") as container:
             codec = "libvpx-vp9" if output == "webm" else "libx264"
             stream = container.add_stream(codec, rate=fps)
-            stream.width, stream.height = w - (w % 2), h - (h % 2)
+            stream.width, stream.height = max(2, w - (w % 2)), max(2, h - (h % 2))
             time_base = Fraction(1, fps)
             stream.codec_context.time_base = time_base
             stream.pix_fmt = "yuv420p" if output == "mp4" else "yuv420p"
