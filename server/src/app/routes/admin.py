@@ -37,9 +37,19 @@ async def admin_page(request: Request, session: db.SessionDep):
 
 
 @router.post("/admin/ban/{user_id}", response_class=HTMLResponse)
-async def ban_user(request: Request, user_id: int, banned: bool, session: db.SessionDep):
+async def ban_user(request: Request, user_id: int, months: int, session: db.SessionDep):
+    """Ban for 1, 6 or 12 months: the account cannot log in and all its tools go private."""
     admin = require_admin(request)
     if user_id == admin.id:
         raise HTTPException(status_code=400, detail="You cannot ban yourself")
-    db.set_banned(session, user_id, banned)
+    if months not in db.BAN_PERIODS_MONTHS:
+        raise HTTPException(status_code=400, detail="Ban period must be 1, 6 or 12 months")
+    db.set_banned(session, user_id, months)
+    return HTMLResponse(status_code=200)
+
+
+@router.post("/admin/unban/{user_id}", response_class=HTMLResponse)
+async def unban_user(request: Request, user_id: int, session: db.SessionDep):
+    require_admin(request)
+    db.set_banned(session, user_id, None)
     return HTMLResponse(status_code=200)

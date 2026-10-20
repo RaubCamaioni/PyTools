@@ -13,6 +13,7 @@ from sqlmodel import (
     Column,
 )
 import hashlib
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from sqlalchemy import func, inspect, text
 from typing import Sequence
@@ -38,6 +39,7 @@ class User(SQLModel, table=True):
     # roles live in the database: an admin is made with an UPDATE, never named in code
     admin: bool = Field(default=False)
     banned: bool = Field(default=False)
+    banned_until: Optional[datetime] = Field(default=None)  # a ban lifts itself after this (UTC)
     tools: Optional[list["Tool"]] = Relationship(back_populates="user")
 
     def __init__(self, **data: Any):
@@ -181,16 +183,36 @@ def get_users_with_tools(session: Session) -> list[AccountSummary]:
     return accounts
 
 
-def set_banned(session: Session, user_id: int, banned: bool) -> None:
-    """Ban (or unban) an account. Banning unpublishes its tools; unbanning leaves them private."""
+BAN_PERIODS_MONTHS = (1, 6, 12)
+
+
+def set_banned(session: Session, user_id: int, months: Optional[int]) -> None:
+    """Ban an account for `months` (its tools are unpublished) or lift the ban with None
+    (the tools stay private until the user publishes them again)."""
     user = session.get(User, user_id)
     if user is None:
         return
-    user.banned = banned
-    if banned:
+    if months is None:
+        user.banned, user.banned_until = False, None
+    else:
+        user.banned = True
+        user.banned_until = datetime.now(timezone.utc) + timedelta(days=30 * months)
         for tool in session.exec(select(Tool).where(Tool.user_id == user_id)).all():
             tool.public = False
     session.commit()
+
+
+def lift_expired_ban(session: Session, user: User) -> bool:
+    """Clear a ban whose period has passed; True when it was lifted."""
+    until = user.banned_until
+    if until is not None and until.tzinfo is None:
+        until = until.replace(tzinfo=timezone.utc)  # stored values may come back naive
+    if user.banned and until is not None and until <= datetime.now(timezone.utc):
+        user.banned, user.banned_until = False, None
+        session.add(user)
+        session.commit()
+        return True
+    return False
 
 
 def get_user_tools(session: Session, user: User) -> list[Tool]:
@@ -229,6 +251,7 @@ def get_tool_by_id(session: Session, tool_id: int) -> Tool | None:
 MIGRATIONS = [
     ("user", "admin", "BOOLEAN NOT NULL DEFAULT 0"),
     ("user", "banned", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("user", "banned_until", "DATETIME"),
 ]
 
 

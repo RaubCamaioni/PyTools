@@ -28,20 +28,27 @@
                     {# the account row carries the totals over all of its tools #}
                     <li class="contents">
                         <span class="px-1 py-0.5 font-bold">{{ account.user.alias }}/ <span class="text-dim font-normal">{{ account.user.id }}</span></span>
-                        <span class="px-1 py-0.5 text-dim">{{ 'admin' if account.user.admin else '' }}{{ 'banned' if account.user.banned else '' }}</span>
+                        <span class="px-1 py-0.5 text-dim">{{ 'admin' if account.user.admin else '' }}{% if account.user.banned %}banned until {{ account.user.banned_until.strftime('%Y-%m-%d') if account.user.banned_until else 'further notice' }}{% endif %}</span>
                         <span class="px-1 py-0.5 text-right text-dim">{{ account.tools | length }} tools</span>
                         <span class="px-1 py-0.5 text-right">{{ account.up }}</span>
                         <span class="px-1 py-0.5 text-right">{{ account.down }}</span>
                         <span class="px-1 py-0.5 text-right {{ 'font-bold' if account.reports else '' }}">{{ account.reports }}</span>
                         <span class="px-1 py-0.5">
                             {% if not account.user.admin %}
-                            {# banning unpublishes the account's tools and refuses its logins #}
-                            <label class="switch" title="banned: this account cannot log in and its tools are unpublished.">
-                                <input type="checkbox" {% if account.user.banned %}checked{% endif %}
-                                    _="on change fetch `{{ root_path }}/admin/ban/{{ account.user.id }}?banned=${my.checked}` with method:'POST'
-                                       then set the next <.label-text/>'s innerText to (my.checked ? '[banned]' : '[ban]')">
-                                <span class="label-text">{{ '[banned]' if account.user.banned else '[ban]' }}</span>
-                            </label>
+                            {% if account.user.banned %}
+                            <button class="btn text-dim" title="lift the ban now; the tools stay private until the user publishes them again"
+                                _="on click fetch `{{ root_path }}/admin/unban/{{ account.user.id }}` with method:'POST' then reload() the location">[unban]</button>
+                            {% else %}
+                            {# a period pick: banning unpublishes the account's tools and refuses its logins until the date #}
+                            <span class="pick" title="ban: the account cannot log in and all its tools go private for the period">
+                                <select _="on change if my.value fetch `{{ root_path }}/admin/ban/{{ account.user.id }}?months=${my.value}` with method:'POST' then reload() the location">
+                                    <option value="">[ban]</option>
+                                    <option value="1">1 month</option>
+                                    <option value="6">6 months</option>
+                                    <option value="12">1 year</option>
+                                </select>
+                            </span>
+                            {% endif %}
                             {% endif %}
                         </span>
                     </li>
@@ -53,7 +60,11 @@
                         <span class="px-1 py-0.5 text-right text-dim">{{ item.up }}</span>
                         <span class="px-1 py-0.5 text-right text-dim">{{ item.down }}</span>
                         <span class="px-1 py-0.5 text-right {{ 'font-bold' if item.reports else 'text-dim' }}">{{ item.reports }}</span>
-                        <span class="px-1 py-0.5"></span>
+                        <span class="px-1 py-0.5 text-dim">
+                            <a hx-delete="{{ root_path }}/manage/tool/delete/{{ item.tool.id }}" hx-trigger="click"
+                               hx-confirm="Delete {{ account.user.alias }}'s {{ item.tool.name }}.py?" hx-target="closest li"
+                               class="cursor-pointer no-underline px-1 hover:bg-paper hover:text-ink">[delete]</a>
+                        </span>
                     </li>
                     {% endfor %}
                     {% endfor %}

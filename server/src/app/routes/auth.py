@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import ValidationError
 
 from app import ENVIRONMENT, TEMPLATES, logger
-from app.models.tools import SessionDep, User, get_user, hash_id
+from app.models.tools import SessionDep, User, get_user, hash_id, lift_expired_ban
 
 router = APIRouter()
 
@@ -147,8 +147,10 @@ async def auth_github(request: Request, code: str, state: str, session: SessionD
 
     user_id = OWNER_USER_ID if account["login"] == OWNER_GITHUB_LOGIN else hash_id(f"github:{account['id']}")
     user = get_user(session, user_id)
+    lift_expired_ban(session, user)
     if user.banned:
-        raise HTTPException(status_code=403, detail="This account is banned")
+        until = f" until {user.banned_until:%Y-%m-%d}" if user.banned_until else ""
+        raise HTTPException(status_code=403, detail=f"This account is banned{until}")
     if user.alias == DEFAULT_ALIAS:
         user.alias = account["login"]
         session.commit()
