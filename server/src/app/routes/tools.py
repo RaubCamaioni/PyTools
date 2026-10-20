@@ -288,10 +288,11 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
 
 
 def _author_label(session, tool) -> str:
-    """alias#id of the uploader; an anonymous tool shows only the id."""
+    """alias#id of the uploader; an anonymous tool shows neither (the id would identify the account)."""
     author = db_tools.get_user_by_id(session, tool.user_id) if tool.user_id is not None else None
-    alias = "anonymous" if tool.annonymous or author is None else author.alias
-    return f"{alias}#{tool.user_id}"
+    if tool.annonymous or author is None:
+        return "anonymous#" + "0" * len(str(tool.user_id or 0))
+    return f"{author.alias}#{tool.user_id}"
 
 
 REPORT_REASON_MAX = 1000
