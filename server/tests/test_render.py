@@ -56,4 +56,6 @@ def test_user_tool_table_starts_with_a_header_row():
     html = render.list_item_user("", [Tool(id=1, name="a", code="", public=True, annonymous=True, usage=3, tags=[])])
     assert html.index("NAME") < html.index("MODE") < html.index("RUNS") < html.index("ACTIONS") < html.index("a.py")
     assert html.index("a.py") < html.index("[public]")  # the name, the row's identifier, comes first
-    assert html.count('<li class="contents') == 2  # header + one row, both grid rows
+    assert html.index("ACTIONS") < html.index("[upload]") < html.index("a.py")  # the upload row leads the table
+    assert html.count('<li class="contents') == 3  # header + upload row + one tool row, all grid rows
+    assert html.count(">---<") == 3  # name, mode and runs do not apply to the upload row; [upload] is its action

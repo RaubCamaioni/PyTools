@@ -178,7 +178,10 @@ def tag_filters(tag_counts, selected=frozenset(), filtered=False, oob=False) -> 
 def list_item_user(root_path: str, tools: list[Tool]):
     template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     # the rows are cells of one grid (`ls -l | column -t`): the header row aligns with them
-    htmlx = [TEMPLATES.get_template("components/update_tool_header.html").render()]
+    htmlx = [
+        TEMPLATES.get_template("components/update_tool_header.html").render(),
+        TEMPLATES.get_template("components/upload_tool_item.html").render(root_path=root_path),
+    ]
 
     for tool in tools:
         htmlx.append(
