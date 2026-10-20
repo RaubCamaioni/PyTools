@@ -32,7 +32,7 @@ from app.utility.podman_runner import PodmanRunner, Outcome, SandboxBusy, Sandbo
 from app.utility.trace import TraceRegistry
 from app import TEMPLATES, ALLOWED_CHARACTERS, logger, ENVIRONMENT
 from app.models import tools as db_tools
-from app.routes.auth import User
+from app.routes.auth import User, session_user
 import json
 import re
 from pathlib import PosixPath
@@ -70,6 +70,15 @@ TRACE_HEADER = "X-Trace-Token"
 TRACE_WAIT_SECONDS = 10.0  # how long a stream waits for its run to be registered
 TRACE_POLL_SECONDS = 0.05
 TRACE_IDLE_SECONDS = 1.0  # between checks that the stream was not superseded
+
+
+def _require_view(request: Request, tool) -> None:
+    """A private tool is visible to its owner and to admins; everyone else gets a 404."""
+    if tool.public:
+        return
+    user = session_user(request)
+    if user is None or (tool.user_id != user.id and not user.admin):
+        raise HTTPException(status_code=404, detail="Tool Not Found")
 
 
 def secret_dir_name(length=32):
@@ -246,12 +255,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    if not tool.public:
-        if "user" not in request.session:
-            raise HTTPException(status_code=404, detail="Tool Not Found")
-        user: User = User.model_validate_json(request.session["user"])
-        if tool.user_id != user.id:
-            raise HTTPException(status_code=404, detail="Tool Not Found")
+    _require_view(request, tool)
 
     query = dict(request.query_params)
     arguments = tool.arguments
@@ -288,12 +292,7 @@ async def download_tool(request: Request, id: int, session: db_tools.SessionDep)
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    if not tool.public:
-        if "user" not in request.session:
-            raise HTTPException(status_code=404, detail="Tool Not Found")
-        user: User = User.model_validate_json(request.session["user"])
-        if tool.user_id != user.id:
-            raise HTTPException(status_code=404, detail="Tool Not Found")
+    _require_view(request, tool)
 
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, "w") as zip_file:
@@ -344,12 +343,7 @@ async def _run_tool(request: Request, id: int, temp_dir: Path, session, channel)
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    if not tool.public:
-        if "user" not in request.session:
-            raise HTTPException(status_code=404, detail="Tool Not Found")
-        user: User = User.model_validate_json(request.session["user"])
-        if tool.user_id != user.id:
-            raise HTTPException(status_code=404, detail="Tool Not Found")
+    _require_view(request, tool)
 
     form_data = {}
     if len(tool.arguments):

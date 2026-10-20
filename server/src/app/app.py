@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from pathlib import Path
 
 from app.models.tools import create_db_and_tables
-from app.routes import tools, auth, upload, user
+from app.routes import tools, auth, upload, user, admin
 from app import logger, ENVIRONMENT
 
 
@@ -25,6 +25,7 @@ app.include_router(upload.router)
 app.include_router(auth.router)
 app.include_router(tools.router)
 app.include_router(user.router)
+app.include_router(admin.router)
 app.add_middleware(SessionMiddleware, secret_key=ENVIRONMENT.SESSION_KEY)
 
 
