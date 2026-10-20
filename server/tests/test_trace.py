@@ -98,3 +98,10 @@ def test_registry_close_and_expire_closed():
     assert ch.closed and reg.get("tok") is ch  # still readable by a late client for a while
     reg.expire(now=ch.created + 11)
     assert reg.get("tok") is None
+
+
+def test_channel_attach_supersedes_earlier_stream():
+    ch = TraceChannel()
+    first = ch.attach()
+    second = ch.attach()
+    assert first != second and ch.ticket == second

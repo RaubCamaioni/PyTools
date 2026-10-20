@@ -16,6 +16,7 @@ class StubRunner:
         self.result, self.raise_, self.available = result, raise_, available
         self.unavailable_reason = None if available else "self-test failed"
         self.calls = []
+        self.on_line = None
 
     async def start(self):
         pass
@@ -26,8 +27,9 @@ class StubRunner:
     async def stop(self):
         pass
 
-    async def run(self, tool, run_dir):
+    async def run(self, tool, run_dir, on_line=None):
         self.calls.append((tool, run_dir))
+        self.on_line = on_line
         if self.raise_:
             raise self.raise_
         return self.result
