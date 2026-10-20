@@ -118,7 +118,11 @@
   }
   /* console field: no box; the caret is a blinking underscore drawn after the text */
   .field {
-    @apply inline-flex items-baseline min-w-0;
+    /* a dim rule under a minimum width shows there is a field even when it is empty */
+    @apply inline-flex items-baseline min-w-[10ch] border-b border-line;
+  }
+  .field:focus-within {
+    @apply border-dim;
   }
   .field::after {
     content: "_";

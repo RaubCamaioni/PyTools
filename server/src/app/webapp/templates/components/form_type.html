@@ -13,12 +13,26 @@
 		name="{{ name }}"
 		_="on change if my.files.length > 0 set #{{ name }}-label.innerText to '[' + my.files[0].name + ']' end">
 	{% else %}
+	{% if type == "number" %}
+	{# numbers are typed, not spun: a text field that only keeps digits, sign and point #}
 	<span class="field ml-auto max-w-[60%]"><input
 		required
-		type="{{ type }}"
+		type="text"
+		inputmode="decimal"
+		autocomplete="off"
+		pattern="-?[0-9]*\.?[0-9]*"
 		id="{{ name }}"
 		name="{{ name }}"
 		value="{{ default }}"
-		step=".01"></span>
+		_="on input set my value to my value.replace(/[^0-9.\-]/g, '')"></span>
+	{% else %}
+	<span class="field ml-auto max-w-[60%]"><input
+		required
+		type="{{ type }}"
+		autocomplete="off"
+		id="{{ name }}"
+		name="{{ name }}"
+		value="{{ default }}"></span>
+	{% endif %}
 	{% endif %}
 </div>

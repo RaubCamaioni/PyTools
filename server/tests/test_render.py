@@ -40,6 +40,11 @@ def test_render_scalars_unchanged():
     assert render.render(42) == "<pre>42</pre>"
 
 
+def test_number_arguments_are_typed_not_spun():
+    html = render.args_to_form({"ratio": ("float", "0.3"), "count": ("int", "2")})
+    assert 'type="number"' not in html and html.count('inputmode="decimal"') == 2
+
+
 def test_argument_inputs_are_console_fields():
     html = render.args_to_form({"count": ("int", "1"), "mode": ("Literal['a', 'b']", "a")})
     assert html.count('<span class="field') == 1 and html.count('<span class="pick') == 1  # text: underscore caret; list: arrow
