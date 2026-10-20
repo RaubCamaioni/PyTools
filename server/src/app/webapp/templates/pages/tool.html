@@ -82,8 +82,12 @@
                 const pre = cursor.parentElement;
                 const total = {{ lines }};
                 const FALLBACK_AFTER_MS = 1000, DONE_VISIBLE_MS = 400;
-                let token = null, stream = null, stepper = null, fallbackTimer = null, frame = null;
-                let maxLine = 0, nextLine = 0, live = false;
+                // every reported line is shown for at least MIN_LINE_MS so the run can be followed;
+                // a backlog plays faster, and whatever is left when the result arrives drains in DRAIN_MS
+                const MIN_LINE_MS = 60, FASTEST_LINE_MS = 15, DRAIN_MS = 2000;
+                let token = null, stream = null, stepper = null, fallbackTimer = null;
+                let maxLine = 0, live = false, done = false;
+                let queue = [], playing = false, lastQueued = 0;
 
                 function randomToken() {
                     const bytes = new Uint8Array(24);
@@ -91,18 +95,10 @@
                     return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
                 }
                 function place(n) {
-                    // the line-number rows know each line's rendered height, including soft-wrapped lines
-                    const rows = pre.querySelector(".line-numbers-rows");
-                    const row = rows && rows.children[n - 1];
-                    if (row) {
-                        const preBox = pre.getBoundingClientRect(), rowBox = row.getBoundingClientRect();
-                        cursor.style.top = (rowBox.top - preBox.top) + "px";
-                        cursor.style.height = rowBox.height + "px";
-                    } else {
-                        const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
-                        cursor.style.top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight + "px";
-                        cursor.style.height = lineHeight + "px";
-                    }
+                    const lineHeight = parseFloat(getComputedStyle(pre).lineHeight);
+                    const top = parseFloat(getComputedStyle(pre).paddingTop) + (n - 1) * lineHeight;
+                    cursor.style.top = top + "px";
+                    cursor.style.height = lineHeight + "px";
                     cursor.scrollIntoView({ block: "nearest" });
                 }
                 function progress(percent) {
@@ -119,15 +115,34 @@
                     clearInterval(stepper);
                     stepper = null;
                 }
+                function finish() {
+                    cursor.classList.add("hidden");
+                    mode.textContent = "";
+                    progress(100);
+                    bar.classList.add("done");  // stays visible at 100% briefly after htmx hides it
+                    setTimeout(function () { bar.classList.remove("done", "determinate"); }, DONE_VISIBLE_MS);
+                }
+                function play() {
+                    if (queue.length === 0) {
+                        playing = false;
+                        if (done) finish();
+                        return;
+                    }
+                    playing = true;
+                    const n = queue.shift();
+                    place(n);
+                    if (n > maxLine) { maxLine = n; progress(100 * maxLine / total); }
+                    const interval = done
+                        ? Math.min(MIN_LINE_MS, DRAIN_MS / (queue.length + 1))
+                        : Math.max(FASTEST_LINE_MS, MIN_LINE_MS - queue.length * 2);
+                    setTimeout(play, interval);
+                }
                 function onLine(event) {
                     const n = parseInt(event.data, 10);
                     if (!(n >= 1 && n <= total)) return;
                     if (!live) { live = true; clearTimeout(fallbackTimer); clearInterval(stepper); stepper = null; }
-                    if (n > maxLine) { maxLine = n; progress(100 * maxLine / total); }
-                    nextLine = n;
-                    if (frame === null) {
-                        frame = requestAnimationFrame(function () { frame = null; place(nextLine); });
-                    }
+                    if (n !== lastQueued) { queue.push(n); lastQueued = n; }
+                    if (!playing) play();
                 }
 
                 form.addEventListener("htmx:configRequest", function (event) {
@@ -135,7 +150,8 @@
                     event.detail.headers["X-Trace-Token"] = token;  // a header: never collides with a tool argument
                 });
                 form.addEventListener("htmx:beforeRequest", function () {
-                    maxLine = 0; live = false;
+                    maxLine = 0; live = false; done = false;
+                    queue = []; playing = false; lastQueued = 0;
                     bar.classList.remove("determinate", "done");
                     bar.style.setProperty("--progress", "0%");
                     cursor.classList.remove("hidden");
@@ -147,12 +163,9 @@
                     fallbackTimer = setTimeout(function () { if (!live) startStepping(); }, FALLBACK_AFTER_MS);
                 });
                 form.addEventListener("htmx:afterRequest", function () {
+                    done = true;
                     stopStream();
-                    cursor.classList.add("hidden");
-                    mode.textContent = "";
-                    progress(100);
-                    bar.classList.add("done");  // stays visible at 100% briefly after htmx hides it
-                    setTimeout(function () { bar.classList.remove("done", "determinate"); }, DONE_VISIBLE_MS);
+                    if (!playing) finish();  // otherwise the queue drains and finishes the run view
                 });
             })();
 

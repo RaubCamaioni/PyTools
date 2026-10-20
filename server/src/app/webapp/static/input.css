@@ -216,7 +216,8 @@
     position: absolute;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(0, 255, 100, 0.22); /* the one colour on the page: the line being executed */
+    box-shadow: inset 3px 0 0 rgb(0, 255, 100);
     pointer-events: none;
   }
   /* indeterminate loading bar; htmx adds .htmx-request to the hx-indicator element while a request runs */
