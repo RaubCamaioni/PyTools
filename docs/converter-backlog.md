@@ -32,6 +32,51 @@ with Google Trends (US, 12 months, "pdf to word" = 100 as the anchor):
 Paid data would sharpen this: one month of Ahrefs/Semrush "top pages" for the sites above
 gives per-tool traffic; Google Keyword Planner (free with an Ads account) gives volumes.
 
+## Built since this list was written
+
+Batches three and four turned most of the tier-1 rows below into live tools (the site now
+has 245 converters). Rows that mention one of these are done; the notes are kept for the
+reasoning behind each one.
+
+- **PDF**: pdf_crop, pdf_n_up, pdf_rasterize, pdf_repair, pdf_reorder, pdf_redact,
+  pdf_compare, comic_archive_converter (cbz ↔ pdf), pdf_page_size (resize, blank pages,
+  pad to even), pdf_form_fields (list, fill, flatten), pdf_bookmarks (export, import,
+  generate from headings, remove)
+- **Office**: markdown_to_pptx, html_to_docx, rtf_to_text, eml_to_text,
+  contacts_calendar_to_csv, csv_to_contacts_calendar, opendocument_to_text, csv_split,
+  excel_merge, excel_to_html (+xml), docx_merge, docx_find_replace, document_word_counter,
+  document_metadata (read/strip), csv_merge
+- **Image**: image_caption, image_frame, image_filters, image_pixelate_region,
+  image_collage, image_split, image_palette, image_compare, image_upscale,
+  image_bulk_resize, image_histogram, color_blindness_simulator, color_palette_generator,
+  gradient_generator, qr_code_styled, qr_code_with_logo, barcode_generator,
+  favicon_generator, blur_faces
+- **GIF, video, audio**: gif_add_text, gif_editor, gif_from_images, video_rotate_flip,
+  video_speed (incl. reverse), video_mute, video_merge, video_to_webp, video_trim,
+  audio_adjust, audio_merge, audio_trim, audio_visualizer, tone_generator, audio_tags,
+  audio_silence_trim, audio_compress, media_info
+- **Fonts, 3D**: font_converter, mesh_converter
+- **Data and developer**: csv_sql_query, csv_tools, json_diff, json_query,
+  json_schema_validator, json_to_types, json_flatten, json_merge, xml_formatter,
+  sql_formatter, web_code_formatter, python_formatter, html_minifier, svg_optimizer,
+  cron_explainer, chmod_calculator, docker_run_to_compose, hmac_generator,
+  password_hasher, totp_generator, ssh_key_generator, certificate_decoder,
+  file_encryptor, jwt_generator, password_strength, passphrase_generator,
+  encoding_converter, nato_alphabet, ascii_banner, list_operations, text_extractor,
+  text_cleanup, text_wrap, find_replace, text_transform, readability_score, hex_dump,
+  line_tools, timestamp_decoder, calendar_generator, sun_moon_calculator,
+  number_validator, phone_number_parser, user_agent_parser, web_reference_lookup,
+  random_data_generator, random_picker, math_evaluator, percent_calculator,
+  tip_split_calculator, loan_calculator, compound_interest_calculator,
+  electrical_calculator, force_torque_converter, frequency_converter,
+  data_rate_converter, random_number_generator, id_generator, cidr_tools,
+  mac_address_formatter, email_normalizer, dotenv_json_converter, markdown_toc,
+  html_table_converter, bbcode_to_html, file_type_detector
+
+Still open from tier 1: pptx rendering (needs LibreOffice), MOBI output, pdf metadata
+stripping, code_to_image, font_info, mesh_info, dxf_to_svg, svg_to_dxf, gcode_preview,
+step_to_stl, meta-tag generators. Tiers 2 and 3 are unchanged.
+
 ## Site constraint: upload → output only
 
 The site deliberately stays a simple form: upload a file / type values, get a result. Tools

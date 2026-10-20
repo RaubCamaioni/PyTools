@@ -62,6 +62,8 @@ dependencies = [
     "zxcvbn>=4.4.28",
     "astral>=3.2",
     "networkx>=3.0",
+    "ua-parser>=1.0.0",
+    "scour>=0.38.2",
 ]
 
 [project.scripts]
