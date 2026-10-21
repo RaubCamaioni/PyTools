@@ -302,9 +302,33 @@ def migrate(engine_) -> None:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {definition}"))
 
 
+def format_stored_tools(engine_) -> int:
+    """Bring every stored tool up to the upload standard (black at the page's line length,
+    one trailing newline); safe to run on every start. Returns how many tools changed.
+    A tool the formatter cannot parse is left as it is and logged.
+    """
+    changed = 0
+    with Session(engine_) as session:
+        for tool in session.exec(select(Tool)):
+            try:
+                formatted = format_source(tool.code)
+            except HTTPException as e:
+                logger.warning("tool %s (%s) not reformatted: %s", tool.id, tool.name, e.detail)
+                continue
+            if formatted != tool.code:
+                tool.code = formatted
+                session.add(tool)
+                changed += 1
+        session.commit()
+    if changed:
+        logger.info("reformatted %s stored tool(s) to the upload standard", changed)
+    return changed
+
+
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
     migrate(engine)
+    format_stored_tools(engine)
 
 
 def get_session():

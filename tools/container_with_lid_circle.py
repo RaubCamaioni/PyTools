@@ -112,18 +112,10 @@ def container(
         b = thickness / 4
 
         # TODO: fix shpere creation, revlove creates seam causing union problems
-        arc = (
-            cq.Workplane(plane)
-            .moveTo(0, -b)
-            .ellipseArc(a, b, -90, 90, startAtCurrent=True)
-            .moveTo(0, b)
-            .close()
-        )
+        arc = cq.Workplane(plane).moveTo(0, -b).ellipseArc(a, b, -90, 90, startAtCurrent=True).moveTo(0, b).close()
 
         ellip_edge = (
-            arc.revolve(360, (0, 0, 0), (0, 1, 0))
-            .rotateAboutCenter((0, 0, 1), 90)
-            .translate(-plane.yDir * ledge / 2.0)
+            arc.revolve(360, (0, 0, 0), (0, 1, 0)).rotateAboutCenter((0, 0, 1), 90).translate(-plane.yDir * ledge / 2.0)
         )
 
         if exterior_ledge:
