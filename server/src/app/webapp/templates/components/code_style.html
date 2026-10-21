@@ -46,6 +46,10 @@
     #argument-form .tree-row label[id] {
         margin-left: 0; max-width: 100%; justify-self: start; justify-content: flex-start;
     }
+    /* the pick and the [upload] label have hover padding; drop its left side so every value starts at
+       the same pixel as the text fields */
+    #argument-form .tree-row .pick,
+    #argument-form .tree-row label[id] { padding-left: 0; }
     #argument-form .tree-row .field input { text-align: left; }
     #argument-form .tree-row .pick select { text-align: left; text-align-last: left; }
 </style>
