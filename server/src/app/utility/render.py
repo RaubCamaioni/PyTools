@@ -1,6 +1,8 @@
 import pyparsing as pp
 from typing import Any, get_args
-from pprint import PrettyPrinter, pformat
+from html import escape
+import json
+import mimetypes
 from pathlib import Path, PosixPath
 from jinja2 import Template
 from app import TEMPLATES, logger
@@ -14,48 +16,16 @@ def parser_literal(input: str):
     OPEN_BRACKET = pp.Suppress(pp.Literal("["))
     CLOSE_BRACKET = pp.Suppress(pp.Literal("]"))
     string_type = pp.Word(pp.alphanums + "_", pp.alphanums + "_.")
-    num_type = pp.Combine(
-        pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Word(pp.nums))
-    )
+    num_type = pp.Combine(pp.Optional(".") + pp.Word(pp.nums) + pp.Optional("." + pp.Word(pp.nums)))
     empty_quote = string_type | num_type
     single = pp.Suppress("'")
     doube = pp.Suppress('"')
-    double_quote = pp.Group(doube + empty_quote + doube).addParseAction(
-        lambda t: "".join(t[0])
-    )
-    single_quote = pp.Group(single + empty_quote + single).addParseAction(
-        lambda t: "".join(t[0])
-    )
+    double_quote = pp.Group(doube + empty_quote + doube).addParseAction(lambda t: "".join(t[0]))
+    single_quote = pp.Group(single + empty_quote + single).addParseAction(lambda t: "".join(t[0]))
     field = double_quote | single_quote | num_type
     literal_values = pp.ZeroOrMore(field + pp.Suppress(pp.Optional(",")))
     literal_expr = LITERAL + OPEN_BRACKET + literal_values + CLOSE_BRACKET
     return literal_expr.parseString(input)
-
-
-PREVIEW_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".avif", ".ico"}
-PREVIEW_IMAGE_STYLE = "display: block; max-width: 100%; max-height: 60vh; margin: 0.5em 0;"
-
-
-# TODO: customize web display for more objects
-class MyPrettyPrinter(PrettyPrinter):
-    def format(self, object, context, maxlevels, level):
-        if isinstance(object, (Path, PosixPath)):
-            hyper_link = (Path("/download") / object.relative_to(object.anchor)).as_posix()
-            download = f'<a href="{hyper_link}" download="{object.name}" style="white-space: pre;">{object}</a>'
-
-            viewer = ""
-            if object.suffix == ".stl":
-                viewer = f'<stl-viewer url="{hyper_link}"></stl-viewer>'
-            elif object.suffix.lower() in PREVIEW_IMAGE_SUFFIXES:
-                # the browser shows the picture in place; the link above still downloads it
-                viewer = (
-                    f'<img src="{hyper_link}?preview=1" alt="{object.name}" loading="lazy" '
-                    f'style="{PREVIEW_IMAGE_STYLE}">'
-                )
-
-            return (f"{download}{viewer}", True, False)
-
-        return super().format(object, context, maxlevels, level)
 
 
 def literal_to_label(name: str, type: str, default: str, glyph: str = ""):
@@ -155,9 +125,7 @@ def list_items(
         htmlx.append(form)
 
     if end is not None:
-        template: Template = TEMPLATES.get_template(
-            "components/tool_scroll_loader.html"
-        )
+        template: Template = TEMPLATES.get_template("components/tool_scroll_loader.html")
         form = template.render(
             {
                 "start": end,
@@ -187,7 +155,13 @@ def tool_votes(root_path, tool_id, up, down, my_vote=None, reported=False, login
     """The [up N] [down N] [report] block of a tool page (components/tool_votes.html)."""
     template: Template = TEMPLATES.get_template("components/tool_votes.html")
     return template.render(
-        root_path=root_path or "", tool_id=tool_id, up=up, down=down, my_vote=my_vote, reported=reported, login_needed=login_needed
+        root_path=root_path or "",
+        tool_id=tool_id,
+        up=up,
+        down=down,
+        my_vote=my_vote,
+        reported=reported,
+        login_needed=login_needed,
     )
 
 
@@ -214,46 +188,157 @@ def list_item_user(root_path: str, tools: list[Tool]):
     return "".join(htmlx)
 
 
-pretty_printer = MyPrettyPrinter(indent=4, width=50)
-INDENT = "    "
-INLINE_WIDTH = 50
+# --- result display -------------------------------------------------------------------------
+# A tool's return value is shown the way a person wants to read and reuse it, not as a Python
+# repr: strings raw (no quotes, line breaks kept), dicts as key/value rows, lists as bullet
+# rows, files as download links with the file embedded when the browser can show it (images,
+# audio, video, PDF). Every scalar has a [copy] bracket and the whole result a [copy all].
+
+PREVIEW_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".avif", ".ico"}
+PREVIEW_AUDIO_SUFFIXES = {".mp3", ".wav", ".ogg", ".oga", ".m4a", ".flac", ".aac", ".opus"}
+PREVIEW_VIDEO_SUFFIXES = {".mp4", ".webm", ".ogv"}
+PREVIEW_DOCUMENT_SUFFIXES = {".pdf"}
+PREVIEW_SUFFIXES = PREVIEW_IMAGE_SUFFIXES | PREVIEW_AUDIO_SUFFIXES | PREVIEW_VIDEO_SUFFIXES | PREVIEW_DOCUMENT_SUFFIXES
+# media types the stdlib does not know (or knows wrongly) for the previewed suffixes
+PREVIEW_MEDIA_TYPES = {
+    ".webp": "image/webp",
+    ".avif": "image/avif",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".m4a": "audio/mp4",
+    ".flac": "audio/flac",
+    ".opus": "audio/ogg",
+    ".oga": "audio/ogg",
+    ".ogv": "video/ogg",
+    ".webm": "video/webm",
+}
 
 
-def pretty(value: Any, depth: int = 0) -> str:
-    """Block-style repr: dicts always one entry per line with the closing bracket on its own line,
-    lists/tuples/sets the same when they do not fit on one line; scalars via the pretty printer."""
-    pad = INDENT * depth
-    inner = INDENT * (depth + 1)
+def preview_media_type(name: str) -> str:
+    suffix = Path(name).suffix.lower()
+    return PREVIEW_MEDIA_TYPES.get(suffix) or mimetypes.guess_type(name)[0] or "application/octet-stream"
+
+
+def _copy_button(text: str, label: str = "[copy]") -> str:
+    return f'<button type="button" class="copy" data-copy="{escape(text, quote=True)}">{label}</button>'
+
+
+def _download_link(path: Path) -> str:
+    href = (Path("/download") / path.relative_to(path.anchor)).as_posix()
+    link = f'<a href="{href}" download="{escape(path.name, quote=True)}">{escape(path.name)}</a>'
+    suffix = path.suffix.lower()
+    if suffix == ".stl":
+        embed = f'<stl-viewer url="{href}"></stl-viewer>'
+    elif suffix in PREVIEW_IMAGE_SUFFIXES:
+        embed = f'<img class="preview" src="{href}?preview=1" alt="{escape(path.name, quote=True)}" loading="lazy">'
+    elif suffix in PREVIEW_AUDIO_SUFFIXES:
+        embed = f'<audio class="preview" controls preload="metadata" src="{href}?preview=1"></audio>'
+    elif suffix in PREVIEW_VIDEO_SUFFIXES:
+        embed = f'<video class="preview" controls preload="metadata" src="{href}?preview=1"></video>'
+    elif suffix in PREVIEW_DOCUMENT_SUFFIXES:
+        embed = f'<object class="preview document" data="{href}?preview=1" type="application/pdf"></object>'
+    else:
+        embed = ""
+    return f'<span class="file">{link}</span>{embed}'
+
+
+def _scalar(value: Any) -> tuple[str, str]:
+    """(html, raw text to copy) for a leaf value."""
+    if isinstance(value, bool) or value is None:
+        text = {True: "True", False: "False", None: "None"}[value]
+        return f'<span class="val lit">{text}</span>', text
+    if isinstance(value, (int, float)):
+        text = repr(value)
+        return f'<span class="val num">{escape(text)}</span>', text
+    if isinstance(value, (Path, PosixPath)):
+        return f'<span class="val">{_download_link(value)}</span>', str(value)
+    text = str(value)
+    return f'<span class="val str">{escape(text)}</span>', text
+
+
+CONTAINERS = (dict, list, tuple, set, frozenset)
+SEQUENCES = (list, tuple, set, frozenset)
+
+
+def _node(value: Any) -> str:
+    """HTML for any value: a dict as key/value rows, a list as bullet rows, a leaf with its
+    [copy] bracket. A list is copied whole (one item per line), never item by item.
+    """
     if isinstance(value, dict):
         if not value:
-            return "{}"
-        entries = [f"{inner}{pretty_printer.pformat(k)}: {pretty(v, depth + 1)}" for k, v in value.items()]
-        return "{\n" + ",\n".join(entries) + f"\n{pad}}}"
-    if isinstance(value, (list, tuple, set, frozenset)):
-        flat = pretty_printer.pformat(value)
-        if "\n" not in flat and len(flat) <= INLINE_WIDTH:
-            return flat
-        open_, close = {list: "[]", tuple: "()"}.get(type(value), "{}")
-        entries = [f"{inner}{pretty(v, depth + 1)}" for v in value]
-        return f"{open_}\n" + ",\n".join(entries) + f"\n{pad}{close}"
-    return pretty_printer.pformat(value)
+            return '<span class="val lit">{}</span>'
+        rows = []
+        for key, item in value.items():
+            label = f'<span class="key">{escape(str(key))}:</span>'
+            if isinstance(item, CONTAINERS) and item:
+                copy = _copy_button(_plain_text(item)) if isinstance(item, SEQUENCES) else ""
+                rows.append(f'<div class="kv">{label}<span class="cell">{copy}</span></div>')
+                rows.append(f'<div class="nest">{_node(item)}</div>')
+            else:
+                html, raw = _scalar(item) if not isinstance(item, CONTAINERS) else (_node(item), "")
+                copy = _copy_button(raw) if raw else ""
+                # the bracket follows its value inside one cell, so it is never far from what it copies
+                rows.append(f'<div class="kv">{label}<span class="cell">{html}{copy}</span></div>')
+        return f'<div class="kv-table">{"".join(rows)}</div>'
+    if isinstance(value, SEQUENCES):
+        if not value:
+            return '<span class="val lit">[]</span>'
+        rows = []
+        for item in value:
+            if isinstance(item, CONTAINERS) and item:
+                rows.append(
+                    f'<div class="item"><span class="bullet">-</span><div class="nest">{_node(item)}</div></div>'
+                )
+            else:
+                html = _scalar(item)[0] if not isinstance(item, CONTAINERS) else _node(item)
+                rows.append(f'<div class="item"><span class="bullet">-</span>{html}</div>')
+        return f'<div class="items">{"".join(rows)}</div>'
+    html, raw = _scalar(value)
+    return f'<div class="item">{html}{_copy_button(raw)}</div>'
 
 
-def render(results: Any):
-    return_string = pretty(results)
+def _plain_text(value: Any) -> str:
+    """What a whole-value [copy] puts on the clipboard: a string as it is, a list of plain
+    values one per line, anything else as JSON.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, SEQUENCES) and not any(isinstance(item, CONTAINERS) for item in value):
+        return "\n".join(_scalar(item)[1] for item in value)
 
-    sanatized = (
-        sanitize_html(
-            return_string,
-            tags={"a", "stl-viewer", "img"},
-            attributes={
-                "a": {"href", "download", "style"},
-                "stl-viewer": {"url"},
-                "img": {"src", "alt", "loading", "style"},
-            },
-        )
-        .replace("\\n", "<br>")
-        .replace("\n", "<br>")
+    def default(obj):
+        if isinstance(obj, (Path, PosixPath)):
+            return str(obj)
+        if isinstance(obj, (set, frozenset)):
+            return sorted(obj, key=str)
+        return str(obj)
+
+    return json.dumps(value, indent=2, ensure_ascii=False, default=default)
+
+
+ALLOWED_TAGS = {"div", "span", "pre", "a", "img", "audio", "video", "object", "button", "stl-viewer", "br"}
+ALLOWED_ATTRIBUTES = {
+    "*": {"class", "title"},
+    "a": {"href", "download"},
+    "img": {"src", "alt", "loading"},
+    "audio": {"src", "controls", "preload"},
+    "video": {"src", "controls", "preload"},
+    "object": {"data", "type"},
+    "button": {"type", "data-copy"},
+    "stl-viewer": {"url"},
+}
+
+
+def render(results: Any) -> str:
+    body = _node(results)
+    # [copy all] only for a container with content: a single value already has its own [copy]
+    tools = ""
+    if isinstance(results, (dict, list, tuple, set, frozenset)) and results:
+        tools = f'<div class="result-tools">{_copy_button(_plain_text(results), "[copy all]")}</div>'
+    html = f'<div class="result">{tools}{body}</div>'
+    return sanitize_html(
+        html,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        url_schemes={"http", "https"},
     )
-
-    return f"<pre>{sanatized}</pre>"

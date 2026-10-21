@@ -17,41 +17,70 @@ def test_list_items_without_more_pages_has_no_loader():
     assert "hx-post" not in html
 
 
-def test_render_dict_is_block_formatted_with_closing_brace_on_its_own_line():
+def test_render_dict_is_key_value_rows_with_copy_brackets():
     html = render.render({"scientific": "6.022e23", "exponent": 23, "nested": {"a": [1, 2]}})
-    text = html.replace("<br>", "\n")
-    assert text == (
-        "<pre>{\n"
-        "    'scientific': '6.022e23',\n"
-        "    'exponent': 23,\n"
-        "    'nested': {\n"
-        "        'a': [1, 2]\n"
-        "    }\n"
-        "}</pre>"
-    )
+    # the value and its bracket share one cell right after the key
+    assert (
+        '<span class="key">scientific:</span><span class="cell"><span class="val str">6.022e23</span>'
+        '<button type="button" class="copy" data-copy="6.022e23">[copy]</button></span>'
+    ) in html
+    assert '<span class="val num">23</span>' in html and "'" not in html  # no python quotes anywhere
+    # a nested container gets its own indented block under its key
+    assert '<span class="key">nested:</span>' in html and '<div class="nest"><div class="kv-table">' in html
+    assert '<span class="key">a:</span>' in html and '<span class="bullet">-</span><span class="val num">1</span>' in html
 
 
-def test_render_long_list_is_one_item_per_line():
-    html = render.render([f"item-{i:02d}-xxxxxxxxxx" for i in range(5)])
-    text = html.replace("<br>", "\n")
-    assert text.startswith("<pre>[\n    'item-00-xxxxxxxxxx',\n") and text.endswith("    'item-04-xxxxxxxxxx'\n]</pre>")
+def test_render_copy_all_is_raw_text_for_a_string_and_json_otherwise():
+    html = render.render("two\nlines")
+    assert 'data-copy="two\nlines">[copy]' in html and "[copy all]" not in html  # one value, one bracket
+    html = render.render({"a": [1, "b"], "p": Path("/r/x.txt")})
+    assert 'data-copy="{\n  &quot;a&quot;: [\n    1,\n    &quot;b&quot;\n  ],\n  &quot;p&quot;: &quot;' in html
 
 
-def test_render_scalars_unchanged():
-    assert render.render("0x68 0x69") == "<pre>'0x68 0x69'</pre>"
-    assert render.render(42) == "<pre>42</pre>"
+def test_render_list_is_bullet_rows_copied_whole():
+    html = render.render([f"item-{i:02d}" for i in range(3)])
+    assert html.count('<span class="bullet">-</span>') == 3 and "[copy]" not in html
+    assert 'data-copy="item-00\nitem-01\nitem-02">[copy all]' in html  # one item per line, no quotes
+    # a list under a key: the bracket sits by the key and copies that list
+    html = render.render({"words": ["a", "b"], "n": 1})
+    assert '<span class="key">words:</span><span class="cell"><button type="button" class="copy" data-copy="a\nb">' in html
+    assert html.count("[copy]") == 2  # the list and the number; not the items
+
+
+def test_render_strings_are_raw_and_escaped():
+    html = render.render("0x68 0x69")
+    assert '<span class="val str">0x68 0x69</span>' in html and "'0x68" not in html
+    html = render.render("<b>not html</b> & co")
+    assert "&lt;b&gt;not html&lt;/b&gt; &amp; co" in html and "<b>" not in html
+    assert '<span class="val num">42</span>' in render.render(42)
+    assert '<span class="val lit">True</span>' in render.render(True)
+    assert '<span class="val lit">{}</span>' in render.render({}) and "[copy all]" not in render.render({})
 
 
 def test_render_image_result_is_previewed_inline():
     html = render.render({"file": Path("/runs/abc/out.PNG")})
     assert '<a href="/download/runs/abc/out.PNG" download="out.PNG"' in html
-    assert '<img src="/download/runs/abc/out.PNG?preview=1" alt="out.PNG"' in html
-    assert "max-height" in html  # the inline style survives sanitising
+    assert '<img class="preview" src="/download/runs/abc/out.PNG?preview=1" alt="out.PNG"' in html
+
+
+def test_render_media_results_are_embedded():
+    html = render.render([Path("/r/a.mp3"), Path("/r/b.webm"), Path("/r/c.pdf"), Path("/r/d.stl")])
+    assert '<audio class="preview" controls="" preload="metadata" src="/download/r/a.mp3?preview=1">' in html
+    assert '<video class="preview" controls="" preload="metadata" src="/download/r/b.webm?preview=1">' in html
+    assert '<object class="preview document" data="/download/r/c.pdf?preview=1" type="application/pdf">' in html
+    assert '<stl-viewer url="/download/r/d.stl">' in html
 
 
 def test_render_other_files_are_links_only():
     html = render.render(Path("/runs/abc/out.csv"))
-    assert "<a href=" in html and "<img" not in html
+    assert "<a href=" in html and "<img" not in html and "<object" not in html
+
+
+def test_preview_media_types():
+    assert render.preview_media_type("a.webp") == "image/webp"
+    assert render.preview_media_type("a.m4a") == "audio/mp4"
+    assert render.preview_media_type("a.pdf") == "application/pdf"
+    assert render.preview_media_type("a.png") == "image/png"
 
 
 def test_number_arguments_are_typed_not_spun():

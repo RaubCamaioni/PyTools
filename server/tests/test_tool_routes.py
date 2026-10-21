@@ -201,10 +201,13 @@ def test_image_preview_is_served_inline_with_its_media_type(monkeypatch, public_
     run.mkdir()
     (run / "qr_code.png").write_bytes(b"png")
     (run / "data.csv").write_bytes(b"a,b")
+    (run / "song.mp3").write_bytes(b"mp3")
+    (run / "doc.pdf").write_bytes(b"pdf")
     c = client(monkeypatch, StubRunner())
-    r = c.get(download_url(run / "qr_code.png") + "?preview=1")
-    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
-    assert r.headers["content-disposition"].startswith("inline")
+    for name, media_type in (("qr_code.png", "image/png"), ("song.mp3", "audio/mpeg"), ("doc.pdf", "application/pdf")):
+        r = c.get(download_url(run / name) + "?preview=1")
+        assert r.status_code == 200 and r.headers["content-type"] == media_type, name
+        assert r.headers["content-disposition"].startswith("inline")
     # preview only changes how images are served; anything else stays a download
     r = c.get(download_url(run / "data.csv") + "?preview=1")
     assert r.headers["content-type"] == "application/octet-stream"

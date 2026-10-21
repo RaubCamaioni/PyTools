@@ -21,7 +21,6 @@ from zipfile import ZipFile
 from pathlib import Path
 from io import BytesIO
 import asyncio
-import mimetypes
 import secrets
 import shutil
 import time
@@ -476,11 +475,11 @@ async def download_file(file_str: str, preview: bool = False):
         # run directories are removed ten minutes after the run (and on a restart of the app)
         raise HTTPException(status_code=404, detail="This result has expired: files are kept for 10 minutes after a run.")
 
-    # a preview is an image the result page shows inline, so it needs its real media type
-    if preview and file_path.suffix.lower() in render.PREVIEW_IMAGE_SUFFIXES:
+    # a preview is a file the result page embeds (image, audio, video, pdf): real media type, inline
+    if preview and file_path.suffix.lower() in render.PREVIEW_SUFFIXES:
         return FileResponse(
             file_path,
-            media_type=mimetypes.guess_type(file_path.name)[0] or "application/octet-stream",
+            media_type=render.preview_media_type(file_path.name),
             filename=file_path.name,
             content_disposition_type="inline",
         )

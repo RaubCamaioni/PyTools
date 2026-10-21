@@ -191,6 +191,20 @@
             }
             document.getElementById("share-link-button").addEventListener("click", copy_form_to_clipboard);
 
+            // [copy] brackets in the result put their value on the clipboard and say so for a moment
+            document.getElementById("result").addEventListener("click", async function (event) {
+                const button = event.target.closest("button.copy[data-copy]");
+                if (!button) return;
+                const label = button.textContent;
+                try {
+                    await navigator.clipboard.writeText(button.dataset.copy);
+                    button.textContent = "[copied]";
+                } catch (error) {
+                    button.textContent = "[copy failed]";
+                }
+                setTimeout(() => { button.textContent = label; }, 1200);
+            });
+
             // result file links download in place: a failure (the file expired, the app restarted) is shown next
             // to the link instead of navigating the page to an error response
             document.getElementById("return").addEventListener("click", async function (event) {
