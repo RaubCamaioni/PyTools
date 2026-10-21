@@ -17,7 +17,9 @@
 
                 <div class="code-column">
                     <div id="code-scroll">
-                        <pre class="line-numbers"><div id="exec-cursor" class="exec-cursor hidden" aria-hidden="true"></div><code class="language-python">{{ code }}</code></pre>
+                        {# a file that ends in a newline shows its empty last line, as editors do;
+                           Prism's line numbers would otherwise hide it (the view's text ends in two newlines) #}
+                        <pre class="line-numbers"><div id="exec-cursor" class="exec-cursor hidden" aria-hidden="true"></div><code class="language-python">{{ code }}{{ "\n" if code.endswith("\n") }}</code></pre>
                     </div>
                     {# vim status line, inverse video; the mode shows -- RUNNING -- while a run is in flight #}
                     <div class="flex items-center gap-4 px-2 bg-paper text-ink whitespace-nowrap overflow-hidden">

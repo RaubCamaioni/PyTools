@@ -22,7 +22,9 @@
             const field = input.closest(".field");
             if (!field) return;
             ctx.font = getComputedStyle(input).font;
-            const pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+            // an unfocused field reports selection 0: its caret rests at the end of the text, like a prompt
+            const focused = document.activeElement === input && input.selectionStart != null;
+            const pos = focused ? input.selectionStart : input.value.length;
             const offset = input.getBoundingClientRect().left - field.getBoundingClientRect().left;
             const x = offset + ctx.measureText(input.value.slice(0, pos)).width - input.scrollLeft;
             field.style.setProperty("--caret", Math.max(0, x) + "px");
