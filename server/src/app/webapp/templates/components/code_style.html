@@ -32,4 +32,20 @@
     }
     .args-actions-row { display: flex; align-items: center; gap: 0.25rem; }
     .args-actions-row .label { margin-left: auto; }
+    /* the argument tree as a `column -t` table: glyph | name: type | value. Values share one column that
+       starts right after the longest label and are left-justified there, instead of sitting flush against
+       the far edge of the panel where a wide window separates them from their names */
+    #argument-form {
+        display: grid; grid-template-columns: max-content max-content minmax(10ch, 1fr);
+        column-gap: 0.5rem; align-items: center;
+    }
+    #argument-form > .font-bold { grid-column: 1 / -1; }
+    #argument-form .tree-row { display: contents; }
+    #argument-form .tree-row .field,
+    #argument-form .tree-row .pick,
+    #argument-form .tree-row label[id] {
+        margin-left: 0; max-width: 100%; justify-self: start; justify-content: flex-start;
+    }
+    #argument-form .tree-row .field input { text-align: left; }
+    #argument-form .tree-row .pick select { text-align: left; text-align-last: left; }
 </style>
