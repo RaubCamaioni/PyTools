@@ -62,6 +62,20 @@ def test_callback_accepts_a_recent_state_after_the_button_was_rendered_again(git
     assert r.status_code in (302, 307)
 
 
+def test_header_renders_the_login_state_without_a_second_request(github):
+    # the control is part of the page itself (no htmx fetch after load, so no [login] -> [logout] flicker)
+    c = TestClient(app)
+    page = c.get("/").text
+    assert "[login]" in page and "[logout]" not in page and "/login/button" not in page
+    query = html.unescape(page.split("https://github.com/login/oauth/authorize?")[1].split('"')[0])
+    state = parse_qs(query)["state"][0]
+    # the state issued while rendering the page was saved in that page's session cookie
+    r = c.get("/auth/github", params={"code": "abc", "state": state}, follow_redirects=False)
+    assert r.status_code in (302, 307)
+    page = c.get("/").text
+    assert "[logout]" in page and "[login]" not in page
+
+
 def test_callback_rejects_wrong_state(github):
     c = TestClient(app)
     c.get("/login/button")  # creates the session state
