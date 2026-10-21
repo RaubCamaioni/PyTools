@@ -58,6 +58,19 @@ def client(monkeypatch, runner):
     return TestClient(app)
 
 
+def test_code_view_shows_the_trailing_newline_as_an_empty_last_line(monkeypatch, public_tool):
+    code = "# tag\n\n\ndef byte_converter() -> int:\n    return 1\n"
+    monkeypatch.setattr(db, "get_tool_by_id", lambda session, id: db.Tool(id=8, name="t", code=code, public=True, tags=[]))
+    page = client(monkeypatch, StubRunner()).get("/tool/8").text
+    # the view's text ends in two newlines, so Prism numbers an empty line 6; the status bar counts 5 like vim
+    assert "    return 1\n\n</code>" in page and ">5L<" in page
+
+
+def test_code_view_without_a_trailing_newline_adds_none(monkeypatch, public_tool):
+    page = client(monkeypatch, StubRunner()).get("/tool/8").text  # the fixture's code has no newline at all
+    assert "return 1</code>" in page and ">1L<" in page
+
+
 def test_run_tool_ok_renders_results(monkeypatch, public_tool):
     c = client(monkeypatch, StubRunner(RunResult(Outcome.OK, results="0x68 0x69")))
     r = c.post("/tool/8")

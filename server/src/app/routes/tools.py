@@ -268,7 +268,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "root_path": request.scope.get("root_path"),
             "endpoint": f"/tool/{tool.id}",
             "code": tool.code,
-            "lines": tool.code.count("\n") + 1,
+            "lines": len(tool.code.splitlines()),  # vim's count: a final newline ends a line, it does not start one
             "form_groups": render.args_to_form(tool.arguments),
             "time": time.time(),
             "votes": _votes_block(request, session, tool.id),
