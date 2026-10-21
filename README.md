@@ -1,156 +1,163 @@
-## PyTools
-PyTools is a web hosting platform for python scripts.  
-The entrypoint arguments and return values are automatically  
-converter to a web compatable format.   
+# PyTools
 
-## Uploading Scripts
-Only individual python files (.py) are currently supported.  
-The entrypoint function must be the same name as the uploaded file.  
+PyTools turns a plain Python file into a web tool. Upload a script whose entrypoint
+function is named after the file, and the site builds a form from the function's
+arguments, runs the script in an isolated container when someone submits the form, and
+presents the return value as readable output with download links and previews.
 
-To upload a script, log into the webpage by clicking login (top right).  
-Then go to profile (top right), click upload code, browse to file and upload.  
+The public instance at **https://pywebtools.com** hosts more than 240 tools, most of
+them small converters and calculators of the kind that paywalled converter sites offer:
+file format conversion, PDF and Office utilities, image, audio and video processing,
+unit and colour conversion, hashing and encoding, network and developer helpers.
 
-All entrypoint arguments are converted to equivalent web form values.  
-The currently supported arguments are: str, int, float, literal, Path   
-Unsupported types can be represented as strings and parsed inside the entrypoint function.  
+## How it works
 
-Path arguments are converted to file upload form items.  
-Path returns are converted to file download links.  
+1. **Upload.** A logged-in user uploads a `.py` file from their profile page. The server
+   formats it with black, checks it against the rules below, extracts the tags from the
+   first line and the entrypoint's signature, and stores it.
+2. **Form.** Each argument becomes a form field: `str` a text field, `int` and `float`
+   numeric fields, `Literal[...]` a list of choices, `Path` a file upload.
+3. **Run.** Submitting the form starts a fresh rootless podman container from the
+   sandbox image with the script, the arguments and any uploaded files. The container
+   has no network, half a CPU, 1 GB of memory, a process cap and a hard time limit.
+   While it runs, the page highlights the line being executed and advances a progress
+   bar.
+4. **Result.** The return value is rendered for people, not as a Python repr: strings
+   raw with their line breaks, dicts as key/value rows, lists as bullet rows, every
+   value with a `[copy]` bracket. A returned `Path` becomes a download link and, for
+   images, audio, video, PDF and STL files, an inline preview. Result files are kept
+   for ten minutes.
 
-## Script Tags
-Add tags to the top of the script.  
-Filter by tags using the homepage search bar.  
+The interface is a monochrome terminal theme: the home page lists tools like `ls`,
+filtering as you type by name or tag, and a tool page shows the source in a vim-style
+viewer beside the argument tree. Every page carries the release version and the commit
+it was built from in the bottom-right corner.
 
-## Example Script
-``` python
+## Writing a tool
+
+```python
 # text, converter
 
 from pathlib import Path
 
+
 def lower_case_text(input: Path) -> Path:
-  output = Path("output.txt")  
-  
-  with open(input, 'r') as f:
-    text = f.read()
-
-  with open(output, 'w') as f:
-    f.write(text.lower())
-  
-  return output
+    """Lower-case the whole of a text file."""
+    output = Path("output.txt")
+    output.write_text(input.read_text().lower())
+    return output
 ```
 
-## Converter Tools
-`tools/converters/` holds the converter scripts published on the site (text and
-encoding, data formats, units, colour/time/network, image, PDF, Office documents,
-media, subtitles, archives). They follow the rules above; a few extra constraints
-that the upload parser enforces are worth knowing when writing new ones:
+Rules the upload enforces:
 
-- form inputs are single-line, so multi-line content is taken as a `Path` upload
-- `Literal` option values may only contain letters, digits, `_` and `.` (no hyphens),
-  and the function receives them as strings
-- numeric arguments should carry a default, the form submits every field
-- tags on line 1 are plain alphanumeric words
-- uploads are formatted with `black -l 120` on the server and always end with a newline; a line
-  black cannot shorten (a long string or comment) is rejected, so wrap those yourself
+- One file; the entrypoint function has the same name as the file.
+- Line 1 is a comment of comma-separated tags (letters and digits), used by search.
+- Supported argument types are `str`, `int`, `float`, `Literal[...]` and `Path`.
+  Anything else can be passed as a string and parsed inside the function.
+- Form inputs are single-line, so multi-line content should be a `Path` upload.
+- `Literal` values contain only letters, digits, `_` and `.`, and arrive as strings.
+- Numeric arguments should carry a default; the form submits every field.
+- A `Path` argument is always a required upload, even with a `None` default.
+- The file is reformatted with `black -l 120` and stored with a single trailing
+  newline. A line black cannot shorten (a long string or comment) over 120 characters
+  is rejected with its line number.
 
-The sandbox image (`sandbox/pyproject.toml`) provides numpy, scipy, pandas,
-opencv (headless, 4.x), av, pymupdf (+pymupdf4llm), cadquery, ezdxf, Pillow (+HEIF),
-PyYAML, qrcode, openpyxl, python-docx, python-pptx, pdf2docx, mammoth, ebooklib, rawpy,
-markdown, tzdata, num2words, xmltodict, tomli-w, py7zr, cryptography, bcrypt,
-cron-descriptor, croniter, jmespath, jsonschema, sqlparse, jsbeautifier, cssbeautifier,
-rcssmin, rjsmin, black, python-stdnum, phonenumbers, faker, python-barcode, mutagen,
-fonttools, brotli, trimesh (+networkx), striprtf, pyzipper, pyfiglet, zxcvbn, astral,
-ua-parser and scour.
+Return a value the site can show: a string, number, dict, list, `Path`, or a nesting
+of those. Write output files into the working directory and return their `Path`.
 
-Docstrings and comments are wrapped at 88 columns so the code view reads comfortably;
-only code lines go out to 120.
+The sandbox image (`sandbox/pyproject.toml`) provides numpy, scipy, pandas, OpenCV
+(headless, 4.x), PyAV, PyMuPDF, cadquery, ezdxf, Pillow with HEIF, PyYAML, qrcode,
+openpyxl, python-docx, python-pptx, pdf2docx, mammoth, ebooklib, rawpy, markdown,
+cryptography, bcrypt, fonttools, trimesh, mutagen, phonenumbers, faker, black and a
+number of smaller libraries. The full list is the `dependencies` table in that file.
 
-Converter ideas that are not built yet, and why, are kept in
-`docs/converter-backlog.md`.
+## Repository layout
 
-## Demo Website
-The application is hosted at https://pywebtools.com.  
-Currently hosted under Linode server, lowest resources.  
-Heavy load scripts will take longer to return.  
-Website responsiveness will be impacted by multiple clients.  
+| Path | Contents |
+|---|---|
+| `server/` | The FastAPI application: routes, SQLModel database, templates (htmx and hyperscript), static assets, tests. |
+| `sandbox/` | The runtime that executes one tool inside its container: argument loading, result serialisation, line tracing. |
+| `containers/` | `Containerfile.prod` (the app image: systemd, nested rootless podman), `Containerfile.sandbox` (the tool runtime image), app config files. |
+| `tools/` | The sample tools the site started with. |
+| `tools/converters/` | The 236 converter and calculator tools published on pywebtools.com. |
+| `docs/` | Design documents for the sandbox runner, execution trace and runtime selection, plus `converter-backlog.md`, the ranked list of tools not built yet and why. |
+| `.github/workflows/` | Builds and pushes both images on every push to `main`. |
 
-## Building Instructions
-Required Secrets:
-``` bash
-GOOGLE_CLIENT_ID=<google_client_id_url>
-GOOGLE_CLIENT_SECRET=<google_client_secret>
-GOOGLE_REDIRECT_URI=<redirect_fastapi_auth_endpoint>
-SESSION_SECRET=<session_secret>
-ROOT_PATH=localhost
-DATABASE=/data/database.db
-SANDBOX=/venvs/sandbox/
+Tool sources are written to the same standard the upload enforces: code to 120
+columns, docstrings and comments wrapped at 88.
+
+## Running the application
+
+The application is a single container image. It needs podman with fuse and a user
+namespace range, and starts with:
+
+```bash
+podman run --rm --name pywebtools \
+  --device /dev/fuse --security-opt unmask=ALL \
+  --memory=3g --pids-limit=4096 \
+  -v ~/pywebtools/.secrets:/run/secrets/pywebtools.env:ro \
+  -v ~/pywebtools/data:/data \
+  -v pywebtools-inner-store:/home/podman/.local/share/containers \
+  -p 8080:8080 \
+  docker.io/raubcamaioni/pywebtools:latest
 ```
 
-## Dvelopment
+The environment file holds:
+
+| Variable | Purpose |
+|---|---|
+| `SESSION_KEY` | Secret for the signed session cookie (required). |
+| `DATABASE` | Path of the SQLite database, for example `/data/database.db` (required). |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_REDIRECT_URI` | GitHub OAuth login. Without them the site runs with login disabled. |
+| `OWNER_GITHUB_LOGIN` | The GitHub account that owns the site's own tools. |
+| `SANDBOX_IMAGE`, `SANDBOX_TIMEOUT_SECONDS`, `SANDBOX_MEMORY`, `SANDBOX_CPUS`, `SANDBOX_PIDS`, `SANDBOX_MAX_CONCURRENT`, `SANDBOX_QUEUE_SECONDS`, `SANDBOX_RUN_DIR`, `SANDBOX_MAX_OUTPUT_MB` | Limits for tool runs; every one has a default (see `server/src/app/utility/sandbox_config.py`). |
+
+`GET /healthz` reports whether the sandbox self-test has passed; tool runs return 503
+until it has. The app pulls the sandbox image itself and re-checks it periodically, so
+a new sandbox image is picked up without restarting the app.
+
+## Development
+
+```bash
+cd server
+python -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/pytest -m "not integration"      # unit tests; integration tests need a real podman
+```
+
+The tests that exercise the runner against a real nested podman and the sandbox image
+are marked `integration`. The sandbox package has its own tests under `sandbox/tests`.
+
+The stylesheet is a Tailwind build. After changing `server/src/app/webapp/static/input.css`
+rebuild `output.css` with the Tailwind CLI:
+
+```bash
+tailwindcss -i server/src/app/webapp/static/input.css -o server/src/app/webapp/static/output.css --minify
+```
+
+Page-specific CSS lives inline in the templates under `templates/components/` so it
+does not depend on a rebuild.
+
+## Deployment
+
+A push to `main` builds `pywebtools` (the app) and `pywebtools-sandbox` (the runtime)
+with GitHub Actions and pushes them to Docker Hub. The build records the commit in the
+app image, and the server pulls the new image and restarts the app; a change is
+usually live within a few minutes. The release version shown on the site is the
+package version in `server/pyproject.toml`.
+
+Production notes for the host:
+
+- Nested rootless podman needs cgroup delegation for the app's user. On the host,
+  `/etc/systemd/system/user@.service.d/delegate.conf` should contain
+  `Delegate=cpu cpuset io memory pids`, and
+  `/sys/fs/cgroup/user.slice/user-<uid>.slice/cgroup.subtree_control` must list those
+  controllers.
+- The reasons behind every runner setting are in
+  `docs/superpowers/specs/2026-10-19-podman-sandbox-runner-design.md`.
 
 ## Roadmap
-Usability:  
-- error message return as toast  
 
-User Page:  
-- update user attributes  
-- update tool attributes  
-- allow image upload with code (hard to make safe), generate image from stl?  
-
-Tool Page:  
-- up vote / down vote  
-- report  
-- GPT malicious code check (infinite while loops, ect)  
-- split donation button (dontation split between web hoster and tool writer)  
-- Remix of query parameters for specific tasks
-
-Admin Page:  
-- banning users  
-- tool statistics  
-
-CadQuery:  
-- embedded VTK model renderer  
-- show model in index.html  
-
-Index Page:  
-- improve search/index capabilites  
-- organize by up/down vote  
-- show votes on item  
-- add catagories button to index page
-
-## Debugging Nested Cgroups
-Keywords delegation slice, cgroup, systemd  
-```bash
-# enable delegation for users
-# /etc/systemd/system/user@.service.d/delegate.conf 
-[Service]
-Delegate=cpu cpuset io memory pids
-```
-
-Check for cgroup.subtree_control permissions.  
-This shows the specific user permissions.  
-Ensure permissions are allowed through the tree.  
-Check if podman nesting works in root vs non-root.
-```bash
-cat /sys/fs/cgroup/user.slice/user-1000.slice/cgroup.subtree_control
-```
-
-## Setup Tailwind
-Download latest binary from: https://github.com/tailwindlabs/tailwindcss/releases  
-``` bash
-wget https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.17/tailwindcss-linux-x64
-chmod +x tailwindcss-linux-x64
-sudo mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss
-tailwindcss --output ./server/src/app/static/styles.css --watch
-```
-
-## Rootless Podman in Podman
-``` bash
-https://www.redhat.com/en/blog/podman-inside-container
-podman run --security-opt label=disable --user podman --device /dev/fuse quay.io/podman/stable podman run alpine echo hello
-```
-
-## Front End Development
-The front end can be developed without having a functional isolate binary.  
-The backend is fastapi.  
-The frontend is htmx and hyperscript.  
+- Runtime selection: let an uploader choose from several sandbox images, including
+  languages other than Python (`docs/superpowers/specs/2026-10-19-runtime-selection-and-validation-design.md`).
+- More converters from `docs/converter-backlog.md` as their dependencies allow.
+- Remix links: share a tool with its arguments pre-filled for a specific task.
