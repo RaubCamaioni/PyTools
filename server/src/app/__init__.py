@@ -50,5 +50,20 @@ def _static_version() -> str:
 
 
 TEMPLATES.env.globals["static_version"] = _static_version()
+# the commit the running image was built from (containers/Containerfile.prod); "dev" outside the image
+TEMPLATES.env.globals["commit_sha"] = os.environ.get("PYTOOLS_COMMIT") or "dev"
+
+
+def _app_version() -> str:
+    """The semantic version from server/pyproject.toml (the installed package metadata)."""
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("pytools")
+    except PackageNotFoundError:
+        return "0.0.0"
+
+
+TEMPLATES.env.globals["app_version"] = _app_version()
 
 logger = logging.getLogger("uvicorn.error")

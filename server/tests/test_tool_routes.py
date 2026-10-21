@@ -158,6 +158,18 @@ def test_anonymous_tool_hides_the_alias_and_the_id(monkeypatch, tmp_path):
     assert "anonymous#00000000" in page and "rob#" not in page and "49600918" not in page
 
 
+def test_every_page_carries_the_version_tag(monkeypatch, public_tool):
+    from app import TEMPLATES
+
+    monkeypatch.setitem(TEMPLATES.env.globals, "commit_sha", "8cb5eba1234567890")
+    monkeypatch.setitem(TEMPLATES.env.globals, "app_version", "0.2.0")
+    c = client(monkeypatch, StubRunner())
+    for path in ("/", "/tool/8", "/privacy-policy"):
+        page = c.get(path).text
+        assert 'id="version-tag"' in page and ">v0.2.0+8cb5eba<" in page, path
+        assert "github.com/RaubCamaioni/PyTools/commit/8cb5eba1234567890" in page
+
+
 def download_url(path):
     return "/download/" + str(path.resolve().relative_to(path.resolve().anchor)).replace("\\", "/")
 
