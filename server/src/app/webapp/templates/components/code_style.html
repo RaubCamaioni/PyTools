@@ -58,13 +58,14 @@
     #result .copy:hover, #result .copy:focus-visible {
         background: var(--color-paper); color: var(--color-ink); outline: none;
     }
-    #result .kv-table { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; column-gap: 1ch; }
+    #result .kv-table { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 1ch; }
+    #result .cell { min-width: 0; }
+    #result .cell .copy, #result .item .copy { margin-left: 0.5ch; }
     #result .kv { display: contents; }
     #result .key { color: var(--color-dim); white-space: nowrap; }
     #result .val { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
     #result .lit { color: var(--color-dim); }
     #result .item { display: flex; align-items: baseline; gap: 1ch; }
-    #result .item > .val { flex: 1; }
     #result .bullet { color: var(--color-dim); }
     #result .nest {
         grid-column: 1 / -1; margin-left: 1ch; padding-left: 1ch; border-left: 1px solid var(--color-line);

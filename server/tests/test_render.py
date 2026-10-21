@@ -19,8 +19,11 @@ def test_list_items_without_more_pages_has_no_loader():
 
 def test_render_dict_is_key_value_rows_with_copy_brackets():
     html = render.render({"scientific": "6.022e23", "exponent": 23, "nested": {"a": [1, 2]}})
-    assert '<span class="key">scientific:</span><span class="val str">6.022e23</span>' in html
-    assert '<button type="button" class="copy" data-copy="6.022e23">[copy]</button>' in html
+    # the value and its bracket share one cell right after the key
+    assert (
+        '<span class="key">scientific:</span><span class="cell"><span class="val str">6.022e23</span>'
+        '<button type="button" class="copy" data-copy="6.022e23">[copy]</button></span>'
+    ) in html
     assert '<span class="val num">23</span>' in html and "'" not in html  # no python quotes anywhere
     # a nested container gets its own indented block under its key
     assert '<span class="key">nested:</span>' in html and '<div class="nest"><div class="kv-table">' in html

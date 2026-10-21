@@ -266,15 +266,16 @@ def _node(value: Any) -> str:
             label = f'<span class="key">{escape(str(key))}:</span>'
             if isinstance(item, (dict, list, tuple, set, frozenset)) and item:
                 rows.append(
-                    f'<div class="kv">{label}<span class="val"></span><span></span></div>'
+                    f'<div class="kv">{label}<span class="cell"></span></div>'
                 )
                 rows.append(f'<div class="nest">{_node(item)}</div>')
             else:
                 html, raw = (
                     _scalar(item) if not isinstance(item, (dict, list, tuple, set, frozenset)) else (_node(item), "")
                 )
-                copy = _copy_button(raw) if raw else "<span></span>"
-                rows.append(f'<div class="kv">{label}{html}{copy}</div>')
+                copy = _copy_button(raw) if raw else ""
+                # the bracket follows its value inside one cell, so it is never far from what it copies
+                rows.append(f'<div class="kv">{label}<span class="cell">{html}{copy}</span></div>')
         return f'<div class="kv-table">{"".join(rows)}</div>'
     if isinstance(value, (list, tuple, set, frozenset)):
         if not value:
