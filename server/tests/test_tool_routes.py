@@ -171,6 +171,21 @@ def test_download_serves_a_file_from_a_run_directory(monkeypatch, public_tool, t
     assert "qr_code.png" in r.headers["content-disposition"]
 
 
+def test_image_preview_is_served_inline_with_its_media_type(monkeypatch, public_tool, tmp_path):
+    run = tmp_path / "abc"
+    run.mkdir()
+    (run / "qr_code.png").write_bytes(b"png")
+    (run / "data.csv").write_bytes(b"a,b")
+    c = client(monkeypatch, StubRunner())
+    r = c.get(download_url(run / "qr_code.png") + "?preview=1")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+    assert r.headers["content-disposition"].startswith("inline")
+    # preview only changes how images are served; anything else stays a download
+    r = c.get(download_url(run / "data.csv") + "?preview=1")
+    assert r.headers["content-type"] == "application/octet-stream"
+    assert r.headers["content-disposition"].startswith("attachment")
+
+
 def test_download_of_an_expired_result_is_404_with_a_reason(monkeypatch, public_tool, tmp_path):
     r = client(monkeypatch, StubRunner()).get(download_url(tmp_path / "gone" / "qr_code.png"))
     assert r.status_code == 404 and "expired" in r.json()["detail"]

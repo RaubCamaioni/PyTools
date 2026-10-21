@@ -42,6 +42,18 @@ def test_render_scalars_unchanged():
     assert render.render(42) == "<pre>42</pre>"
 
 
+def test_render_image_result_is_previewed_inline():
+    html = render.render({"file": Path("/runs/abc/out.PNG")})
+    assert '<a href="/download/runs/abc/out.PNG" download="out.PNG"' in html
+    assert '<img src="/download/runs/abc/out.PNG?preview=1" alt="out.PNG"' in html
+    assert "max-height" in html  # the inline style survives sanitising
+
+
+def test_render_other_files_are_links_only():
+    html = render.render(Path("/runs/abc/out.csv"))
+    assert "<a href=" in html and "<img" not in html
+
+
 def test_number_arguments_are_typed_not_spun():
     html = render.args_to_form({"ratio": ("float", "0.3"), "count": ("int", "2")})
     assert 'type="number"' not in html and html.count('inputmode="decimal"') == 2

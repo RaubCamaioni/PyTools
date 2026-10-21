@@ -37,6 +37,24 @@ def test_migration_adds_role_columns_once():
         assert conn.execute(text("SELECT admin, banned FROM user WHERE id = 1")).one() == (0, 0)
 
 
+def test_startup_pass_formats_stored_tools_once():
+    engine = engine_with(
+        users=[db.User(id=1, alias="rob")],
+        tools=[
+            db.Tool(id=1, name="a", code="# tag\ndef a(x:int=1)->int:\n  return x", user_id=1, tags=[]),
+            db.Tool(id=2, name="b", code="# tag\n\n\ndef b(x: int = 1) -> int:\n    return x\n", user_id=1, tags=[]),
+            db.Tool(id=3, name="c", code="def (broken", user_id=1, tags=[]),
+        ],
+    )
+    assert db.format_stored_tools(engine) == 1
+    assert db.format_stored_tools(engine) == 0  # idempotent
+    with Session(engine) as session:
+        codes = {t.id: t.code for t in session.exec(db.select(db.Tool))}
+    assert codes[1] == "# tag\ndef a(x: int = 1) -> int:\n    return x\n"
+    assert codes[2].endswith("return x\n") and not codes[2].endswith("\n\n")
+    assert codes[3] == "def (broken"  # unparsable code is left alone, not dropped
+
+
 def test_users_with_tools_lists_every_account_with_vote_and_report_totals():
     engine = engine_with(
         users=[db.User(id=1, alias="rob", admin=True), db.User(id=2, alias="eve")],

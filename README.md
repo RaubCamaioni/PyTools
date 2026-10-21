@@ -50,7 +50,8 @@ that the upload parser enforces are worth knowing when writing new ones:
   and the function receives them as strings
 - numeric arguments should carry a default, the form submits every field
 - tags on line 1 are plain alphanumeric words
-- every line must be 120 characters or shorter (the upload is rejected otherwise); `black -l 120` gets there
+- uploads are formatted with `black -l 120` on the server and always end with a newline; a line
+  black cannot shorten (a long string or comment) is rejected, so wrap those yourself
 
 The sandbox image (`sandbox/pyproject.toml`) provides numpy, scipy, pandas,
 opencv (headless, 4.x), av, pymupdf (+pymupdf4llm), cadquery, ezdxf, Pillow (+HEIF),

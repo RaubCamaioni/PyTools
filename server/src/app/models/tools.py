@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from sqlalchemy import func, inspect, text
 import logging
 import ast
+import black
 
 from app import ENVIRONMENT
 
@@ -301,9 +302,33 @@ def migrate(engine_) -> None:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {definition}"))
 
 
+def format_stored_tools(engine_) -> int:
+    """Bring every stored tool up to the upload standard (black at the page's line length,
+    one trailing newline); safe to run on every start. Returns how many tools changed.
+    A tool the formatter cannot parse is left as it is and logged.
+    """
+    changed = 0
+    with Session(engine_) as session:
+        for tool in session.exec(select(Tool)):
+            try:
+                formatted = format_source(tool.code)
+            except HTTPException as e:
+                logger.warning("tool %s (%s) not reformatted: %s", tool.id, tool.name, e.detail)
+                continue
+            if formatted != tool.code:
+                tool.code = formatted
+                session.add(tool)
+                changed += 1
+        session.commit()
+    if changed:
+        logger.info("reformatted %s stored tool(s) to the upload standard", changed)
+    return changed
+
+
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
     migrate(engine)
+    format_stored_tools(engine)
 
 
 def get_session():
@@ -387,8 +412,23 @@ def check_line_lengths(tool_source: str) -> None:
             raise HTTPException(status_code=400, detail=detail)
 
 
+def format_source(tool_source: str) -> str:
+    """Uploads are stored black-formatted at the page's line length and end with a newline,
+    so every tool on the site reads the same way whatever editor it came from.
+    """
+    try:
+        formatted = black.format_str(tool_source, mode=black.Mode(line_length=MAX_LINE_LENGTH))
+    except black.InvalidInput as e:
+        raise HTTPException(status_code=400, detail=f"Python Syntax Error: {e}")
+    if not formatted.endswith("\n"):
+        formatted += "\n"
+    return formatted
+
+
 def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
     tool_source = tool_source.replace("\r\n", "\n").replace("\r", "\n")
+    tool_source = format_source(tool_source)
+    # black wraps code but leaves long strings and comments alone, so those still need the author
     check_line_lengths(tool_source)
     tags = get_tags(tool_source.split("\n")[0])
     tags.append(tool_name)
