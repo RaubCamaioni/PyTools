@@ -25,6 +25,11 @@ COPY --chown=podman:podman containers/app/storage.conf /home/podman/.config/cont
 # the inner image store is a named volume; podman gives a new volume this directory's ownership
 RUN mkdir -p /home/podman/.local/share/containers && chown -R podman:podman /home/podman/.local
 
+# the commit the image was built from, shown bottom-right on every page (CI passes GIT_SHA).
+# A file, not ENV: the app is a systemd user service and does not inherit the container environment.
+ARG GIT_SHA=
+RUN echo "$GIT_SHA" > /etc/pytools-commit
+
 # server dependencies first (cached layer unless pyproject.toml changes), then the code itself
 COPY server/pyproject.toml /tmp/server/pyproject.toml
 RUN python3.12 -m venv /venvs/server && \
