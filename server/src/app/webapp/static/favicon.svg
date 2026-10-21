@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- PyTools: a wrench on a transparent background -->
+  <g transform="rotate(45 32 32)">
+    <path d="M32 2a14 14 0 0 1 14 14c0 5.7-3.4 10.6-8.4 12.8V54a6.5 6.5 0 0 1-13 0V28.8A14 14 0 0 1 18 16 14 14 0 0 1 32 2zm-5-2V18h10V0z"
+          fill="#fff" fill-rule="evenodd" stroke="#404040" stroke-width="2.5" stroke-linejoin="round" paint-order="stroke"/>
+  </g>
+</svg>

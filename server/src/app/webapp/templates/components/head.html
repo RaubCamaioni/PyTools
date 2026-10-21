@@ -3,7 +3,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ title }}</title>
-<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="icon" href="/static/favicon.svg?v={{ static_version }}" type="image/svg+xml">
+<link rel="icon" href="/static/favicon.ico?v={{ static_version }}" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v={{ static_version }}">
 
 {# Styling #}
 <link href="/static/output.css?v={{ static_version }}" rel="stylesheet">
