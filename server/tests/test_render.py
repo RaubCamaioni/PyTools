@@ -37,9 +37,14 @@ def test_render_copy_all_is_raw_text_for_a_string_and_json_otherwise():
     assert 'data-copy="{\n  &quot;a&quot;: [\n    1,\n    &quot;b&quot;\n  ],\n  &quot;p&quot;: &quot;' in html
 
 
-def test_render_list_is_one_bullet_row_per_item():
+def test_render_list_is_bullet_rows_copied_whole():
     html = render.render([f"item-{i:02d}" for i in range(3)])
-    assert html.count('<span class="bullet">-</span>') == 3 and html.count("[copy]") == 3
+    assert html.count('<span class="bullet">-</span>') == 3 and "[copy]" not in html
+    assert 'data-copy="item-00\nitem-01\nitem-02">[copy all]' in html  # one item per line, no quotes
+    # a list under a key: the bracket sits by the key and copies that list
+    html = render.render({"words": ["a", "b"], "n": 1})
+    assert '<span class="key">words:</span><span class="cell"><button type="button" class="copy" data-copy="a\nb">' in html
+    assert html.count("[copy]") == 2  # the list and the number; not the items
 
 
 def test_render_strings_are_raw_and_escaped():

@@ -256,51 +256,55 @@ def _scalar(value: Any) -> tuple[str, str]:
     return f'<span class="val str">{escape(text)}</span>', text
 
 
+CONTAINERS = (dict, list, tuple, set, frozenset)
+SEQUENCES = (list, tuple, set, frozenset)
+
+
 def _node(value: Any) -> str:
-    """HTML for any value; containers become rows, leaves get their [copy] bracket."""
+    """HTML for any value: a dict as key/value rows, a list as bullet rows, a leaf with its
+    [copy] bracket. A list is copied whole (one item per line), never item by item.
+    """
     if isinstance(value, dict):
         if not value:
             return '<span class="val lit">{}</span>'
         rows = []
         for key, item in value.items():
             label = f'<span class="key">{escape(str(key))}:</span>'
-            if isinstance(item, (dict, list, tuple, set, frozenset)) and item:
-                rows.append(
-                    f'<div class="kv">{label}<span class="cell"></span></div>'
-                )
+            if isinstance(item, CONTAINERS) and item:
+                copy = _copy_button(_plain_text(item)) if isinstance(item, SEQUENCES) else ""
+                rows.append(f'<div class="kv">{label}<span class="cell">{copy}</span></div>')
                 rows.append(f'<div class="nest">{_node(item)}</div>')
             else:
-                html, raw = (
-                    _scalar(item) if not isinstance(item, (dict, list, tuple, set, frozenset)) else (_node(item), "")
-                )
+                html, raw = _scalar(item) if not isinstance(item, CONTAINERS) else (_node(item), "")
                 copy = _copy_button(raw) if raw else ""
                 # the bracket follows its value inside one cell, so it is never far from what it copies
                 rows.append(f'<div class="kv">{label}<span class="cell">{html}{copy}</span></div>')
         return f'<div class="kv-table">{"".join(rows)}</div>'
-    if isinstance(value, (list, tuple, set, frozenset)):
+    if isinstance(value, SEQUENCES):
         if not value:
             return '<span class="val lit">[]</span>'
         rows = []
         for item in value:
-            if isinstance(item, (dict, list, tuple, set, frozenset)) and item:
+            if isinstance(item, CONTAINERS) and item:
                 rows.append(
                     f'<div class="item"><span class="bullet">-</span><div class="nest">{_node(item)}</div></div>'
                 )
             else:
-                html, raw = (
-                    _scalar(item) if not isinstance(item, (dict, list, tuple, set, frozenset)) else (_node(item), "")
-                )
-                copy = _copy_button(raw) if raw else ""
-                rows.append(f'<div class="item"><span class="bullet">-</span>{html}{copy}</div>')
+                html = _scalar(item)[0] if not isinstance(item, CONTAINERS) else _node(item)
+                rows.append(f'<div class="item"><span class="bullet">-</span>{html}</div>')
         return f'<div class="items">{"".join(rows)}</div>'
     html, raw = _scalar(value)
     return f'<div class="item">{html}{_copy_button(raw)}</div>'
 
 
 def _plain_text(value: Any) -> str:
-    """What [copy all] puts on the clipboard: a string as it is, anything else as JSON."""
+    """What a whole-value [copy] puts on the clipboard: a string as it is, a list of plain
+    values one per line, anything else as JSON.
+    """
     if isinstance(value, str):
         return value
+    if isinstance(value, SEQUENCES) and not any(isinstance(item, CONTAINERS) for item in value):
+        return "\n".join(_scalar(item)[1] for item in value)
 
     def default(obj):
         if isinstance(obj, (Path, PosixPath)):
