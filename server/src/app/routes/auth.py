@@ -109,17 +109,28 @@ TEMPLATES.env.globals["session_alias"] = session_alias
 TEMPLATES.env.globals["session_admin"] = session_admin
 
 
-def _login_button(request: Request) -> HTMLResponse:
+def login_button(request: Request) -> str:
+    """The [login] or [logout] control. Pages render it straight into the header (the page
+    response carries the session cookie with the new login state), so it never flickers from
+    one to the other after load; /login/button and /logout/button return the same markup.
+    """
     user = _session_user(request)
     if user is not None:
-        return TEMPLATES.TemplateResponse(request, "components/logout_button.html", {"name": user.alias})
+        return TEMPLATES.get_template("components/logout_button.html").render(name=user.alias)
     url = None
     if github.configured:
         state = secrets.token_urlsafe(24)
         # every page render issues a new state; keep the last few so an older tab's login still works
         request.session["oauth_states"] = (request.session.get("oauth_states") or [])[-(RECENT_STATES - 1) :] + [state]
         url = github.login_url(state)
-    return TEMPLATES.TemplateResponse(request, "components/login_button.html", {"url": url})
+    return TEMPLATES.get_template("components/login_button.html").render(url=url)
+
+
+TEMPLATES.env.globals["login_button"] = login_button
+
+
+def _login_button(request: Request) -> HTMLResponse:
+    return HTMLResponse(login_button(request))
 
 
 @router.get("/login/button", response_class=HTMLResponse)
