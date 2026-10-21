@@ -32,16 +32,26 @@ def parser_literal(input: str):
     return literal_expr.parseString(input)
 
 
+PREVIEW_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".avif", ".ico"}
+PREVIEW_IMAGE_STYLE = "display: block; max-width: 100%; max-height: 60vh; margin: 0.5em 0;"
+
+
 # TODO: customize web display for more objects
 class MyPrettyPrinter(PrettyPrinter):
     def format(self, object, context, maxlevels, level):
         if isinstance(object, (Path, PosixPath)):
-            hyper_link = Path("/download") / object.relative_to(object.anchor)
+            hyper_link = (Path("/download") / object.relative_to(object.anchor)).as_posix()
             download = f'<a href="{hyper_link}" download="{object.name}" style="white-space: pre;">{object}</a>'
 
             viewer = ""
-            if hyper_link.suffix == ".stl":
+            if object.suffix == ".stl":
                 viewer = f'<stl-viewer url="{hyper_link}"></stl-viewer>'
+            elif object.suffix.lower() in PREVIEW_IMAGE_SUFFIXES:
+                # the browser shows the picture in place; the link above still downloads it
+                viewer = (
+                    f'<img src="{hyper_link}?preview=1" alt="{object.name}" loading="lazy" '
+                    f'style="{PREVIEW_IMAGE_STYLE}">'
+                )
 
             return (f"{download}{viewer}", True, False)
 
@@ -235,8 +245,12 @@ def render(results: Any):
     sanatized = (
         sanitize_html(
             return_string,
-            tags={"a", "stl-viewer"},
-            attributes={"a": {"href", "download", "style"}, "stl-viewer": {"url"}},
+            tags={"a", "stl-viewer", "img"},
+            attributes={
+                "a": {"href", "download", "style"},
+                "stl-viewer": {"url"},
+                "img": {"src", "alt", "loading", "style"},
+            },
         )
         .replace("\\n", "<br>")
         .replace("\n", "<br>")

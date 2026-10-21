@@ -21,6 +21,7 @@ from zipfile import ZipFile
 from pathlib import Path
 from io import BytesIO
 import asyncio
+import mimetypes
 import secrets
 import shutil
 import time
@@ -463,7 +464,7 @@ async def run_isolated(
 
 @security.constant_time_with_random_delay(0.2, 1)
 @router.get("/download/{file_str:path}", response_class=FileResponse)
-async def download_file(file_str: str):
+async def download_file(file_str: str, preview: bool = False):
     file_path = (Path("/") / Path(file_str)).resolve()
     run_root = ENVIRONMENT.sandbox.run_dir.resolve()
 
@@ -474,6 +475,15 @@ async def download_file(file_str: str):
     if not file_path.is_file():
         # run directories are removed ten minutes after the run (and on a restart of the app)
         raise HTTPException(status_code=404, detail="This result has expired: files are kept for 10 minutes after a run.")
+
+    # a preview is an image the result page shows inline, so it needs its real media type
+    if preview and file_path.suffix.lower() in render.PREVIEW_IMAGE_SUFFIXES:
+        return FileResponse(
+            file_path,
+            media_type=mimetypes.guess_type(file_path.name)[0] or "application/octet-stream",
+            filename=file_path.name,
+            content_disposition_type="inline",
+        )
 
     return FileResponse(
         file_path,

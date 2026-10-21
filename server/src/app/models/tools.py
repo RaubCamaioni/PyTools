@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from sqlalchemy import func, inspect, text
 import logging
 import ast
+import black
 
 from app import ENVIRONMENT
 
@@ -387,8 +388,23 @@ def check_line_lengths(tool_source: str) -> None:
             raise HTTPException(status_code=400, detail=detail)
 
 
+def format_source(tool_source: str) -> str:
+    """Uploads are stored black-formatted at the page's line length and end with a newline,
+    so every tool on the site reads the same way whatever editor it came from.
+    """
+    try:
+        formatted = black.format_str(tool_source, mode=black.Mode(line_length=MAX_LINE_LENGTH))
+    except black.InvalidInput as e:
+        raise HTTPException(status_code=400, detail=f"Python Syntax Error: {e}")
+    if not formatted.endswith("\n"):
+        formatted += "\n"
+    return formatted
+
+
 def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
     tool_source = tool_source.replace("\r\n", "\n").replace("\r", "\n")
+    tool_source = format_source(tool_source)
+    # black wraps code but leaves long strings and comments alone, so those still need the author
     check_line_lengths(tool_source)
     tags = get_tags(tool_source.split("\n")[0])
     tags.append(tool_name)

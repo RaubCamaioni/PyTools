@@ -21,11 +21,31 @@ def test_line_over_the_limit_is_rejected_with_its_number():
     assert info.value.detail.startswith(f"Line Too Long: line 3 has {len(line)} characters")
 
 
-def test_length_check_runs_before_syntax_check():
-    # a long line that is also invalid python reports the length problem, the easier one to fix
+def test_invalid_python_is_rejected_before_the_length_check():
+    # the formatter runs first and cannot parse this, so the syntax problem is the one reported
     with pytest.raises(HTTPException) as info:
         db.create_tool(1, "demo", source("def (" + "a" * 130))
-    assert "Line Too Long" in info.value.detail
+    assert info.value.status_code == 400 and "Syntax Error" in info.value.detail
+
+
+def test_long_code_line_is_wrapped_by_the_formatter():
+    call = "x = max(" + ", ".join(f"value_{n}" for n in range(30)) + ")"
+    assert len(call) > db.MAX_LINE_LENGTH
+    tool = db.create_tool(1, "demo", source(call))
+    assert all(len(line) <= db.MAX_LINE_LENGTH for line in tool.code.splitlines())
+    assert "value_29,\n)" in tool.code
+
+
+def test_uploads_are_black_formatted():
+    tool = db.create_tool(1, "demo", "# tag\nimport os\ndef demo(value:int=1)->int:\n  return  value")
+    assert tool.code == "# tag\nimport os\n\n\ndef demo(value: int = 1) -> int:\n    return value\n"
+    assert tool.arguments == {"value": ("int", "1")}
+
+
+def test_upload_ends_with_exactly_one_newline():
+    for ending in ("", "\n", "\n\n\n"):
+        tool = db.create_tool(1, "demo", source("x = 1").rstrip("\n") + ending)
+        assert tool.code.endswith("value\n") and not tool.code.endswith("\n\n")
 
 
 def test_windows_line_endings_are_normalised():
