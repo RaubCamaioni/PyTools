@@ -156,3 +156,9 @@ def test_login_button_says_unavailable_without_github_keys(github):
     github.configured = False
     page = TestClient(app).get("/login/button").text
     assert "login unavailable" in page and "github.com" not in page
+
+
+def test_privacy_policy_states_what_the_github_login_collects():
+    page = TestClient(app).get("/privacy-policy").text
+    assert '"read:user"' in page and "account id" in page and "username" in page
+    assert "no email address" in page and "discarded" in page  # nothing else is read; the token is not kept

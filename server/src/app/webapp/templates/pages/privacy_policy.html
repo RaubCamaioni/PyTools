@@ -14,13 +14,59 @@
       <div class="prompt font-bold mb-2">cat privacy_policy.txt</div>
 
       <div class="whitespace-pre-line leading-relaxed">
-        PyTools requires user data for the following reasons:
-        - Attributing uploaded code to users
-        - Allowing users to delete their uploaded code
-        - Banning users who violate TOS
+        Last updated: 2026-10-21
 
-        PyTools utilizes user data for internal purposes only.
-        User data is not given/sold/shared for any purposes.
+        PyTools can be used without an account. Browsing tools and running them does not
+        require a login, and the site keeps no record of who ran what.
+
+        LOGGING IN WITH GITHUB
+
+        Uploading tools, voting and reporting require a login, and the only login is
+        GitHub OAuth. The site asks GitHub for the "read:user" scope, which lets it read
+        your public profile once. From that profile it keeps exactly two values:
+
+        - your GitHub account id (a number), used to recognise you on your next login.
+          It is stored only as a one-way hash, so the database does not hold the id itself.
+        - your GitHub username, used as your display name ("alias") next to the tools you
+          upload. You can change the alias on your profile page at any time.
+
+        Nothing else is read or kept: no email address, name, avatar, repositories or
+        followers. The access token GitHub issues is used for that single profile
+        request and then discarded; the site never stores it and cannot act on your
+        GitHub account.
+
+        Why the login is needed:
+        - to attribute uploaded code to the account that uploaded it, and let only that
+          account update, hide or delete it
+        - to allow one vote and one report per account per tool
+        - to ban an account that violates the terms of service
+
+        WHAT ELSE IS STORED
+
+        - the tools you upload (source code, name, tags), whether each is public, and how
+          many times each has been run
+        - your votes and reports (a report includes the reason you typed)
+        - the admin and ban flags of your account
+
+        While you are logged in, a signed session cookie holds your account record so the
+        site knows who you are. Logging out clears it. No third-party cookies, analytics or
+        advertising are used.
+
+        TOOL RUNS
+
+        Files and arguments you submit to a tool are written to a private run directory,
+        processed in an isolated container with no network access, and deleted ten minutes
+        after the run. They are not linked to an account.
+
+        The web server keeps standard access logs (IP address, requested URL, time, browser
+        identifier) for operating and securing the site. These are not combined with
+        account data.
+
+        SHARING AND DELETION
+
+        Account data is used only to run this site. It is not sold, shared or given to
+        anyone. To delete your data, delete your tools from your profile page and contact
+        the site operator through the GitHub repository to have the account record removed.
       </div>
     </div>
 
