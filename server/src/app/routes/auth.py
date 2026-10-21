@@ -109,7 +109,7 @@ TEMPLATES.env.globals["session_alias"] = session_alias
 TEMPLATES.env.globals["session_admin"] = session_admin
 
 
-def login_button(request: Request) -> str:
+def login_control(request: Request) -> str:
     """The [login] or [logout] control. Pages render it straight into the header (the page
     response carries the session cookie with the new login state), so it never flickers from
     one to the other after load; /login/button and /logout/button return the same markup.
@@ -126,11 +126,11 @@ def login_button(request: Request) -> str:
     return TEMPLATES.get_template("components/login_button.html").render(url=url)
 
 
-TEMPLATES.env.globals["login_button"] = login_button
+TEMPLATES.env.globals["login_control"] = login_control
 
 
 def _login_button(request: Request) -> HTMLResponse:
-    return HTMLResponse(login_button(request))
+    return HTMLResponse(login_control(request))
 
 
 @router.get("/login/button", response_class=HTMLResponse)
