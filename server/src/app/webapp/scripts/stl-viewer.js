@@ -1,6 +1,6 @@
-import * as THREE from '/scripts/three/three.module.js';
-import { STLLoader } from '/scripts/three/addons/loaders/STLLoader.js';
-import { OrbitControls } from '/scripts/three/addons/controls/OrbitControls.js';
+import * as THREE from './three/three.module.js';
+import { STLLoader } from './three/addons/loaders/STLLoader.js';
+import { OrbitControls } from './three/addons/controls/OrbitControls.js';
 
 class STLViewer extends HTMLElement {
     constructor() {
