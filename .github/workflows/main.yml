@@ -43,9 +43,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/pywebtools
+          # only two tags per release (latest and the version) so Docker Hub is not littered with
+          # one tag per commit; a manual deploy is tagged with its commit so it can be told apart
           tags: |
             type=semver,pattern={{version}}
-            type=sha
+            type=sha,enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=latest,enable=${{ env.PUBLISH == 'true' }}
 
       - name: Login to Docker Hub
@@ -86,9 +88,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/pywebtools-sandbox
+          # only two tags per release (latest and the version) so Docker Hub is not littered with
+          # one tag per commit; a manual deploy is tagged with its commit so it can be told apart
           tags: |
             type=semver,pattern={{version}}
-            type=sha
+            type=sha,enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=latest,enable=${{ env.PUBLISH == 'true' }}
 
       - name: Login to Docker Hub

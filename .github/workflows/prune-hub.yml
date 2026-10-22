@@ -1,0 +1,51 @@
+name: Prune Docker Hub tags
+
+# Deletes image tags on Docker Hub that are neither `latest` nor a release version
+# (`<major>.<minor>.<patch>`), for both the app and the sandbox repository. Run by hand
+# from the Actions tab. Each tag is only a pointer; layers no tag refers to are garbage
+# collected by Docker Hub.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only list the tags that would be deleted"
+        type: boolean
+        default: true
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete stale tags
+        env:
+          HUB_USER: ${{ secrets.DOCKER_USERNAME }}
+          HUB_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          jwt=$(curl -sf -X POST https://hub.docker.com/v2/users/login/ \
+            -H "Content-Type: application/json" \
+            -d "{\"username\": \"$HUB_USER\", \"password\": \"$HUB_TOKEN\"}" | jq -r .token)
+          for repo in pywebtools pywebtools-sandbox; do
+            echo "== $HUB_USER/$repo"
+            url="https://hub.docker.com/v2/repositories/$HUB_USER/$repo/tags?page_size=100"
+            tags=""
+            while [ "$url" != "null" ] && [ -n "$url" ]; do
+              page=$(curl -sf -H "Authorization: JWT $jwt" "$url")
+              tags="$tags $(echo "$page" | jq -r '.results[].name')"
+              url=$(echo "$page" | jq -r '.next')
+            done
+            for tag in $tags; do
+              case "$tag" in
+                latest) continue ;;
+                [0-9]*.[0-9]*.[0-9]*) continue ;;
+              esac
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "would delete $tag"
+              else
+                curl -sf -X DELETE -H "Authorization: JWT $jwt" \
+                  "https://hub.docker.com/v2/repositories/$HUB_USER/$repo/tags/$tag/" && echo "deleted $tag"
+              fi
+            done
+          done
