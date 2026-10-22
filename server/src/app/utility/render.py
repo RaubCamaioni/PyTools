@@ -131,6 +131,7 @@ def list_items(
                 "start": end,
                 "end": end + page,
                 "tags": " ".join(tags),
+                "root_path": base_url or "",  # fragments rendered outside a request must be told the prefix
             },
         )
         htmlx.append(form)
