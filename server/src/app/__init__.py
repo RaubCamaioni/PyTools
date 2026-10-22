@@ -22,6 +22,8 @@ class _ENVIRONMENT:
     GITHUB_REDIRECT_URI: str = os.environ.get("GITHUB_REDIRECT_URI", "https://pywebtools.com/auth/github")
     # the GitHub account that owns the tools uploaded under the original (Google) account
     OWNER_GITHUB_LOGIN: str = os.environ.get("OWNER_GITHUB_LOGIN", "RaubCamaioni")
+    # the URL prefix the app is served under, e.g. "/tools" behind a reverse proxy; "" at the root
+    ROOT_PATH: str = os.environ.get("ROOT_PATH", "").rstrip("/")
     # SANDBOX_* variables all have defaults; see SandboxConfig
     sandbox: SandboxConfig = field(default_factory=lambda: SandboxConfig.from_environment(os.environ))
 
@@ -35,7 +37,12 @@ ENVIRONMENT = _ENVIRONMENT()
 
 ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
 APP_DIRECTORY = Path(__file__).parent
-TEMPLATES = Jinja2Templates(directory=APP_DIRECTORY / "webapp" / "templates")
+def _root_path(request) -> dict:
+    """Every template gets `root_path`, the prefix the app is mounted at, to build its URLs with."""
+    return {"root_path": request.scope.get("root_path") or ""}
+
+
+TEMPLATES = Jinja2Templates(directory=APP_DIRECTORY / "webapp" / "templates", context_processors=[_root_path])
 
 
 def _static_version() -> str:

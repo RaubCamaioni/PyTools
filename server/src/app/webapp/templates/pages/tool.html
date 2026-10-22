@@ -208,7 +208,7 @@
             // result file links download in place: a failure (the file expired, the app restarted) is shown next
             // to the link instead of navigating the page to an error response
             document.getElementById("return").addEventListener("click", async function (event) {
-                const link = event.target.closest('a[href^="/download/"]');
+                const link = event.target.closest('a[href^="{{ root_path }}/download/"]');
                 if (!link || event.ctrlKey || event.metaKey || event.shiftKey) return;
                 event.preventDefault();
                 const note = link.nextElementSibling?.classList.contains("download-note")
@@ -235,6 +235,6 @@
                 }
             });
         </script>
-        <script async type="module" src="/scripts/stl-viewer.js"></script>
+        <script async type="module" src="{{ root_path }}/scripts/stl-viewer.js"></script>
     </body>
 </html>

@@ -223,8 +223,8 @@ def _copy_button(text: str, label: str = "[copy]") -> str:
     return f'<button type="button" class="copy" data-copy="{escape(text, quote=True)}">{label}</button>'
 
 
-def _download_link(path: Path) -> str:
-    href = (Path("/download") / path.relative_to(path.anchor)).as_posix()
+def _download_link(path: Path, root: str) -> str:
+    href = root + (Path("/download") / path.relative_to(path.anchor)).as_posix()
     link = f'<a href="{href}" download="{escape(path.name, quote=True)}">{escape(path.name)}</a>'
     suffix = path.suffix.lower()
     if suffix == ".stl":
@@ -242,7 +242,7 @@ def _download_link(path: Path) -> str:
     return f'<span class="file">{link}</span>{embed}'
 
 
-def _scalar(value: Any) -> tuple[str, str]:
+def _scalar(value: Any, root: str = "") -> tuple[str, str]:
     """(html, raw text to copy) for a leaf value."""
     if isinstance(value, bool) or value is None:
         text = {True: "True", False: "False", None: "None"}[value]
@@ -251,7 +251,7 @@ def _scalar(value: Any) -> tuple[str, str]:
         text = repr(value)
         return f'<span class="val num">{escape(text)}</span>', text
     if isinstance(value, (Path, PosixPath)):
-        return f'<span class="val">{_download_link(value)}</span>', str(value)
+        return f'<span class="val">{_download_link(value, root)}</span>', str(value)
     text = str(value)
     return f'<span class="val str">{escape(text)}</span>', text
 
@@ -260,7 +260,7 @@ CONTAINERS = (dict, list, tuple, set, frozenset)
 SEQUENCES = (list, tuple, set, frozenset)
 
 
-def _node(value: Any) -> str:
+def _node(value: Any, root: str = "") -> str:
     """HTML for any value: a dict as key/value rows, a list as bullet rows, a leaf with its
     [copy] bracket. A list is copied whole (one item per line), never item by item.
     """
@@ -273,9 +273,9 @@ def _node(value: Any) -> str:
             if isinstance(item, CONTAINERS) and item:
                 copy = _copy_button(_plain_text(item)) if isinstance(item, SEQUENCES) else ""
                 rows.append(f'<div class="kv">{label}<span class="cell">{copy}</span></div>')
-                rows.append(f'<div class="nest">{_node(item)}</div>')
+                rows.append(f'<div class="nest">{_node(item, root)}</div>')
             else:
-                html, raw = _scalar(item) if not isinstance(item, CONTAINERS) else (_node(item), "")
+                html, raw = _scalar(item, root) if not isinstance(item, CONTAINERS) else (_node(item, root), "")
                 copy = _copy_button(raw) if raw else ""
                 # the bracket follows its value inside one cell, so it is never far from what it copies
                 rows.append(f'<div class="kv">{label}<span class="cell">{html}{copy}</span></div>')
@@ -287,13 +287,13 @@ def _node(value: Any) -> str:
         for item in value:
             if isinstance(item, CONTAINERS) and item:
                 rows.append(
-                    f'<div class="item"><span class="bullet">-</span><div class="nest">{_node(item)}</div></div>'
+                    f'<div class="item"><span class="bullet">-</span><div class="nest">{_node(item, root)}</div></div>'
                 )
             else:
-                html = _scalar(item)[0] if not isinstance(item, CONTAINERS) else _node(item)
+                html = _scalar(item, root)[0] if not isinstance(item, CONTAINERS) else _node(item, root)
                 rows.append(f'<div class="item"><span class="bullet">-</span>{html}</div>')
         return f'<div class="items">{"".join(rows)}</div>'
-    html, raw = _scalar(value)
+    html, raw = _scalar(value, root)
     return f'<div class="item">{html}{_copy_button(raw)}</div>'
 
 
@@ -329,8 +329,9 @@ ALLOWED_ATTRIBUTES = {
 }
 
 
-def render(results: Any) -> str:
-    body = _node(results)
+def render(results: Any, root_path: str = "") -> str:
+    """The result panel; `root_path` is the prefix the app is mounted at (for file links)."""
+    body = _node(results, root_path or "")
     # [copy all] only for a container with content: a single value already has its own [copy]
     tools = ""
     if isinstance(results, (dict, list, tuple, set, frozenset)) and results:

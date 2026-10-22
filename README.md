@@ -110,7 +110,27 @@ The environment file holds:
 | `DATABASE` | Path of the SQLite database, for example `/data/database.db` (required). |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_REDIRECT_URI` | GitHub OAuth login. Without them the site runs with login disabled. |
 | `OWNER_GITHUB_LOGIN` | The GitHub account that owns the site's own tools. |
+| `ROOT_PATH` | The URL prefix the app is served under when it does not own the whole host, for example `/tools`. Empty (the default) at the root. |
 | `SANDBOX_IMAGE`, `SANDBOX_TIMEOUT_SECONDS`, `SANDBOX_MEMORY`, `SANDBOX_CPUS`, `SANDBOX_PIDS`, `SANDBOX_MAX_CONCURRENT`, `SANDBOX_QUEUE_SECONDS`, `SANDBOX_RUN_DIR`, `SANDBOX_MAX_OUTPUT_MB` | Limits for tool runs; every one has a default (see `server/src/app/utility/sandbox_config.py`). |
+
+### Serving under a sub-path
+
+The app builds every link, asset URL, htmx call, redirect and result file link from the
+prefix it is mounted at, so it can live under a path of an existing site. Set `ROOT_PATH`
+to the prefix and have the reverse proxy pass requests through with the prefix intact,
+for example in nginx:
+
+```nginx
+location /tools/ {
+    proxy_pass http://172.18.0.1:8080;   # no trailing slash: the /tools prefix is kept
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_buffering off;                 # the execution trace is a server-sent event stream
+}
+```
+
+The GitHub OAuth callback then becomes `https://<host>/tools/auth/github`, in both the
+OAuth app's settings and `GITHUB_REDIRECT_URI`.
 
 `GET /healthz` reports whether the sandbox self-test has passed; tool runs return 503
 until it has. The app pulls the sandbox image itself and re-checks it periodically, so
