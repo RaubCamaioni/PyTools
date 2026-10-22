@@ -117,12 +117,13 @@ The environment file holds:
 
 The app builds every link, asset URL, htmx call, redirect and result file link from the
 prefix it is mounted at, so it can live under a path of an existing site. Set `ROOT_PATH`
-to the prefix and have the reverse proxy pass requests through with the prefix intact,
-for example in nginx:
+to the prefix and have the reverse proxy strip it before forwarding: uvicorn adds
+`root_path` back onto every request path itself, so a proxy that passed the prefix
+through would make the app see it twice. In nginx the trailing slash does the stripping:
 
 ```nginx
 location /tools/ {
-    proxy_pass http://172.18.0.1:8080;   # no trailing slash: the /tools prefix is kept
+    proxy_pass http://172.18.0.1:8080/;  # trailing slash: /tools/x reaches the app as /x
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_buffering off;                 # the execution trace is a server-sent event stream
