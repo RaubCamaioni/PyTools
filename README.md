@@ -137,13 +137,30 @@ tailwindcss -i server/src/app/webapp/static/input.css -o server/src/app/webapp/s
 Page-specific CSS lives inline in the templates under `templates/components/` so it
 does not depend on a rebuild.
 
-## Deployment
+## Contributing and releasing
 
-A push to `main` builds `pywebtools` (the app) and `pywebtools-sandbox` (the runtime)
-with GitHub Actions and pushes them to Docker Hub. The build records the commit in the
-app image, and the server pulls the new image and restarts the app; a change is
-usually live within a few minutes. The release version shown on the site is the
-package version in `server/pyproject.toml`.
+Work happens on branches that are merged into `main` through a pull request (squash
+merge, so `main` keeps one commit per change). Every push and pull request builds both
+container images in GitHub Actions to prove they build; nothing is deployed by a merge.
+
+A release deploys:
+
+1. Bump `version` in `server/pyproject.toml` on a branch and merge it.
+2. Tag the merge commit with that version and push the tag:
+
+   ```bash
+   git tag v0.3.0 && git push origin v0.3.0
+   ```
+
+   The workflow refuses a tag that does not match the package version. It then builds
+   `pywebtools` (the app) and `pywebtools-sandbox` (the runtime), pushes them to Docker
+   Hub as `latest` and as the version, and the server pulls them and restarts the app,
+   usually within a few minutes. The build records the commit in the app image, and
+   every page shows `v<version>+<commit>` bottom-right.
+
+To deploy without a release, open the **Actions** tab, choose **Build and publish
+PyTools images**, click **Run workflow**, pick the branch and leave **publish** ticked.
+That publishes the chosen branch as `latest` exactly as a release would.
 
 Production notes for the host:
 
