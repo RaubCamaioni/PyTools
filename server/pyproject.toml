@@ -1,6 +1,6 @@
 [project]
 name = "pytools"
-version = "0.3.2"
+version = "0.3.3"
 description = "Python script execution web wrapper."
 readme = "README.md"
 requires-python = ">=3.10"
