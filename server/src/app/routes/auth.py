@@ -116,7 +116,8 @@ def login_control(request: Request) -> str:
     """
     user = _session_user(request)
     if user is not None:
-        return TEMPLATES.get_template("components/logout_button.html").render(name=user.alias)
+        root_path = request.scope.get("root_path") or ""
+        return TEMPLATES.get_template("components/logout_button.html").render(name=user.alias, root_path=root_path)
     url = None
     if github.configured:
         state = secrets.token_urlsafe(24)
@@ -167,7 +168,7 @@ async def auth_github(request: Request, code: str, state: str, session: SessionD
         session.commit()
 
     request.session["user"] = user.model_dump_json()
-    return RedirectResponse(url="/")
+    return RedirectResponse(url=(request.scope.get("root_path") or "") + "/")
 
 
 @router.get("/whoami")

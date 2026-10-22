@@ -1,6 +1,7 @@
 {# terminal prompt: user@host:cwd $ on the left, the bracket links on the right.
    Pages set `cwd` before including this (default ~). The link for the current page is inverted. #}
-{% set path = request.url.path %}
+{# the request path below the mount prefix, so the active link is right under any root_path #}
+{% set path = request.url.path[root_path|length:] or '/' %}
 {% macro navlink(href, label, active) -%}
 <a href="{{ root_path }}{{ href }}" class="no-underline px-1 {% if active %}bg-paper text-ink{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[{{ label }}]</a>
 {%- endmacro %}

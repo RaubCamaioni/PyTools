@@ -265,7 +265,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "runs": render.format_runs(tool.usage),
             "request": request,
             "root_path": request.scope.get("root_path"),
-            "endpoint": f"/tool/{tool.id}",
+            "endpoint": f"{request.scope.get('root_path') or ''}/tool/{tool.id}",
             "code": tool.code,
             "lines": len(tool.code.splitlines()),  # vim's count: a final newline ends a line, it does not start one
             "form_groups": render.args_to_form(tool.arguments),
@@ -456,7 +456,7 @@ async def run_isolated(
         return JSONResponse({"detail": result.message})
 
     if htmx:
-        return HTMLResponse(content=render.render(result.results))
+        return HTMLResponse(content=render.render(result.results, request.scope.get("root_path") or ""))
     else:
         return json.dumps(result.results, cls=PathEncoder)
 

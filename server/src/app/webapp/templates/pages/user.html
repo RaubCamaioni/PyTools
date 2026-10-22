@@ -15,7 +15,7 @@
 
             {# settings as a command line: $ alias <name> [ save ] #}
             <form
-                hx-post="/manage/user/settings"
+                hx-post="{{ root_path }}/manage/user/settings"
                 hx-swap="none"
                 onsubmit="event.preventDefault();"
                 class="flex flex-wrap items-center gap-2 whitespace-nowrap">
