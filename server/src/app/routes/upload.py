@@ -2,7 +2,7 @@ from fastapi import Request, APIRouter, UploadFile, Query
 from fastapi.responses import HTMLResponse
 from fastapi.exceptions import HTTPException
 from app.models import tools
-from app.models.tools import SessionDep, User, FilterDep, get_user
+from app.models.tools import SessionDep, User, FilterDep, get_user, lift_expired_ban
 from app.routes.auth import session_user
 from pathlib import Path
 from app import TEMPLATES, logger
@@ -59,9 +59,14 @@ async def tool_upload_post(
     filter: FilterDep,
     id: Optional[int] = None,
 ):
-    if "user" not in request.session:
+    session_account = session_user(request)
+    if session_account is None:
         raise HTTPException(status_code=404, detail="Uploading code requires login.")
-    user: User = User.model_validate_json(request.session["user"])
+    # bans and roles are read from the database: the cookie only says who is logged in
+    user: User = get_user(session, session_account.id)
+    lift_expired_ban(session, user)
+    if user.banned:
+        raise HTTPException(status_code=403, detail="This account is banned.")
 
     name = file.filename
     if name is None:
@@ -75,6 +80,10 @@ async def tool_upload_post(
 
     db_tool: Optional[tools.Tool] = tools.get_tool(session, id)
 
+    # only the owner replaces a tool's code; an admin removes an offending tool instead
+    if db_tool is not None and db_tool.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Tool does not exist.")
+
     if db_tool is None:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
         if tool is None:
@@ -85,7 +94,7 @@ async def tool_upload_post(
     else:
         tool = tools.create_tool(user.id, Path(name).stem, code.decode())
         if tool is None:
-            return HTTPException(status_code=404, detail="Error updating tool.")
+            raise HTTPException(status_code=404, detail="Error updating tool.")
         db_tool.name = tool.name
         db_tool.code = tool.code
         db_tool.arguments = tool.arguments
@@ -130,6 +139,10 @@ async def tool_set_public(
     user: User = User.model_validate_json(request.session["user"])
 
     db_tool: Optional[tools.Tool] = tools.get_tool(session, id)
+
+    # only the owner replaces a tool's code; an admin removes an offending tool instead
+    if db_tool is not None and db_tool.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Tool does not exist.")
 
     if db_tool is None:
         raise HTTPException(status_code=404, detail="Tool does not exist.")
