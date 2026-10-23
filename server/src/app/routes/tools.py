@@ -18,7 +18,7 @@ from starlette.datastructures import UploadFile as StarUploadFile
 from typing import Literal, get_origin, Annotated, Optional
 from contextlib import asynccontextmanager, suppress
 from zipfile import ZipFile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from io import BytesIO
 import asyncio
 import secrets
@@ -378,6 +378,26 @@ async def public_tool(
     return HTMLResponse(status_code=200)
 
 
+UPLOAD_NAME_UNSAFE = re.compile(r"[^A-Za-z0-9._ -]")
+
+
+def _upload_path(temp_dir: Path, key: str, filename: Optional[str]) -> Path:
+    """Where an uploaded file is written: its own directory, inputs/<argument>/, under a cleaned name.
+
+    The name in the multipart header is the visitor's: `/x` or `../x` would place the file anywhere the
+    app user can write. Only the last component survives, reduced to plain characters and without a
+    leading dot; tools still see a readable name (they name their output after it).
+    """
+    name = PurePosixPath((filename or "").replace("\\", "/")).name
+    name = UPLOAD_NAME_UNSAFE.sub("_", name).lstrip(". ")[:128] or key
+    directory = temp_dir / "inputs" / key
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / name
+    if path.resolve().parent != directory.resolve():
+        raise HTTPException(status_code=400, detail="Bad upload filename")
+    return path
+
+
 async def _run_tool(request: Request, id: int, temp_dir: Path, session, channel):
     if not runner.available:
         raise HTTPException(status_code=503, detail="Sandbox unavailable")
@@ -408,8 +428,8 @@ async def _run_tool(request: Request, id: int, temp_dir: Path, session, channel)
             raise HTTPException(status_code=400, detail=f"Argument Error: '{key}' has an unsupported annotation")
 
         if isinstance(value, StarUploadFile):
-            upload_path = temp_dir / value.filename
-            with open(upload_path, "wb+") as f:
+            upload_path = _upload_path(temp_dir, key, value.filename)
+            with open(upload_path, "xb") as f:
                 f.write(value.file.read())
             kwargs[key] = upload_path
         elif get_origin(python_type) is Literal:
