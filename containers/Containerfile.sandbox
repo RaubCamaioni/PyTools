@@ -10,12 +10,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libgomp1 \
   && rm -rf /var/lib/apt/lists/*
 
+# Runtime image: no package installer. The base image's pip is removed here and the venv's after the install.
+RUN python3 -m pip uninstall -y pip
+
 RUN useradd -u 1001 -m app && mkdir -p /venvs && chown app:app /venvs
 
 USER app
 COPY --chown=app:app sandbox /tmp/sandbox
 RUN python3 -m venv /venvs/sandbox && \
   /venvs/sandbox/bin/pip install --no-cache-dir /tmp/sandbox && \
+  /venvs/sandbox/bin/pip uninstall -y pip && \
   rm -rf /tmp/sandbox
 
 WORKDIR /box
