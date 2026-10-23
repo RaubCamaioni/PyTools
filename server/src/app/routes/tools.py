@@ -30,6 +30,7 @@ import os
 from app.utility import render, serializer, security
 from app.utility.podman_runner import PodmanRunner, Outcome, SandboxBusy, SandboxUnavailable
 from app.utility.trace import TraceRegistry
+from app.utility.annotations import AnnotationError, resolve_annotation
 from app import TEMPLATES, ALLOWED_CHARACTERS, logger, ENVIRONMENT
 from app.models import tools as db_tools
 from app.routes.auth import User, session_user
@@ -399,8 +400,12 @@ async def _run_tool(request: Request, id: int, temp_dir: Path, session, channel)
         f.write(tool.code)
 
     for key, value in form_data.items():
-        # TODO: saftey check: tool arguments have been parsed at this point (maybe pre cast them?)
-        python_type = eval(tool.arguments[key][0])
+        # the stored annotation is mapped to a type through an allow-list, never evaluated: this runs
+        # in the web app, outside the sandbox
+        try:
+            python_type = resolve_annotation(tool.arguments[key][0])
+        except AnnotationError:
+            raise HTTPException(status_code=400, detail=f"Argument Error: '{key}' has an unsupported annotation")
 
         if isinstance(value, StarUploadFile):
             upload_path = temp_dir / value.filename
