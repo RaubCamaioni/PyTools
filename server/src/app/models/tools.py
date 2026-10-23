@@ -21,6 +21,7 @@ import ast
 import black
 
 from app import ENVIRONMENT
+from app.utility.annotations import AnnotationError, check_annotation
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -396,7 +397,12 @@ def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
         if not arg.annotation:
             detail = "Annotation Error: arguments to entrypoint function must have annotations"
             raise HTTPException(status_code=400, detail=detail)
-        arguments[arg.arg] = (ast.unparse(arg.annotation), default)
+        # only the allow-listed shapes are stored: the web app reads them outside the sandbox
+        try:
+            annotation = check_annotation(arg.annotation)
+        except AnnotationError as e:
+            raise HTTPException(status_code=400, detail=f"Annotation Error: '{arg.arg}': {e}")
+        arguments[arg.arg] = (annotation, default)
 
     return arguments
 
