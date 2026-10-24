@@ -18,8 +18,9 @@ router = APIRouter()
 
 
 def normalise_kind(value: Optional[str]) -> Optional[str]:
-    """The view a request asks for: "model" (only tools returning a CadQuery object) or None (every tool)."""
-    return "model" if value == "model" else None
+    """The view a request asks for: "model" (only tools returning a CadQuery object), "script" (every other tool:
+    converters, calculators, text tools) or None (every tool)."""
+    return value if value in ("model", "script") else None
 
 
 def category_counts(session: Session, kind: Optional[str] = None) -> dict[str, int]:
@@ -67,12 +68,12 @@ def index_page(
     request: Request, session: Session, category: Optional[str] = None, search: str = "", kind: Optional[str] = None
 ):
     """The front page; with `category`, that category's page (callers check it exists); with kind "model", only
-    the models, as cards."""
+    the models, as cards; with kind "script", only the rest."""
     kind = normalise_kind(kind)
     crumbs, description = [], ""
     if category is not None:
         top, _, sub = category.partition("/")
-        view = "?kind=model" if kind else ""
+        view = f"?kind={kind}" if kind else ""
         crumbs = [(categories.find(top).name, f"/c/{top}{view}")]
         if sub:
             crumbs.append((categories.find(category).name, f"/c/{category}{view}"))

@@ -123,7 +123,7 @@ def test_cleared_categories_fall_back_to_misc(client, filed):
     assert "br_cleared" in listed(client, "misc") and "br_cleared" not in listed(client, "home")
 
 
-# --- the kind view: ?kind=model -----------------------------------------------------------------------------------
+# --- the kind view: ?kind=model, ?kind=script --------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -178,7 +178,28 @@ def test_counts_and_the_bar_follow_the_view(client, kinds):
     assert ">Home <" in model_bar
 
 
-@pytest.mark.parametrize("junk", ["MODEL", "<b>x</b>", "", "script", "models"])
+def test_the_script_view_lists_only_scripts_as_rows(client, kinds):
+    page = client.post("/tools?start=0&end=500", data={"search": "kd_", "kind": "script"}).text
+    assert f'href="/tool/{kinds["kd_script"]}"' in page and f'href="/tool/{kinds["kd_model"]}"' not in page
+    assert '<li class="card">' not in page
+
+
+def test_the_script_view_keeps_kind_in_every_link(client, kinds):
+    page = client.get("/", params={"kind": "script"}).text
+    bar = page.split('id="category-bar"')[1].split("</nav>")[0]
+    links = re.findall(r'href="(/c/[^"]*)"', bar)
+    assert links and all(link.endswith("?kind=script") for link in links)
+    assert '<input type="hidden" name="kind" value="script">' in page and 'class="mt-3 gallery' not in page
+    with db.Session(db.engine) as session:
+        scripts, models = browse.category_counts(session, "script"), browse.category_counts(session, "model")
+        everything = browse.category_counts(session)
+    assert all(scripts[k] + models[k] == everything[k] for k in everything)  # every tool is one or the other
+    assert re.search(r'href="/\?kind=script" class="[^"]*font-bold[^"]*">\[scripts\]', page)  # the switch marks it
+    sub = client.get("/c/text/formatting", params={"kind": "script"}).text
+    assert 'href="/c/text?kind=script"' in sub
+
+
+@pytest.mark.parametrize("junk", ["MODEL", "<b>x</b>", "", "scripts", "models"])
 def test_an_unknown_kind_is_the_all_view(client, kinds, junk):
     r = client.get("/", params={"kind": junk})
     assert r.status_code == 200 and "<b>x</b>" not in r.text

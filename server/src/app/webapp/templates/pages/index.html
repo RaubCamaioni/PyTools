@@ -10,7 +10,7 @@
 
         {% include 'components/header.html'%}
 
-        <div class="{% if kind %}max-w-6xl{% else %}max-w-4xl{% endif %} mx-auto px-4">
+        <div class="{% if kind == "model" %}max-w-6xl{% else %}max-w-4xl{% endif %} mx-auto px-4">
             {# on a category page: where we are and what the category holds #}
             {% if crumbs %}
             <div class="mb-2">
@@ -45,17 +45,18 @@
                 {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
             </form>
 
-            {# the view: every tool, or only the models (tools returning a CadQuery object) as cards #}
+            {# the view: every tool, only the models (tools returning a CadQuery object) as cards, or only the scripts #}
             {% set here = root_path ~ ("/c/" ~ category if category else "/") %}
             <div class="mt-2">
-                <a href="{{ here }}" class="no-underline px-1 {% if not kind %}font-bold{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[all]</a>
-                <a href="{{ here }}?kind=model" class="no-underline px-1 {% if kind %}font-bold{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[models]</a>
+                {%- for value, label in [(none, "all"), ("model", "models"), ("script", "scripts")] %}
+                <a href="{{ here }}{% if value %}?kind={{ value }}{% endif %}" class="no-underline px-1 {% if kind == value %}font-bold{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[{{ label }}]</a>
+                {%- endfor %}
             </div>
 
             {% include 'components/category_bar.html' %}
 
             {# ls output: columns of file names #}
-            <ul id="tool-list" class="mt-3 {% if kind %}gallery{% else %}grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6{% endif %}">
+            <ul id="tool-list" class="mt-3 {% if kind == "model" %}gallery{% else %}grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6{% endif %}">
                 {% with start=0, end=50, tags=search or "" %}
                     {% include 'components/tool_scroll_loader.html'%}
                 {% endwith %}

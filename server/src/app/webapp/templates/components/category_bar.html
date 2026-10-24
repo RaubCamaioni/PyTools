@@ -1,7 +1,7 @@
 {# the category tree under the search box: each category opens to its subcategories; counts are public tools of
-   the current view (all, or models with ?kind=model), and empty ones are left out. Miscellaneous has no
+   the current view (all, models with ?kind=model, or scripts with ?kind=script), and empty ones are left out. Miscellaneous has no
    subcategories and is a plain link. Every link keeps the view. #}
-{% set view = "?kind=model" if kind == "model" else "" %}
+{% set view = "?kind=" ~ kind if kind else "" %}
 <nav id="category-bar" class="flex flex-wrap items-start gap-x-4 gap-y-1 mt-2" aria-label="categories">
     {%- for c in bar %}
     {%- if c.subs %}
