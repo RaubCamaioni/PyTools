@@ -219,3 +219,11 @@ async def test_a_converter_still_returns_its_output(runner, run_dir):
     r = await runner.run(write_code(run_dir, "json_yaml_converter", code, args), run_dir)
     assert r.outcome is Outcome.OK, r
     assert Path(r.results).read_text().strip() == "a: 1"
+
+
+async def test_a_model_can_emboss_text(cadquery_runner, run_dir):
+    # CadQuery's text() needs a font in the image (the kitchen models emboss their labels)
+    code = "import cadquery as cq\n\ndef label(size: float = 10) -> cq.Workplane:\n    return cq.Workplane().box(40, 20, 4).faces('>Z').workplane().text('50 ml', size, -1)\n"
+    r = await cadquery_runner.run(write_code(run_dir, "label", code, {"size": 8.0}), run_dir)
+    assert r.outcome is Outcome.OK, r
+    assert isinstance(r.results, dict) and r.results["meta"]["solids"] == 1, r.results
