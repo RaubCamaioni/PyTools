@@ -1257,3 +1257,525 @@ video_to_video:
   categories: [converters/media]
   tags: [video]
   description: "Convert a video to another format."
+
+# CadQuery models (from the CadQuery Catalog): created on the site by apply-manifest when missing
+bag_clip:
+  file: models/bag_clip.py
+  categories: [home/kitchen]
+  tags: [bag, clip, kitchen, spring, closure]
+battery_tray:
+  file: models/battery_tray.py
+  categories: [home/storage, hardware/electronics]
+  tags: [battery, tray, holder, aa, aaa, organizer]
+bearing_holder:
+  file: models/bearing_holder.py
+  categories: [hardware/mounts]
+  tags: [bearing, holder, 608, pocket, mount]
+bike_wall_hook:
+  file: models/bike_wall_hook.py
+  categories: [outdoor/garage]
+  tags: [bike, wall, hook, garage, wheel]
+blank_wall_plate:
+  file: models/blank_wall_plate.py
+  categories: [home/fixtures]
+  tags: [wall, plate, blank, switch, cover]
+bookend:
+  file: models/bookend.py
+  categories: [office/desk]
+  tags: [bookend, shelf, books, desk, weight]
+bottle_holder:
+  file: models/bottle_holder.py
+  categories: [home/wall]
+  tags: [bottle, holder, wall, ring, spray]
+bowl:
+  file: models/bowl.py
+  categories: [home/decor]
+  tags: [bowl, dish, revolve, kitchen, decor]
+broom_holder:
+  file: models/broom_holder.py
+  categories: [home/wall]
+  tags: [broom, holder, wall, clip, spring]
+bushing:
+  file: models/bushing.py
+  categories: [hardware/fasteners]
+  tags: [bushing, sleeve, bearing, flange, shaft]
+business_card_holder:
+  file: models/business_card_holder.py
+  categories: [office/desk]
+  tags: [business, card, holder, desk, display]
+cable_clip:
+  file: models/cable_clip.py
+  categories: [office/cables]
+  tags: [cable, clip, cord, organizer, desk]
+cable_comb:
+  file: models/cable_comb.py
+  categories: [office/cables]
+  tags: [cable, comb, sleeving, pc, management]
+cable_grommet:
+  file: models/cable_grommet.py
+  categories: [office/cables]
+  tags: [grommet, desk, cable, hole, cover]
+cable_spool:
+  file: models/cable_spool.py
+  categories: [office/cables]
+  tags: [cable, spool, winder, cord, organizer]
+cable_tie_mount:
+  file: models/cable_tie_mount.py
+  categories: [office/cables]
+  tags: [cable, tie, zip, mount, anchor]
+calibration_cube:
+  file: models/calibration_cube.py
+  categories: [workshop/printing]
+  tags: [calibration, cube, test, printer, tolerance]
+card_deck_box:
+  file: models/card_deck_box.py
+  categories: [hobbies/games]
+  tags: [card, deck, box, playing, tuck]
+coaster:
+  file: models/coaster.py
+  categories: [home/kitchen]
+  tags: [coaster, drink, cup, round, hexagon]
+container_with_lid:
+  file: models/container_with_lid.py
+  categories: [home/storage]
+  tags: [container, box, lid, storage]
+controller_stand:
+  file: models/controller_stand.py
+  categories: [office/stands]
+  tags: [controller, stand, gaming, desk, cradle]
+cookie_cutter:
+  file: models/cookie_cutter.py
+  categories: [home/kitchen]
+  tags: [cookie, cutter, kitchen, baking, shape]
+cord_cover:
+  file: models/cord_cover.py
+  categories: [office/cables]
+  tags: [cord, cover, floor, cable, ramp]
+corner_protector:
+  file: models/corner_protector.py
+  categories: [home/fixtures]
+  tags: [corner, protector, guard, furniture, bumper]
+cup_holder_insert:
+  file: models/cup_holder_insert.py
+  categories: [outdoor/garage]
+  tags: [cup, holder, car, insert, adapter]
+cup_tray:
+  file: models/cup_tray.py
+  categories: [workshop/tool-storage, hobbies/crafts]
+  tags: [tray, cups, round, organizer, paint]
+cutting_board_rack:
+  file: models/cutting_board_rack.py
+  categories: [home/kitchen]
+  tags: [cutting, board, rack, kitchen, stand]
+desk_cable_clamp:
+  file: models/desk_cable_clamp.py
+  categories: [office/cables]
+  tags: [desk, cable, clamp, edge, clip]
+dice:
+  file: models/dice.py
+  categories: [hobbies/games]
+  tags: [dice, d6, game, pips, cube]
+door_wedge:
+  file: models/door_wedge.py
+  categories: [home/fixtures]
+  tags: [door, stop, wedge, shim, household]
+drain_cover:
+  file: models/drain_cover.py
+  categories: [home/bathroom]
+  tags: [drain, cover, sink, strainer, shower]
+drawer_divider:
+  file: models/drawer_divider.py
+  categories: [home/storage]
+  tags: [drawer, divider, organizer, strip, kitchen]
+drawer_handle:
+  file: models/drawer_handle.py
+  categories: [home/fixtures]
+  tags: [handle, pull, drawer, cabinet, grip]
+drawer_tray:
+  file: models/drawer_tray.py
+  categories: [home/storage]
+  tags: [tray, drawer, organizer, divider, storage]
+earring_holder:
+  file: models/earring_holder.py
+  categories: [home/bedroom]
+  tags: [earring, holder, jewelry, stand, display]
+egg_holder:
+  file: models/egg_holder.py
+  categories: [home/kitchen]
+  tags: [egg, holder, kitchen, tray, fridge]
+extrusion_corner_bracket:
+  file: models/extrusion_corner_bracket.py
+  categories: [hardware/mounts]
+  tags: [extrusion, corner, bracket, 2020, joint]
+extrusion_end_cap:
+  file: models/extrusion_end_cap.py
+  categories: [hardware/mounts]
+  tags: [extrusion, end, cap, 2020, cover]
+fan_guard:
+  file: models/fan_guard.py
+  categories: [hardware/electronics]
+  tags: [fan, guard, grill, cooling, pc]
+french_cleat:
+  file: models/french_cleat.py
+  categories: [home/wall]
+  tags: [cleat, french, wall, hanger, mount]
+funnel:
+  file: models/funnel.py
+  categories: [workshop/shop-aids, home/kitchen]
+  tags: [funnel, kitchen, workshop, pour, cone]
+glasses_stand:
+  file: models/glasses_stand.py
+  categories: [home/bedroom]
+  tags: [glasses, stand, eyeglass, holder, desk]
+gridfinity_baseplate:
+  file: models/gridfinity_baseplate.py
+  categories: [workshop/tool-storage]
+  tags: [gridfinity, baseplate, storage, modular, workshop]
+gridfinity_bin:
+  file: models/gridfinity_bin.py
+  categories: [workshop/tool-storage]
+  tags: [gridfinity, bin, storage, modular, workshop]
+headphone_hook:
+  file: models/headphone_hook.py
+  categories: [office/stands]
+  tags: [headphone, hook, desk, hanger, clamp]
+hex_bit_holder:
+  file: models/hex_bit_holder.py
+  categories: [workshop/tool-storage]
+  tags: [bit, holder, hex, tool, organizer]
+hex_key_holder:
+  file: models/hex_key_holder.py
+  categories: [workshop/tool-storage]
+  tags: [hex, key, allen, holder, workshop]
+hex_tray:
+  file: models/hex_tray.py
+  categories: [home/decor]
+  tags: [tray, dish, hexagon, bowl, catchall]
+hinge:
+  file: models/hinge.py
+  categories: [hardware/mechanisms]
+  tags: [hinge, print, in, place, knuckle]
+honeycomb_wall_panel:
+  file: models/honeycomb_wall_panel.py
+  categories: [workshop/tool-storage]
+  tags: [honeycomb, wall, panel, hsw, workshop]
+hook_rail:
+  file: models/hook_rail.py
+  categories: [home/wall]
+  tags: [hooks, rail, coat, keys, wall]
+hose_hanger:
+  file: models/hose_hanger.py
+  categories: [outdoor/garden]
+  tags: [hose, hanger, garden, wall, reel]
+ice_cube_tray:
+  file: models/ice_cube_tray.py
+  categories: [home/kitchen]
+  tags: [ice, cube, tray, kitchen, silicone]
+image_relief:
+  file: models/image_relief.py
+  categories: [home/decor]
+  tags: [image, relief, depth, map, lithophane, heightmap]
+key_holder:
+  file: models/key_holder.py
+  categories: [home/wall]
+  tags: [keys, holder, wall, hooks, entryway]
+knife_block:
+  file: models/knife_block.py
+  categories: [home/kitchen]
+  tags: [knife, block, kitchen, slots, holder]
+knob:
+  file: models/knob.py
+  categories: [hardware/mechanisms]
+  tags: [knob, dial, handle, potentiometer, shaft]
+l_bracket:
+  file: models/l_bracket.py
+  categories: [hardware/mounts]
+  tags: [bracket, angle, shelf, corner, mount]
+lamp_shade:
+  file: models/lamp_shade.py
+  categories: [home/decor]
+  tags: [lamp, shade, light, decor, polygon]
+laptop_stand:
+  file: models/laptop_stand.py
+  categories: [office/stands]
+  tags: [laptop, stand, desk, riser, ergonomic]
+led_channel:
+  file: models/led_channel.py
+  categories: [hardware/electronics]
+  tags: [led, strip, channel, diffuser, lighting]
+measuring_cup:
+  file: models/measuring_cup.py
+  categories: [home/kitchen]
+  tags: [cup, measuring, kitchen, baking, volume]
+measuring_scoop:
+  file: models/measuring_scoop.py
+  categories: [home/kitchen]
+  tags: [scoop, measuring, kitchen, spoon, volume, ml, tsp, tbsp, cup]
+monitor_riser:
+  file: models/monitor_riser.py
+  categories: [office/stands]
+  tags: [monitor, riser, desk, stand, shelf]
+napkin_holder:
+  file: models/napkin_holder.py
+  categories: [home/kitchen]
+  tags: [napkin, holder, kitchen, table, upright]
+nema17_mount:
+  file: models/nema17_mount.py
+  categories: [hardware/mounts]
+  tags: [nema17, motor, mount, stepper, bracket]
+nut_trap_block:
+  file: models/nut_trap_block.py
+  categories: [hardware/fasteners]
+  tags: [nut, trap, block, captive, fastener]
+paper_towel_holder:
+  file: models/paper_towel_holder.py
+  categories: [home/kitchen]
+  tags: [paper, towel, holder, kitchen, roll]
+parts_sorter:
+  file: models/parts_sorter.py
+  categories: [workshop/tool-storage]
+  tags: [sorter, parts, tray, tilted, workshop]
+pegboard_bin:
+  file: models/pegboard_bin.py
+  categories: [workshop/tool-storage, home/storage]
+  tags: [pegboard, bin, cup, workshop, hook]
+pegboard_hook:
+  file: models/pegboard_hook.py
+  categories: [workshop/tool-storage]
+  tags: [pegboard, hook, workshop, tool, wall]
+pen_cup:
+  file: models/pen_cup.py
+  categories: [office/desk]
+  tags: [pen, cup, holder, desk, pencil]
+pencil_tray:
+  file: models/pencil_tray.py
+  categories: [office/desk]
+  tags: [pencil, tray, desk, pen, groove]
+phone_stand:
+  file: models/phone_stand.py
+  categories: [office/stands]
+  tags: [phone, tablet, stand, desk, holder]
+pi_mount_plate:
+  file: models/pi_mount_plate.py
+  categories: [hardware/electronics]
+  tags: [raspberry, pi, mount, plate, standoff]
+picture_frame:
+  file: models/picture_frame.py
+  categories: [home/decor]
+  tags: [frame, picture, photo, display, wall]
+pill_organizer:
+  file: models/pill_organizer.py
+  categories: [home/bedroom]
+  tags: [pill, organizer, weekly, tray, compartments]
+plant_marker:
+  file: models/plant_marker.py
+  categories: [outdoor/garden]
+  tags: [plant, marker, label, garden, stake]
+planter:
+  file: models/planter.py
+  categories: [outdoor/garden]
+  tags: [planter, pot, plant, garden, drainage]
+pot_lid_rack:
+  file: models/pot_lid_rack.py
+  categories: [home/kitchen]
+  tags: [pot, lid, rack, kitchen, cabinet]
+power_strip_cover:
+  file: models/power_strip_cover.py
+  categories: [office/cables]
+  tags: [power, strip, cover, cable, box]
+project_box:
+  file: models/project_box.py
+  categories: [hardware/electronics]
+  tags: [enclosure, project, box, electronics, lid]
+pulley:
+  file: models/pulley.py
+  categories: [hardware/mechanisms]
+  tags: [pulley, belt, wheel, groove, mechanism]
+rack_gear:
+  file: models/rack_gear.py
+  categories: [hardware/mechanisms]
+  tags: [rack, gear, linear, module, mechanism]
+remote_caddy:
+  file: models/remote_caddy.py
+  categories: [home/storage]
+  tags: [remote, caddy, organizer, sofa, slots]
+ring:
+  file: models/ring.py
+  categories: [hardware/fasteners]
+  tags: [ring, washer, spacer]
+rolling_pin_guides:
+  file: models/rolling_pin_guides.py
+  categories: [home/kitchen]
+  tags: [rolling-pin, dough, baking, thickness, kitchen]
+router_shelf:
+  file: models/router_shelf.py
+  categories: [home/wall]
+  tags: [router, shelf, wall, mount, strap]
+rubber_foot:
+  file: models/rubber_foot.py
+  categories: [home/fixtures]
+  tags: [foot, bumper, pad, furniture, electronics]
+ruler:
+  file: models/ruler.py
+  categories: [office/desk]
+  tags: [ruler, measure, mm, scale, desk]
+s_hook:
+  file: models/s_hook.py
+  categories: [home/kitchen]
+  tags: [s, hook, hanging, kitchen, rail]
+sanding_block:
+  file: models/sanding_block.py
+  categories: [workshop/shop-aids]
+  tags: [sanding, block, workshop, grip, paper]
+sd_card_holder:
+  file: models/sd_card_holder.py
+  categories: [office/desk]
+  tags: [sd, card, holder, memory, organizer]
+seed_tray:
+  file: models/seed_tray.py
+  categories: [outdoor/garden]
+  tags: [seed, tray, garden, starter, cells]
+servo_bracket:
+  file: models/servo_bracket.py
+  categories: [hardware/mounts]
+  tags: [servo, bracket, sg90, mount, robot]
+shaft_coupler:
+  file: models/shaft_coupler.py
+  categories: [hardware/mechanisms]
+  tags: [coupler, shaft, motor, coupling, bore]
+shelf_bracket:
+  file: models/shelf_bracket.py
+  categories: [home/wall]
+  tags: [shelf, bracket, wall, support, triangle]
+shim_set:
+  file: models/shim_set.py
+  categories: [workshop/shop-aids]
+  tags: [shim, spacer, set, leveling, washer]
+sliding_lid_box:
+  file: models/sliding_lid_box.py
+  categories: [home/storage]
+  tags: [box, sliding, lid, storage, groove]
+small_parts_bin:
+  file: models/small_parts_bin.py
+  categories: [workshop/tool-storage, home/storage]
+  tags: [bin, parts, storage, stackable, workshop]
+soap_dish:
+  file: models/soap_dish.py
+  categories: [home/bathroom]
+  tags: [soap, dish, bathroom, drain, tray]
+spacer:
+  file: models/spacer.py
+  categories: [hardware/fasteners]
+  tags: [spacer, standoff, washer, hardware]
+spaghetti_measure:
+  file: models/spaghetti_measure.py
+  categories: [home/kitchen]
+  tags: [spaghetti, pasta, portion, measuring, kitchen]
+spice_rack:
+  file: models/spice_rack.py
+  categories: [home/kitchen]
+  tags: [spice, rack, kitchen, tiered, jars]
+spool_holder:
+  file: models/spool_holder.py
+  categories: [workshop/printing]
+  tags: [spool, filament, holder, printer, stand]
+spur_gear:
+  file: models/spur_gear.py
+  categories: [hardware/mechanisms]
+  tags: [gear, spur, involute, module, teeth, mechanism]
+stackable_box:
+  file: models/stackable_box.py
+  categories: [home/storage]
+  tags: [box, stackable, crate, storage, lip]
+standoff_plate:
+  file: models/standoff_plate.py
+  categories: [hardware/electronics]
+  tags: [pcb, standoff, mount, plate, electronics]
+stl_coaster:
+  file: models/stl_coaster.py
+  categories: [home/decor, home/kitchen]
+  tags: [stl, coaster, emboss, silhouette, mesh]
+storage_box:
+  file: models/storage_box.py
+  categories: [home/storage]
+  tags: [box, container, storage, organizer]
+t_nut:
+  file: models/t_nut.py
+  categories: [hardware/fasteners]
+  tags: [t, nut, extrusion, 2020, slot]
+tablet_stand:
+  file: models/tablet_stand.py
+  categories: [office/stands, home/kitchen]
+  tags: [tablet, stand, desk, angle, kitchen]
+tea_light_holder:
+  file: models/tea_light_holder.py
+  categories: [home/decor]
+  tags: [tea, light, candle, holder, decor]
+test_tube_rack:
+  file: models/test_tube_rack.py
+  categories: [hobbies/science]
+  tags: [test, tube, rack, lab, holder]
+thread_spool_rack:
+  file: models/thread_spool_rack.py
+  categories: [hobbies/crafts]
+  tags: [thread, spool, rack, sewing, pegs]
+tolerance_test:
+  file: models/tolerance_test.py
+  categories: [workshop/printing]
+  tags: [tolerance, test, fit, clearance, printer]
+tool_rack:
+  file: models/tool_rack.py
+  categories: [workshop/tool-storage]
+  tags: [tool, rack, pliers, wrench, workshop]
+toothbrush_holder:
+  file: models/toothbrush_holder.py
+  categories: [home/bathroom]
+  tags: [toothbrush, holder, bathroom, cup, drain]
+trivet:
+  file: models/trivet.py
+  categories: [home/kitchen]
+  tags: [trivet, kitchen, hexagon, honeycomb, hot]
+tube:
+  file: models/tube.py
+  categories: [hardware/fasteners]
+  tags: [tube, pipe, sleeve, bushing, cylinder]
+tube_squeezer:
+  file: models/tube_squeezer.py
+  categories: [home/bathroom]
+  tags: [tube, squeezer, toothpaste, key, roller]
+twisted_vase:
+  file: models/twisted_vase.py
+  categories: [home/decor]
+  tags: [vase, twisted, decor, polygon, spiral]
+usb_stick_holder:
+  file: models/usb_stick_holder.py
+  categories: [office/desk]
+  tags: [usb, stick, holder, flash, organizer]
+vent_cover:
+  file: models/vent_cover.py
+  categories: [home/fixtures]
+  tags: [vent, cover, louver, grille, duct]
+wall_bottle_opener:
+  file: models/wall_bottle_opener.py
+  categories: [outdoor/garage]
+  tags: [bottle, opener, wall, mount, bar]
+wall_hook:
+  file: models/wall_hook.py
+  categories: [home/wall]
+  tags: [hook, wall, hanger, coat, screw]
+washer:
+  file: models/washer.py
+  categories: [hardware/fasteners]
+  tags: [washer, spacer, ring, hardware, shim]
+watch_stand:
+  file: models/watch_stand.py
+  categories: [home/bedroom]
+  tags: [watch, stand, charger, desk, display]
+wheel:
+  file: models/wheel.py
+  categories: [hardware/mechanisms]
+  tags: [wheel, robot, axle, tire, rc]
+yarn_bowl:
+  file: models/yarn_bowl.py
+  categories: [hobbies/crafts]
+  tags: [yarn, bowl, knitting, crochet, craft]
