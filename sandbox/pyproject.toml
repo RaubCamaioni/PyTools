@@ -5,7 +5,7 @@ description = "PyTools sandbox runtime: the tools' dependencies and the sandboxc
 requires-python = ">=3.12"
 dependencies = [
     # the runner the image's entrypoint calls; same tag as server/pyproject.toml
-    "sandboxcore @ https://github.com/RaubCamaioni/sandboxcore/archive/refs/tags/v0.1.0.tar.gz",
+    "sandboxcore @ https://github.com/RaubCamaioni/sandboxcore/archive/refs/tags/v0.2.1.tar.gz",
     "cadquery>=2.3.0",
     "ezdxf>=1.3.4",
     "numpy>=2.2.4",
@@ -69,5 +69,5 @@ dependencies = [
 ]
 
 [project.scripts]
-sandbox = "sandboxcore.python.runner:main"
+sandbox = "sandbox.runner:main"
 

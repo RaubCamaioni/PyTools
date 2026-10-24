@@ -184,3 +184,38 @@ async def test_cadquery_tools_produce_stl(cadquery_runner, run_dir, name):
     assert r.outcome is Outcome.OK, f"{name}: {r} after {elapsed:.1f}s"
     assert Path(r.results).suffix == ".stl" and Path(r.results).stat().st_size > 0
     print(f"{name}: {elapsed:.1f}s")  # visible with -s; production SANDBOX_TIMEOUT_SECONDS must cover this
+
+
+def write_code(run_dir, name, code, args=None):
+    """A tool given as code (not a file in tools/), staged like run_sample does."""
+    tool = run_dir / f"{name}.py"
+    tool.write_text(code)
+    with open(run_dir / "args.json", "w") as f:
+        serializer.dump(args or {}, f)
+    return tool
+
+
+async def test_a_returned_cadquery_object_is_exported_as_a_model(cadquery_runner, run_dir):
+    code = "import cadquery as cq\n\ndef cube(size: float = 10) -> cq.Workplane:\n    return cq.Workplane().box(size, size, size)\n"
+    r = await cadquery_runner.run(write_code(run_dir, "cube", code, {"size": 12.0}), run_dir)
+    assert r.outcome is Outcome.OK, r
+    assert set(r.results) == {"stl", "step", "preview", "meta"}
+    assert r.results["meta"]["size_mm"] == [12, 12, 12]
+    assert Path(r.results["stl"]).stat().st_size > 0 and Path(r.results["preview"]).read_text().lstrip().startswith("<")
+
+
+async def test_ezdxf_is_the_real_library(cadquery_runner, run_dir):
+    # the vtk stub is installed for CadQuery's import time; ezdxf must stay real for DXF tools
+    code = 'import ezdxf\n\ndef dxf(n: int = 1) -> str:\n    doc = ezdxf.new()\n    doc.modelspace().add_line((0, 0), (n, n))\n    doc.saveas("a.dxf")\n    return "a.dxf"\n'
+    r = await cadquery_runner.run(write_code(run_dir, "dxf", code, {"n": 3}), run_dir)
+    assert r.outcome is Outcome.OK and r.results == "a.dxf", r
+    assert "LINE" in (run_dir / "a.dxf").read_text()
+
+
+async def test_a_converter_still_returns_its_output(runner, run_dir):
+    (run_dir / "in.json").write_bytes(b'{"a": 1}')
+    code = (TOOLS / "converters" / "json_yaml_converter.py").read_text()
+    args = {"data_file": run_dir / "in.json", "output": "yaml"}
+    r = await runner.run(write_code(run_dir, "json_yaml_converter", code, args), run_dir)
+    assert r.outcome is Outcome.OK, r
+    assert Path(r.results).read_text().strip() == "a: 1"
