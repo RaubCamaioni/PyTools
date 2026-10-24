@@ -6,7 +6,7 @@
 # Check it: podman exec --user podman -e XDG_RUNTIME_DIR=/run/user/1000 <name> sandboxcore-doctor
 
 # the same version as the sandboxcore pin in server/pyproject.toml
-FROM docker.io/raubcamaioni/sandboxcore-base:0.2.0
+FROM docker.io/raubcamaioni/sandboxcore-base:0.2.1
 
 # the commit the image was built from, shown bottom-right on every page (CI passes GIT_SHA).
 # A file, not ENV: the app is a systemd user service and does not inherit the container environment.
