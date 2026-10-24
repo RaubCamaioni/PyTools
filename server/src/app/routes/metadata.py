@@ -19,8 +19,9 @@ from app.utility import render
 
 router = APIRouter()
 
-# the most tags the dropdown lists when nothing is typed (the whole list, browsed by scrolling)
-BROWSE_LIMIT = 500
+# the most tags the dropdown lists when nothing is typed: well above the 931 in use (2026-10), so the whole list
+# is browsable, but never unbounded
+BROWSE_LIMIT = 5000
 
 
 def can_edit(request: Request, session, tool: tools.Tool) -> bool:
