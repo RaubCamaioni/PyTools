@@ -70,18 +70,29 @@ async def validate_model(tool: tools.Tool) -> dict:
     return result.value
 
 
-def store_default_build(tool: tools.Tool, build: dict) -> None:
-    """Keep the default STL and STEP beside the database and the thumbnail and measurements on the row."""
-    target = ENVIRONMENT.MODELS_DIR / str(tool.id)
-    target.mkdir(parents=True, exist_ok=True)
+def read_default_build(build: dict) -> dict:
+    """Everything the default build produced, read and checked before anything is stored: a bad file rejects
+    the upload with nothing saved and the previous build kept."""
     # read again through the same checks (OutputFile.read): never a link or a FIFO the model left behind
-    for key, name in (("stl", "model.stl"), ("step", "model.step")):
-        (target / name).write_bytes(read_build_file(build[key], MAX_BYTES[key]))
+    files = {name: read_build_file(build[key], MAX_BYTES[key]) for key, name in (("stl", "model.stl"), ("step", "model.step"))}
     try:
-        tool.preview_svg = read_build_file(build["preview"], MAX_BYTES["preview"]).decode("utf-8")
+        preview = read_build_file(build["preview"], MAX_BYTES["preview"]).decode("utf-8")
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="Model Build Failed: preview.svg is not text")
-    tool.meta = checked_meta(build["meta"])
+    return {"files": files, "preview": preview, "meta": checked_meta(build["meta"])}
+
+
+def keep_default_build(tool: tools.Tool, build: dict) -> None:
+    """The thumbnail and measurements onto the row (from read_default_build)."""
+    tool.preview_svg, tool.meta = build["preview"], build["meta"]
+
+
+def store_default_files(tool_id: int, build: dict) -> None:
+    """The default STL and STEP beside the database (from read_default_build)."""
+    target = ENVIRONMENT.MODELS_DIR / str(tool_id)
+    target.mkdir(parents=True, exist_ok=True)
+    for name, data in build["files"].items():
+        (target / name).write_bytes(data)
 
 
 def forget_build(tool_id: int) -> None:
@@ -138,12 +149,14 @@ async def tool_create(
     if upload is None:
         raise HTTPException(status_code=400, detail="Choose the tool's .py file.")
     tool = await _create_tool(user.id, upload)
-    build = await validate_model(tool) if tool.kind == "model" else None
+    build = read_default_build(await validate_model(tool)) if tool.kind == "model" else None
+    if build is not None:
+        keep_default_build(tool, build)
     session.add(tool)
     session.commit()
     session.refresh(tool)
     if build is not None:
-        store_default_build(tool, build)
+        store_default_files(tool.id, build)
     metadata.save_all(session, tool.id, parsed)
     session.commit()
     return HTMLResponse(status_code=200)
@@ -169,13 +182,14 @@ async def tool_update(
         if db_tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool does not exist.")
         tool = await _create_tool(user.id, upload)
-        build = await validate_model(tool) if tool.kind == "model" else None
+        build = read_default_build(await validate_model(tool)) if tool.kind == "model" else None
         db_tool.name = tool.name
         db_tool.code = tool.code
         db_tool.arguments = tool.arguments
         db_tool.kind = tool.kind
         if build is not None:
-            store_default_build(db_tool, build)
+            keep_default_build(db_tool, build)
+            store_default_files(db_tool.id, build)
         else:  # no longer a model: its thumbnail, measurements and default files go
             db_tool.preview_svg, db_tool.meta = "", {}
             forget_build(db_tool.id)

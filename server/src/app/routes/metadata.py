@@ -19,6 +19,9 @@ from app.utility import render
 
 router = APIRouter()
 
+# the most tags the dropdown lists when nothing is typed (the whole list, browsed by scrolling)
+BROWSE_LIMIT = 500
+
 
 def can_edit(request: Request, session, tool: tools.Tool) -> bool:
     account = session_user(request)
@@ -69,6 +72,6 @@ async def edit_dialog(request: Request, id: int, session: SessionDep):
 @router.get("/tags/suggest")
 async def tag_suggestions(session: SessionDep, q: str = ""):
     """The tag editor's dropdown: tags in use on public tools that start with `q`, most used first; every
-    tag in use when nothing is typed, so the list can be browsed."""
-    limit = 50 if q.strip() else None
+    tag in use (up to BROWSE_LIMIT) when nothing is typed, so the list can be browsed."""
+    limit = 50 if q.strip() else BROWSE_LIMIT
     return [{"tag": tag, "count": count} for tag, count in suggest(session, q, limit)]

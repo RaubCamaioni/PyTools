@@ -15,7 +15,7 @@ from pathlib import Path
 import argparse
 import json
 import sys
-from typing import Callable
+from typing import Callable, Optional
 
 import yaml
 from sqlmodel import Session, select
@@ -95,7 +95,7 @@ CREATABLE = "models/"
 Post = Callable[[str, bytes, dict[str, list[str]]], tuple[int, str]]
 
 
-def create_missing(session: Session, manifest: dict, owner: int, apply: bool, tools_dir: Path, post: Post) -> list[str]:
+def create_missing(session: Session, manifest: dict, owner: int, apply: bool, tools_dir: Path, post: Optional[Post]) -> list[str]:
     """Create the manifest's models that the owner has no tool for: `post(filename, code, form)` uploads one
     (returning the status and the error detail); a created one is made public. A failure is reported and the
     rest still go. A stored model that is still private (a create whose answer was lost) is published.
@@ -143,6 +143,8 @@ def http_post(base_url: str, owner: int) -> Post:
     from app import ENVIRONMENT
     from app.models.tools import engine, get_user
 
+    if not ENVIRONMENT.SESSION_KEY:  # every upload would be refused as logged out
+        raise SystemExit("pytools-admin: SESSION_KEY is empty; read the env file as systemd does, not with sh")
     with Session(engine) as session:
         user_json = get_user(session, owner).model_dump_json()
     payload = base64.b64encode(json.dumps({"user": user_json}).encode())
@@ -194,9 +196,9 @@ def main(argv: list[str] = None) -> int:
     create_db_and_tables()  # the metadata tables exist even if the app has not started on this version yet
     manifest = yaml.safe_load(args.manifest.read_text(encoding="utf-8"))
     with Session(engine) as session:
-        created = create_missing(
-            session, manifest, args.owner, args.apply, args.manifest.parent, http_post(args.app, args.owner)
-        )
+        # only a real run signs in as the owner (which also adds the owner's row if it is missing)
+        post = http_post(args.app, args.owner) if args.apply else None
+        created = create_missing(session, manifest, args.owner, args.apply, args.manifest.parent, post)
         print("\n".join(created))
         code, lines = apply_manifest(
             session, manifest, args.owner, args.apply, Path(ENVIRONMENT.DATABASE).parent / "backups"
