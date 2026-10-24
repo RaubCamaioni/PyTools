@@ -102,12 +102,13 @@ def test_argument_inputs_are_console_fields():
 def test_user_tool_table_starts_with_a_header_row():
     from app.models.tools import Tool
 
-    html = render.list_item_user("", [Tool(id=1, name="a", code="", public=True, annonymous=True, usage=3, tags=[])])
-    assert html.index("NAME") < html.index("MODE") < html.index("RUNS") < html.index("ACTIONS") < html.index("a.py")
-    assert html.index("a.py") < html.index("[public]")  # the name, the row's identifier, comes first
-    assert html.index("ACTIONS") < html.index("[upload]") < html.index("a.py")  # the upload row leads the table
-    assert html.count('<li class="contents') == 3  # header + upload row + one tool row, all grid rows
-    assert html.count(">---<") == 3  # name, mode and runs do not apply to the upload row; [upload] is its action
+    html = render.list_item_user("", [Tool(id=1, name="a", code="", public=True, annonymous=True, usage=3)])
+    assert html.index("NAME") < html.index("MODE") < html.index("RUNS") < html.index("ACTIONS")
+    assert html.index("ACTIONS") < html.index("a.py") < html.index("[public]")  # the name, the row's identifier, comes first
+    assert html.index("ACTIONS") < html.index("[create]") < html.index("a.py")  # the create row leads the table
+    assert html.count('<li class="contents') == 3  # header + create row + one tool row, all grid rows
+    assert html.count(">---<") == 3  # name, mode and runs do not apply to the create row
+    assert "[edit]" in html.split("a.py")[1] and "CATEGORY" not in html and "Miscellaneous" not in html
 
 
 @pytest.mark.parametrize(

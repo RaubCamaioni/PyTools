@@ -168,6 +168,24 @@ def tool_votes(root_path, tool_id, up, down, my_vote=None, reported=False, login
     )
 
 
+def tool_meta(root_path: str, tool_id: int, values: dict) -> str:
+    """A tool's metadata as each kind's display partial."""
+    from app import metadata
+
+    return TEMPLATES.get_template("components/tool_meta.html").render(
+        root_path=root_path or "", tool_id=tool_id, kinds=metadata.KINDS, **values
+    )
+
+
+def tool_dialog(root_path: str, tool_id: Optional[int], name: Optional[str], values: dict) -> str:
+    """The profile's create/edit dialog: the file and every kind's editor, filled with `values` when editing."""
+    from app import metadata
+
+    return TEMPLATES.get_template("components/tool_dialog.html").render(
+        root_path=root_path or "", tool_id=tool_id, name=name, kinds=metadata.KINDS, **values
+    )
+
+
 def list_item_user(root_path: str, tools: list[Tool]):
     template: Template = TEMPLATES.get_template("components/update_tool_item.html")
     # the rows are cells of one grid (`ls -l | column -t`): the header row aligns with them

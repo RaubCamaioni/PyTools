@@ -38,6 +38,7 @@ from sandboxcore.host import (
 )
 from app.utility.trace_stream import TraceRegistry
 from app.utility import render
+from app.routes import metadata as metadata_routes
 from app.utility.build_files import BuildFileError, checked_build
 from app import TEMPLATES, logger, ENVIRONMENT
 from app.models import tools as db_tools
@@ -234,6 +235,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "time": time.time(),
             "votes": _votes_block(request, session, tool.id),
             "author": _author_label(session, tool),
+            "tool_meta": metadata_routes.display(request, session, tool),
         },
     )
 

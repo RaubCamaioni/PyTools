@@ -13,6 +13,9 @@
 
         <div class="w-11/12 mx-auto flex flex-col">
 
+            {# the description, where the tool is filed and its tags; editing happens in the profile's dialog #}
+            <div id="tool-meta" class="flex flex-wrap items-center gap-x-6 gap-y-1 mb-3">{{ tool_meta | safe }}</div>
+
             <div class="panel tool-layout">
 
                 <div class="code-column">
