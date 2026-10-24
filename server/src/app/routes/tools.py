@@ -1,5 +1,8 @@
+from typing import Literal
+import hashlib
 from fastapi.responses import (
     HTMLResponse,
+    Response,
     JSONResponse,
     StreamingResponse,
     FileResponse,
@@ -206,6 +209,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
 
     _require_view(request, tool)
 
+    root_path = request.scope.get("root_path") or ""
     query = dict(request.query_params)
     arguments = tool.arguments
 
@@ -233,6 +237,14 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "votes": _votes_block(request, session, tool.id),
             "author": _author_label(session, tool),
             "tool_meta": metadata_routes.display(request, session, tool),
+            "kind": tool.kind,
+            # a model shows its default build in the viewer until the first [ regenerate ]
+            "default_build": (
+                render.model_result(root_path, tool.name, f"{root_path}/tool/{tool.id}/model.stl",
+                                    f"{root_path}/tool/{tool.id}/model.step", tool.meta)
+                if tool.kind == "model" and tool.meta
+                else ""
+            ),
         },
     )
 
@@ -476,6 +488,35 @@ def _model_response(value: dict, name: str, root_path: str, htmx: bool):
     if htmx:
         return HTMLResponse(content=render.model_result(root_path, name, stl_url, step_url, build["meta"]))
     return json.dumps({"stl": stl_url, "step": step_url, "meta": build["meta"]})
+
+
+@router.get("/tool/{id}/preview.svg")
+async def tool_preview(request: Request, id: int, session: db_tools.SessionDep):
+    """The thumbnail drawn at upload (white lines, transparent background)."""
+    tool = db_tools.get_tool_by_id(session, id)
+    if tool is None or not tool.preview_svg:
+        raise HTTPException(status_code=404, detail="No preview")
+    _require_view(request, tool)
+    # a re-upload replaces the thumbnail, so browsers revalidate: the ETag is the drawing's hash
+    etag = hashlib.sha256(tool.preview_svg.encode("utf-8")).hexdigest()[:16]
+    if request.headers.get("if-none-match") == f'"{etag}"':
+        return Response(status_code=304, headers={"ETag": f'"{etag}"'})
+    headers = {"Cache-Control": "no-cache", "ETag": f'"{etag}"'}
+    return Response(content=tool.preview_svg, media_type="image/svg+xml", headers=headers)
+
+
+@router.get("/tool/{id}/model.{ext}")
+async def tool_default_file(request: Request, id: int, ext: Literal["stl", "step"], session: db_tools.SessionDep):
+    """The model built with its default parameters, kept from the validation run at upload."""
+    tool = db_tools.get_tool_by_id(session, id)
+    if tool is None:
+        raise HTTPException(status_code=404, detail="Tool Not Found")
+    _require_view(request, tool)
+    path = ENVIRONMENT.MODELS_DIR / str(tool.id) / f"model.{ext}"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="No default build for this model")
+    media = "model/stl" if ext == "stl" else "application/step"
+    return FileResponse(path, media_type=media, filename=f"{tool.name}.{ext}")
 
 
 @router.get("/download/{run}/{name:path}", response_class=FileResponse)

@@ -151,3 +151,38 @@ def test_optional_file_parameter_validates_with_none_and_runs_with_the_upload(mo
     saved = run_dir / "inputs" / "image" / "photo.png"
     assert runner.args["image"] == {"__path__": str(saved)} and runner.saved["inputs/image/photo.png"] == b"png-bytes"
     assert runner.args["size"] == 30.0
+
+
+def test_the_default_build_is_served_and_shown(monkeypatch, logged_in, tmp_path):
+    upload(logged_in, monkeypatch, BuildingRunner(built(size_mm=[10, 10, 10])), code=MODEL.replace("demo_box", "shown_box"),
+           name="shown_box.py")
+    tool_id = stored_tool("shown_box").id
+    # the thumbnail and the default files are served from what the validation run produced
+    preview = logged_in.get(f"/tool/{tool_id}/preview.svg")
+    assert preview.headers["content-type"].startswith("image/svg+xml") and preview.headers["cache-control"] == "no-cache"
+    # a browser revalidates with the ETag and gets a 304 while the thumbnail is unchanged
+    assert logged_in.get(f"/tool/{tool_id}/preview.svg", headers={"If-None-Match": preview.headers["etag"]}).status_code == 304
+    r = logged_in.get(f"/tool/{tool_id}/model.stl")
+    assert r.status_code == 200 and r.text == "<model.stl>"
+    assert logged_in.get(f"/tool/{tool_id}/model.step").text == "<model.step>"
+    page = logged_in.get(f"/tool/{tool_id}").text
+    assert f'<stl-viewer url="/tool/{tool_id}/model.stl">' in page and "10 &times; 10 &times; 10 mm" in page
+    assert "[ regenerate ]" in page and f"cat shown_box.py" in page  # the code is still there, below the model
+
+
+def test_a_private_models_files_are_not_served_to_others(monkeypatch, logged_in):
+    upload(logged_in, monkeypatch, BuildingRunner(built()), code=MODEL.replace("demo_box", "secret_box"), name="secret_box.py")
+    tool_id = stored_tool("secret_box").id  # uploads are private until published
+    anonymous = TestClient(app)
+    for path in (f"/tool/{tool_id}/preview.svg", f"/tool/{tool_id}/model.stl", f"/tool/{tool_id}/model.step"):
+        assert anonymous.get(path).status_code == 404, path
+
+
+def test_a_script_page_has_no_viewer_and_no_model_files(monkeypatch, logged_in):
+    code = "def plain_page(n: int = 1) -> int:\n    return n\n"
+    upload(logged_in, monkeypatch, BuildingRunner(), code=code, name="plain_page.py")
+    tool_id = stored_tool("plain_page").id
+    page = logged_in.get(f"/tool/{tool_id}").text
+    assert "<stl-viewer" not in page and "[ regenerate ]" not in page and "[ run ]" in page
+    assert logged_in.get(f"/tool/{tool_id}/preview.svg").status_code == 404
+    assert logged_in.get(f"/tool/{tool_id}/model.stl").status_code == 404
