@@ -1,5 +1,8 @@
+from typing import Literal
+import hashlib
 from fastapi.responses import (
     HTMLResponse,
+    Response,
     JSONResponse,
     StreamingResponse,
     FileResponse,
@@ -120,10 +123,10 @@ async def trace_stream(token: str):
 
 
 @router.api_route("/", methods=["GET", "POST"])
-async def read_root(request: Request, session: db_tools.SessionDep, search: str = ""):
+async def read_root(request: Request, session: db_tools.SessionDep, search: str = "", kind: str = ""):
     from app.routes.browse import index_page
 
-    return index_page(request, session, None, search)
+    return index_page(request, session, None, search, kind)
 
 
 @router.post("/tools", response_class=JSONResponse)
@@ -142,13 +145,16 @@ async def get_tools(
     # every typed word must match the tool's name or one of its tags
     tags = query_params.get("search", [""])[0].split()
     category = query_params.get("category", [""])[0] or None  # an unknown one matches nothing
-    tools = db_tools.search_tools(session, tags, start, end, category=category)
+    from app.routes.browse import normalise_kind
+
+    kind = normalise_kind(query_params.get("kind", [""])[0])
+    tools = db_tools.search_tools(session, tags, start, end, category=category, kind=kind)
 
     if len(tools) < (end - start):
         end = None
 
     content = render.list_items(
-        request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50, category=category
+        request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50, category=category, kind=kind
     )
     return HTMLResponse(content=content)
 
@@ -206,6 +212,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
 
     _require_view(request, tool)
 
+    root_path = request.scope.get("root_path") or ""
     query = dict(request.query_params)
     arguments = tool.arguments
 
@@ -233,6 +240,14 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "votes": _votes_block(request, session, tool.id),
             "author": _author_label(session, tool),
             "tool_meta": metadata_routes.display(request, session, tool),
+            "kind": tool.kind,
+            # a model shows its default build in the viewer until the first [ regenerate ]
+            "default_build": (
+                render.model_result(root_path, tool.name, f"{root_path}/tool/{tool.id}/model.stl",
+                                    f"{root_path}/tool/{tool.id}/model.step", tool.meta)
+                if tool.kind == "model" and tool.meta
+                else ""
+            ),
         },
     )
 
@@ -421,6 +436,47 @@ async def run_isolated(
     return json.dumps(result.value, default=lambda obj: render.download_url(obj, root_path) if isinstance(obj, OutputFile) else str(obj))
 
 
+async def build_model(tool, values: dict, on_line=None):
+    """Build a model's code in the sandbox from submitted values ({} builds it with its defaults).
+    The result's value is the checked export dict, or the error text."""
+    if not sandbox.available:
+        raise HTTPException(status_code=503, detail="Sandbox unavailable")
+    # the stored signature is checked again and every value converted through it, never evaluated:
+    # this runs in the web app, outside the sandbox. A file parameter without an upload is left out,
+    # so the model's own `= None` default builds its demo
+    try:
+        signature = Signature.from_arguments("python", tool.name, tool.arguments)
+        arguments, files = signature.bind(values)
+        job = Job(Source("python", tool.name, tool.code), arguments, files)
+    except (SignatureError, SourceError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    # !DANGER! user submitted code
+    try:
+        result = await sandbox.run(job, on_line=on_line)
+    except (JobError, SourceError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except SandboxBusy:
+        raise HTTPException(status_code=503, detail="Server busy, try again")
+    except SandboxUnavailable:
+        raise HTTPException(status_code=503, detail="Sandbox unavailable")
+    # the core vetted every file; keep only the export's fixed names and the measurements' shape
+    if result.outcome is Outcome.OK and isinstance(result.value, dict):
+        try:
+            result.value = checked_build(result.value)
+        except BuildFileError as e:
+            result.value = f"Export Error: {e}"
+    return result
+
+
+def build_failure(result) -> Optional[str]:
+    """Why a build did not produce a model, or None when it did."""
+    if result.outcome is not Outcome.OK:
+        return result.message + (f"\n{result.stderr_tail}" if result.stderr_tail else "")
+    if not isinstance(result.value, dict) or "stl" not in result.value:
+        return str(result.value)  # the runtime's own error text (Runtime Error ..., Export Error ...)
+    return None
+
+
 def _model_response(value: dict, name: str, root_path: str, htmx: bool):
     """A run whose tool returned a CadQuery object: the viewer (htmx) or the file URLs and measurements.
     The export is checked first (fixed file names, size caps, the measurements' shape)."""
@@ -437,6 +493,40 @@ def _model_response(value: dict, name: str, root_path: str, htmx: bool):
     return json.dumps({"stl": stl_url, "step": step_url, "meta": build["meta"]})
 
 
+# an SVG is a document that can carry script, and uploaded code writes its own: served from this origin it is
+# inert (no script, no requests, a sandboxed origin) and never sniffed as anything else
+INERT_SVG = {"Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox", "X-Content-Type-Options": "nosniff"}
+
+
+@router.get("/tool/{id}/preview.svg")
+async def tool_preview(request: Request, id: int, session: db_tools.SessionDep):
+    """The thumbnail drawn at upload (white lines, transparent background)."""
+    tool = db_tools.get_tool_by_id(session, id)
+    if tool is None or not tool.preview_svg:
+        raise HTTPException(status_code=404, detail="No preview")
+    _require_view(request, tool)
+    # a re-upload replaces the thumbnail, so browsers revalidate: the ETag is the drawing's hash
+    etag = hashlib.sha256(tool.preview_svg.encode("utf-8")).hexdigest()[:16]
+    if request.headers.get("if-none-match") == f'"{etag}"':
+        return Response(status_code=304, headers={"ETag": f'"{etag}"'})
+    headers = {"Cache-Control": "no-cache", "ETag": f'"{etag}"', **INERT_SVG}
+    return Response(content=tool.preview_svg, media_type="image/svg+xml", headers=headers)
+
+
+@router.get("/tool/{id}/model.{ext}")
+async def tool_default_file(request: Request, id: int, ext: Literal["stl", "step"], session: db_tools.SessionDep):
+    """The model built with its default parameters, kept from the validation run at upload."""
+    tool = db_tools.get_tool_by_id(session, id)
+    if tool is None:
+        raise HTTPException(status_code=404, detail="Tool Not Found")
+    _require_view(request, tool)
+    path = ENVIRONMENT.MODELS_DIR / str(tool.id) / f"model.{ext}"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="No default build for this model")
+    media = "model/stl" if ext == "stl" else "application/step"
+    return FileResponse(path, media_type=media, filename=f"{tool.name}.{ext}")
+
+
 @router.get("/download/{run}/{name:path}", response_class=FileResponse)
 async def download_file(run: str, name: str, preview: bool = False):
     # only a file of a run the sandbox still keeps, checked again (no symlinks, nothing outside the run)
@@ -447,11 +537,13 @@ async def download_file(run: str, name: str, preview: bool = False):
 
     # a preview is a file the result page embeds (image, audio, video, pdf): real media type, inline
     if preview and out.path.suffix.lower() in render.PREVIEW_SUFFIXES:
+        inert = INERT_SVG if out.path.suffix.lower() == ".svg" else {"X-Content-Type-Options": "nosniff"}
         return FileResponse(
             out.path,
             media_type=render.preview_media_type(out.filename),
             filename=out.filename,
             content_disposition_type="inline",
+            headers=inert,
         )
 
     return FileResponse(

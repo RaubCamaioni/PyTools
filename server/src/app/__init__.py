@@ -23,6 +23,8 @@ class _ENVIRONMENT:
     OWNER_GITHUB_LOGIN: str = os.environ.get("OWNER_GITHUB_LOGIN", "RaubCamaioni")
     # the URL prefix the app is served under, e.g. "/tools" behind a reverse proxy; "" at the root
     ROOT_PATH: str = os.environ.get("ROOT_PATH", "").rstrip("/")
+    # each model's default build (model.stl, model.step) under <MODELS_DIR>/<tool id>/, beside the database
+    MODELS_DIR: Path = Path(os.environ.get("MODELS_DIR") or (Path(os.environ.get("DATABASE") or "/data/db").parent / "models"))
     # SANDBOX_* variables all have defaults; see SandboxConfig
     sandbox: SandboxConfig = field(
         default_factory=lambda: SandboxConfig.from_environment(

@@ -3,13 +3,14 @@
     <head>
         {% with title="PyTools" %}
             {% include 'components/head.html'%}
+            {% include 'components/tool_style.html' %}
         {% endwith %}
     </head>
     <body class="bg-ink text-paper font-mono">
 
         {% include 'components/header.html'%}
 
-        <div class="max-w-4xl mx-auto px-4">
+        <div class="{% if kind %}max-w-6xl{% else %}max-w-4xl{% endif %} mx-auto px-4">
             {# on a category page: where we are and what the category holds #}
             {% if crumbs %}
             <div class="mb-2">
@@ -41,12 +42,20 @@
                         aria-label="filter tools"></span>
                 </label>
                 {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+                {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
             </form>
+
+            {# the view: every tool, or only the models (tools returning a CadQuery object) as cards #}
+            {% set here = root_path ~ ("/c/" ~ category if category else "/") %}
+            <div class="mt-2">
+                <a href="{{ here }}" class="no-underline px-1 {% if not kind %}font-bold{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[all]</a>
+                <a href="{{ here }}?kind=model" class="no-underline px-1 {% if kind %}font-bold{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[models]</a>
+            </div>
 
             {% include 'components/category_bar.html' %}
 
             {# ls output: columns of file names #}
-            <ul id="tool-list" class="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6">
+            <ul id="tool-list" class="mt-3 {% if kind %}gallery{% else %}grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6{% endif %}">
                 {% with start=0, end=50, tags=search or "" %}
                     {% include 'components/tool_scroll_loader.html'%}
                 {% endwith %}

@@ -1,0 +1,7 @@
+{# a model in the model view (?kind=model): its thumbnail drawn at upload, and its name #}
+<li class="card">
+	<a href="{{ base_url }}/tool/{{ id }}" class="block no-underline">
+		<img src="{{ base_url }}/tool/{{ id }}/preview.svg" alt="" loading="lazy">
+		<span class="block truncate px-1">{{ name }}</span>
+	</a>
+</li>

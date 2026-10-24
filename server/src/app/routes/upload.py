@@ -8,8 +8,10 @@ from sandboxcore.host import SandboxBusy, SandboxUnavailable, SignatureError, So
 from sandboxcore.source import MAX_CODE_BYTES
 from app.models.tools import SessionDep, User, FilterDep, get_user, lift_expired_ban
 from app.routes.auth import session_user
-from app import TEMPLATES, logger
+from app import TEMPLATES, ENVIRONMENT, logger
+from app.utility.build_files import MAX_BYTES, checked_meta, read_build_file
 from typing import Optional
+import shutil
 from urllib.parse import parse_qsl
 
 router = APIRouter()
@@ -37,6 +39,7 @@ async def tool_delete(
         return HTMLResponse(status_code=404)
 
     tools.del_tool(session, tool)
+    forget_build(id)
     return HTMLResponse(status_code=200)
 
 
@@ -51,6 +54,39 @@ async def tool_upload_get(request: Request):
             "root_path": request.scope.get("root_path"),
         },
     )
+
+
+async def validate_model(tool: tools.Tool) -> dict:
+    """Build the model once with its defaults in the sandbox. Returns the export dict (stl, step,
+    preview, meta) or raises a 400 with the reason the build failed; an upload that cannot build
+    is never stored.
+    """
+    from app.routes.tools import build_failure, build_model
+
+    result = await build_model(tool, {})
+    failure = build_failure(result)
+    if failure is not None:
+        raise HTTPException(status_code=400, detail=f"Model Build Failed: {failure}")
+    return result.value
+
+
+def store_default_build(tool: tools.Tool, build: dict) -> None:
+    """Keep the default STL and STEP beside the database and the thumbnail and measurements on the row."""
+    target = ENVIRONMENT.MODELS_DIR / str(tool.id)
+    target.mkdir(parents=True, exist_ok=True)
+    # read again through the same checks (OutputFile.read): never a link or a FIFO the model left behind
+    for key, name in (("stl", "model.stl"), ("step", "model.step")):
+        (target / name).write_bytes(read_build_file(build[key], MAX_BYTES[key]))
+    try:
+        tool.preview_svg = read_build_file(build["preview"], MAX_BYTES["preview"]).decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Model Build Failed: preview.svg is not text")
+    tool.meta = checked_meta(build["meta"])
+
+
+def forget_build(tool_id: int) -> None:
+    """Remove a tool's stored default build (it was deleted, or its new code is no longer a model)."""
+    shutil.rmtree(ENVIRONMENT.MODELS_DIR / str(tool_id), ignore_errors=True)
 
 
 def _uploader(request: Request, session) -> User:
@@ -102,9 +138,12 @@ async def tool_create(
     if upload is None:
         raise HTTPException(status_code=400, detail="Choose the tool's .py file.")
     tool = await _create_tool(user.id, upload)
+    build = await validate_model(tool) if tool.kind == "model" else None
     session.add(tool)
     session.commit()
     session.refresh(tool)
+    if build is not None:
+        store_default_build(tool, build)
     metadata.save_all(session, tool.id, parsed)
     session.commit()
     return HTMLResponse(status_code=200)
@@ -130,9 +169,16 @@ async def tool_update(
         if db_tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool does not exist.")
         tool = await _create_tool(user.id, upload)
+        build = await validate_model(tool) if tool.kind == "model" else None
         db_tool.name = tool.name
         db_tool.code = tool.code
         db_tool.arguments = tool.arguments
+        db_tool.kind = tool.kind
+        if build is not None:
+            store_default_build(db_tool, build)
+        else:  # no longer a model: its thumbnail, measurements and default files go
+            db_tool.preview_svg, db_tool.meta = "", {}
+            forget_build(db_tool.id)
     metadata.save_all(session, db_tool.id, parsed)
     session.commit()
     return HTMLResponse(status_code=200)

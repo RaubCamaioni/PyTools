@@ -329,3 +329,9 @@ def test_a_dict_that_is_not_a_model_renders_as_before(monkeypatch, public_tool):
     c = client(monkeypatch, StubRunner(RunResult(Outcome.OK, results={"stl": "not a file", "other": 1})))
     page = c.post("/tool/8", headers={"HX-Request": "true"}).text
     assert "<stl-viewer" not in page and "not a file" in page
+
+
+def test_an_svg_preview_of_a_run_cannot_run_script(monkeypatch, public_tool):
+    with client(monkeypatch, FileRunner({"drawing.svg": b"<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>"})) as c:
+        r = c.get(run_and_get_urls(c)["drawing.svg"] + "?preview=1")
+    assert "sandbox" in r.headers["content-security-policy"] and r.headers["x-content-type-options"] == "nosniff"

@@ -57,6 +57,11 @@ class Tool(SQLModel, table=True):
     down_votes: list["DownVote"] = Relationship(back_populates="tool")
     reports: list["Report"] = Relationship(back_populates="tool")
     usage: int = Field(default=0)
+    # "model" when the entrypoint declares a CadQuery return and its upload build passed, else "script"
+    kind: str = Field(default="script", sa_column_kwargs={"server_default": "script"})
+    # a model's default build: the thumbnail (an SVG line drawing) and the measurements
+    preview_svg: str = Field(default="", sa_column_kwargs={"server_default": ""})
+    meta: dict = Field(default={}, sa_column=Column(JSON))
     public: bool = Field(default=False)
     annonymous: bool = Field(default=True)
     user_id: int = Field(default=None, foreign_key="user.id")
@@ -106,9 +111,10 @@ def search_tools(
     end: int,
     only_public: bool = True,
     category: Optional[str] = None,
-) -> list[tuple[int, str]]:
-    """(id, name) of the tools where every word matches the name (substring) or a tag (exact; the last word,
-    still being typed, by prefix), optionally within a category slug or leaf path, in id order."""
+    kind: Optional[str] = None,
+) -> list[tuple[int, str, str]]:
+    """(id, name, kind) of the tools where every word matches the name (substring) or a tag (exact; the last word,
+    still being typed, by prefix), optionally within a category slug or leaf path and of one kind, in id order."""
     from app import categories
     from app.metadata.categories import tool_ids_in
     from app.metadata.tags import ToolTag, escape_like
@@ -123,7 +129,9 @@ def search_tools(
     if category is not None:
         paths = categories.paths_under(category) or ([category] if categories.is_leaf(category) else [])
         conditions.append(Tool.id.in_(tool_ids_in(paths)))
-    statement = select(Tool.id, Tool.name).where(*conditions).order_by(Tool.id).offset(start).limit(end - start)
+    if kind is not None:
+        conditions.append(Tool.kind == kind)
+    statement = select(Tool.id, Tool.name, Tool.kind).where(*conditions).order_by(Tool.id).offset(start).limit(end - start)
     return session.exec(statement).all()
 
 
@@ -288,6 +296,9 @@ MIGRATIONS = [
     ("user", "admin", "BOOLEAN NOT NULL DEFAULT 0"),
     ("user", "banned", "BOOLEAN NOT NULL DEFAULT 0"),
     ("user", "banned_until", "DATETIME"),
+    ("tool", "kind", "VARCHAR NOT NULL DEFAULT 'script'"),
+    ("tool", "preview_svg", "VARCHAR NOT NULL DEFAULT ''"),
+    ("tool", "meta", "JSON"),
 ]
 
 
@@ -433,8 +444,21 @@ def prepare_source(source: Source) -> Source:
 
 
 def create_tool(user_id: int, source: Source, signature: Signature) -> Tool:
-    """A tool from prepared code and the signature the sandbox read from it (Sandbox.inspect)."""
+    """A tool from prepared code and the signature the sandbox read from it (Sandbox.inspect). A tool that declares
+    a CadQuery return is a model candidate: the upload builds it before it is stored (routes/upload.py)."""
+    from app.models.kind import declares_model
+
+    if declares_model(signature.returns):
+        # a model's file parameter is optional: without a file it builds a demo (the upload build passes no file)
+        for parameter in signature.parameters:
+            if parameter.kind == "file" and parameter.default != "None":
+                detail = (
+                    f"Argument Error: '{parameter.name}' is a Path: give it a default of None and build a demo when "
+                    "it is None"
+                )
+                raise HTTPException(status_code=400, detail=detail)
     return Tool(
+        kind="model" if declares_model(signature.returns) else "script",
         name=source.entrypoint,
         code=source.code,
         arguments=signature.to_arguments(),

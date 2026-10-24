@@ -111,18 +111,22 @@ def list_items(
     tags: Optional[list[str]] = None,
     page: int = 50,
     category: Optional[str] = None,
+    kind: Optional[str] = None,
 ):
-    """Render the ls-style tool list; `end` (if any) is where the next page of `page` tools starts; the next
-    page's loader carries the search words and the category."""
+    """Render the ls-style tool list (the model view: cards with thumbnails); `end` (if any) is where the next page
+    of `page` tools starts; the next page's loader carries the search words, the category and the kind."""
     tags = tags or []
 
     htmlx = []
-    template: Template = TEMPLATES.get_template("components/index_tool_item.html")
-    for id, name in tools:
+    item = "components/index_model_card.html" if kind == "model" else "components/index_tool_item.html"
+    template: Template = TEMPLATES.get_template(item)
+    for row in tools:
+        id, name = row[0], row[1]
         form = template.render(
             {
                 "name": name,
                 "id": id,
+                "kind": row[2] if len(row) > 2 else "script",
                 "base_url": base_url,
             },
         )
@@ -136,6 +140,7 @@ def list_items(
                 "end": end + page,
                 "tags": " ".join(tags),
                 "category": category,
+                "kind": kind,
                 "root_path": base_url or "",  # fragments rendered outside a request must be told the prefix
             },
         )
