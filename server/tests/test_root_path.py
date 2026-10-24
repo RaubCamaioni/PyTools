@@ -25,7 +25,8 @@ def prefixed_client(monkeypatch, runner=None):
 def unprefixed_urls(page: str) -> list[str]:
     """Site-relative URLs in the page that do not start with the prefix."""
     urls = re.findall(r'(?:href|src|hx-get|hx-post|hx-delete|action)="(/[^"]*)"', page)
-    return [u for u in urls if not u.startswith(PREFIX + "/") and u != PREFIX]
+    # "/" is the prompt's `home`, the site's landing page, deliberately outside the mount
+    return [u for u in urls if not u.startswith(PREFIX + "/") and u != PREFIX and u != "/"]
 
 
 def test_home_page_assets_and_links_carry_the_prefix(monkeypatch, public_tool):
@@ -34,7 +35,9 @@ def test_home_page_assets_and_links_carry_the_prefix(monkeypatch, public_tool):
     assert f'href="{PREFIX}/static/output.css' in page and f'src="{PREFIX}/scripts/htmx.min.js"' in page
     assert f'hx-post="{PREFIX}/tools' in page  # the listing loader
     # the home link is marked active even though the request path is /tools/
-    assert re.search(r'href="/tools/" class="[^"]*bg-paper', page)
+    assert re.search(r'href="/tools/" class="[^"]* bg-paper text-ink', page)
+    # the prompt reads /home/tools: "home" leaves the mount for the landing page, "tools" is this app's front page
+    assert re.search(r':/<a href="/" [^>]*>home</a>/<a href="/tools/" [^>]*>tools</a><span', page)
 
 
 def test_tool_page_and_result_links_carry_the_prefix(monkeypatch, public_tool):

@@ -1,5 +1,6 @@
 import html
 import json
+import re
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -109,10 +110,16 @@ def test_header_highlights_the_current_page(github):
 
 def test_header_prompt_shows_user_and_directory(github):
     c = TestClient(app)
-    assert "anonymous@pytools</span>:~<" in c.get("/").text
-    assert "anonymous@pytools</span>:~/tools<" in c.get("/user").text
-    assert "anonymous@pytools</span>:~/privacy<" in c.get("/privacy-policy").text
-    assert "anonymous@pytools</span>:~/terms<" in c.get("/terms-of-service").text
+    def cwd(html):  # the prompt's directory with its links reduced to their text
+        prompt = re.search(r"anonymous@pytools</span>:(.*?)<span", html).group(1)
+        return re.sub(r"<a [^>]*>(.*?)</a>", r"\1", prompt)
+
+    assert cwd(c.get("/").text) == "/home/tools"
+    assert cwd(c.get("/user").text) == "/home/tools/tools"
+    assert cwd(c.get("/privacy-policy").text) == "/home/tools/privacy"
+    assert cwd(c.get("/terms-of-service").text) == "/home/tools/terms"
+    # "home" is the site's landing page, "tools" this app's front page
+    assert ':/<a href="/" class="no-underline hover:bg-paper hover:text-ink">home</a>/<a href="/"' in c.get("/").text
 
 
 def test_owner_github_login_maps_to_existing_user_id(github):
