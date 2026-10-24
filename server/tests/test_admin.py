@@ -108,18 +108,18 @@ def test_expired_ban_lifts_itself():
         assert db.lift_expired_ban(session, still) is False and still.banned
 
 
-def test_admin_page_is_404_for_anonymous_and_ordinary_users(monkeypatch):
+def test_the_profile_shows_no_accounts_to_anonymous_and_ordinary_users(monkeypatch):
     from app.routes import admin as admin_routes
 
     c = client(monkeypatch, StubRunner())
-    assert c.get("/admin").status_code == 404
+    assert "ls -l /home/*/tools/" not in c.get("/user").text
     monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=2, alias="eve"))
-    assert c.get("/admin").status_code == 404
+    assert "ls -l /home/*/tools/" not in c.get("/user").text
     assert c.post("/admin/ban/2", params={"months": "1"}).status_code == 404
     assert c.post("/admin/unban/2").status_code == 404
 
 
-def test_admin_page_lists_accounts_and_their_tools(monkeypatch):
+def test_an_admins_profile_lists_accounts_and_their_tools(monkeypatch):
     from app.routes import admin as admin_routes
 
     monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
@@ -137,7 +137,7 @@ def test_admin_page_lists_accounts_and_their_tools(monkeypatch):
             db.AccountSummary(eve, [db.ToolSummary(b, 1, 4, 3)], 1, 4, 3),
         ],
     )
-    page = client(monkeypatch, StubRunner()).get("/admin").text
+    page = client(monkeypatch, StubRunner()).get("/user").text
     assert "ls -l /home/*/tools/ | column -t" in page
     assert page.index("rob/ ") < page.index("a.py") < page.index("eve/ ") < page.index("b.py")
     assert 'href="/tool/6"' in page  # private tools are linked for the admin
@@ -225,14 +225,32 @@ def test_session_user_json_carries_admin_flag():
     assert json.loads(user.model_dump_json())["admin"] is True
 
 
-def test_admin_page_folds_each_accounts_tools_behind_its_row(monkeypatch):
+def test_an_admins_profile_folds_each_accounts_tools_behind_its_row(monkeypatch):
     from app.routes import admin as admin_routes
 
     monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
     eve = db.User(id=2, alias="eve")
     b = db.Tool(id=6, name="b", code="", user_id=2, public=True, tags=[])
     monkeypatch.setattr(db, "get_users_with_tools", lambda session: [db.AccountSummary(eve, [db.ToolSummary(b, 0, 0, 0)], 0, 0, 0)])
-    page = client(monkeypatch, StubRunner()).get("/admin").text
+    page = client(monkeypatch, StubRunner()).get("/user").text
     # the tool rows are a hidden group the account row toggles
     assert 'id="tools-2"' in page and "tools-2" in page[page.index("eve/ ") - 400 : page.index("eve/ ")]
     assert page[page.index('id="tools-2"') : page.index('id="tools-2"') + 60].count("hidden") == 1
+
+
+def test_the_old_admin_page_opens_the_profile(monkeypatch):
+    r = client(monkeypatch, StubRunner()).get("/admin", follow_redirects=False)
+    assert r.status_code in (301, 307, 308) and r.headers["location"] == "/user"
+
+
+def test_the_header_has_no_admin_link(monkeypatch):
+    from app.routes import admin as admin_routes
+    from app.routes import auth as auth_routes
+
+    admin = lambda request: db.User(id=1, alias="rob", admin=True)  # noqa: E731
+    monkeypatch.setattr(admin_routes, "session_user", admin)
+    monkeypatch.setattr(auth_routes, "_session_user", admin)  # what the header reads
+    monkeypatch.setattr(db, "get_users_with_tools", lambda session: [])
+    page = client(monkeypatch, StubRunner()).get("/user").text
+    assert "ls -l /home/*/tools/ | column -t" in page  # the admin's profile has the accounts
+    assert 'href="/admin"' not in page and ">admin<" not in page

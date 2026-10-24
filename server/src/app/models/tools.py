@@ -145,7 +145,7 @@ class ToolSummary:
 
 @dataclass
 class AccountSummary:
-    """An account with its tools and the votes/reports totalled over them (admin page)."""
+    """An account with its tools and the votes/reports totalled over them (an admin's profile)."""
 
     user: User
     tools: list[ToolSummary]
@@ -160,7 +160,7 @@ def _counts(session: Session, model, column) -> dict[int, int]:
 
 
 def get_users_with_tools(session: Session) -> list[AccountSummary]:
-    """Every account (oldest first) with its tools and vote/report totals, for the admin page."""
+    """Every account (oldest first) with its tools and vote/report totals, for an admin's profile."""
     ups, downs, reports = (_counts(session, M, M.tool_id) for M in (UpVote, DownVote, Report))
     accounts = []
     for user in session.exec(select(User).order_by(User.id)).all():

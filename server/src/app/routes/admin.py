@@ -1,39 +1,33 @@
-"""Admin page: every account and its tools, with a ban switch per account.
+"""Admin actions: ban and unban an account. An admin's own profile (/user) lists every account and its tools.
 
 Who is an admin is a column on the user table (`user.admin`), set in the database; nothing
 in the code names an account. Non-admins get a 404, like a private tool.
 """
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
-from app import TEMPLATES
 from app.models import tools as db
 from app.routes.auth import session_user
 
 router = APIRouter()
 
 
-def require_admin(request: Request) -> db.User:
+def is_admin(request: Request) -> bool:
     user = session_user(request)
-    if user is None or not user.admin:
+    return user is not None and user.admin
+
+
+def require_admin(request: Request) -> db.User:
+    if not is_admin(request):
         raise HTTPException(status_code=404, detail="Not Found")
-    return user
+    return session_user(request)
 
 
-@router.get("/admin", response_class=HTMLResponse)
-async def admin_page(request: Request, session: db.SessionDep):
-    require_admin(request)
-    return TEMPLATES.TemplateResponse(
-        request,
-        "pages/admin.html",
-        {
-            "header_title": "PyTools",
-            "request": request,
-            "root_path": request.scope.get("root_path"),
-            "accounts": db.get_users_with_tools(session),
-        },
-    )
+@router.get("/admin")
+async def admin_page(request: Request):
+    """The admin page became part of the profile: old links and bookmarks land there."""
+    return RedirectResponse(f"{request.scope.get('root_path', '')}/user", status_code=301)
 
 
 @router.post("/admin/ban/{user_id}", response_class=HTMLResponse)

@@ -40,6 +40,10 @@
                     <li class="px-1 text-dim">...</li>
                 </ul>
             </section>
+
+            {% if accounts is not none %}
+                {% include 'components/admin_accounts.html' %}
+            {% endif %}
         </div>
 
         {# [create] and [edit] load their form in here; it opens as a modal once the form has arrived. Only a swap
