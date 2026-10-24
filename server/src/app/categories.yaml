@@ -1,0 +1,170 @@
+# Categories, two levels. A slug is a permanent id stored with every tool filed under it; names and
+# descriptions can change freely. Removing a slug moves its tools to Miscellaneous. Scripts and CadQuery
+# models share the tree: a model is filed like any other tool (?kind=model filters to models).
+- slug: converters
+  name: Converters
+  description: Turn one file or format into another.
+  subcategories:
+    - slug: images
+      name: Images
+      description: Convert, resize and edit pictures, and read or strip their metadata.
+    - slug: documents
+      name: Documents & PDF
+      description: PDF, Word, slides, ebooks and other documents.
+    - slug: media
+      name: Media
+      description: Audio and video files.
+    - slug: data
+      name: Data formats
+      description: JSON, CSV, XML, YAML, TOML, spreadsheets and databases.
+    - slug: units
+      name: Units
+      description: Lengths, weights, temperatures, sizes and other measurements.
+    - slug: 3d
+      name: 3D files
+      description: STL, STEP, OBJ and other 3D model formats.
+- slug: text
+  name: Text
+  description: Work with plain text.
+  subcategories:
+    - slug: encoding
+      name: Encoding
+      description: Base64, URL, HTML entities, Unicode and other encodings.
+    - slug: formatting
+      name: Formatting
+      description: Case, whitespace, sorting, diffing and cleaning up text.
+    - slug: generators
+      name: Generators
+      description: Placeholder text, names, ASCII art and other generated text.
+- slug: developer
+  name: Developer
+  description: Helpers for programming and the web.
+  subcategories:
+    - slug: code
+      name: Code
+      description: Format, minify and inspect source code.
+    - slug: web
+      name: Web
+      description: URLs, HTTP, user agents, colours and other web helpers.
+    - slug: patterns
+      name: Regex & cron
+      description: Regular expressions, cron schedules and other patterns.
+- slug: security
+  name: Security
+  description: Hashes, passwords and encryption.
+  subcategories:
+    - slug: hashing
+      name: Hashing
+      description: Checksums and hashes of text and files.
+    - slug: passwords
+      name: Passwords
+      description: Generate passwords and check their strength.
+    - slug: encryption
+      name: Encryption
+      description: Encrypt, decrypt and sign data, and inspect keys and certificates.
+- slug: utilities
+  name: Utilities
+  description: Everyday calculators and generators.
+  subcategories:
+    - slug: time
+      name: Time & date
+      description: Time zones, timestamps, durations and calendars.
+    - slug: codes
+      name: QR & barcodes
+      description: Make and read QR codes and barcodes.
+    - slug: calculators
+      name: Calculators
+      description: Numbers, money, statistics and other calculations.
+- slug: home
+  name: Home
+  description: Things for around the house.
+  subcategories:
+    - slug: kitchen
+      name: Kitchen
+      description: Cooking, baking, food storage and serving.
+    - slug: bathroom
+      name: Bathroom
+      description: Soap dishes, toothbrush holders, drains and other bathroom helpers.
+    - slug: bedroom
+      name: Bedroom & Personal
+      description: Jewellery, glasses, watches and other personal things.
+    - slug: decor
+      name: Decor
+      description: Vases, lamp shades, frames and other things to look at.
+    - slug: storage
+      name: Storage
+      description: Boxes, containers, trays and drawer organisers.
+    - slug: wall
+      name: Wall & Hanging
+      description: Hooks, rails, cleats and brackets for hanging things on walls.
+    - slug: fixtures
+      name: Fixtures
+      description: Handles, door stops, feet, covers and other small fittings.
+- slug: office
+  name: Office & Desk
+  description: Things for the desk and the home office.
+  subcategories:
+    - slug: desk
+      name: Desk Organizers
+      description: Pen cups, trays and holders that keep a desk tidy.
+    - slug: stands
+      name: Stands & Risers
+      description: Stands for laptops, monitors, phones, tablets and controllers.
+    - slug: cables
+      name: Cable Management
+      description: Clips, combs, grommets and covers for cables.
+- slug: workshop
+  name: Workshop
+  description: Tool storage and helpers for the workshop.
+  subcategories:
+    - slug: tool-storage
+      name: Tool Storage
+      description: Racks, holders, pegboard, Gridfinity and parts bins.
+    - slug: shop-aids
+      name: Shop Aids
+      description: Small helpers for working with materials.
+    - slug: printing
+      name: 3D Printing
+      description: Calibration prints, tolerance tests and printer accessories.
+- slug: hardware
+  name: Hardware & Electronics
+  description: Mechanical parts and electronics mounts.
+  subcategories:
+    - slug: fasteners
+      name: Fasteners & Spacers
+      description: Washers, spacers, nuts, bushings and tubes.
+    - slug: mounts
+      name: Brackets & Mounts
+      description: Brackets, extrusion parts and mounts for motors and bearings.
+    - slug: mechanisms
+      name: Mechanisms
+      description: Gears, pulleys, couplers, hinges, knobs and wheels.
+    - slug: electronics
+      name: Electronics
+      description: Enclosures, board mounts, fan guards and LED channels.
+- slug: outdoor
+  name: Outdoor & Garage
+  description: The garden, the garage and the car.
+  subcategories:
+    - slug: garden
+      name: Garden
+      description: Planters, seed trays, markers and hose hangers.
+    - slug: garage
+      name: Garage & Vehicle
+      description: Bike hooks, car inserts and garage helpers.
+- slug: hobbies
+  name: Hobbies
+  description: Games, crafts and science.
+  subcategories:
+    - slug: games
+      name: Games
+      description: Dice, card boxes and other game pieces.
+    - slug: crafts
+      name: Crafts
+      description: Knitting, sewing and other craft helpers.
+    - slug: science
+      name: Science
+      description: Lab racks and other science helpers.
+- slug: misc
+  name: Miscellaneous
+  description: Tools that do not fit another category yet.

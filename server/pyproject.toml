@@ -1,6 +1,6 @@
 [project]
 name = "pytools"
-version = "0.4.1"
+version = "0.5.0"
 description = "Python script execution web wrapper."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -13,6 +13,7 @@ dependencies = [
     "nh3>=0.2.21",
     "profanityfilter>=2.1.0",
     "pyparsing>=3.2.3",
+    "pyyaml>=6.0",
     "sqlmodel>=0.0.24",
 ]
 
@@ -21,6 +22,7 @@ line-length = 120
 
 [project.scripts]
 pywebtool = "app.runner:runner"
+pytools-admin = "app.admin_cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.24"]

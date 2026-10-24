@@ -33,16 +33,10 @@
 
     {# actions #}
     <span class="flex items-center gap-1 text-dim px-1 py-0.5">
-        <input
-            id="tool-update-{{ id }}"
-            type="file"
-            name="file"
-            hx-post="{{ root_path }}/manage/tool/update/{{ id }}"
-            hx-encoding="multipart/form-data"
-            hx-trigger="change"
-            hx-swap="none"
-            style="display: none;" />
-        <label for="tool-update-{{ id }}" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[update]</label>
+        <button type="button" class="cursor-pointer px-1 hover:bg-paper hover:text-ink"
+            hx-get="{{ root_path }}/manage/tool/{{ id }}/edit"
+            hx-target="#tool-dialog"
+            hx-swap="innerHTML">[edit]</button>
         <a
             hx-delete="{{ root_path }}/manage/tool/delete/{{ id }}"
             hx-trigger="click"

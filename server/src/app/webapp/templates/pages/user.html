@@ -41,5 +41,10 @@
                 </ul>
             </section>
         </div>
+
+        {# [create] and [edit] load their form in here; it opens as a modal once the form has arrived. Only a swap
+           into the dialog itself opens it: the form's own request bubbles the same event up when it finishes #}
+        <dialog id="tool-dialog" class="tool-dialog"
+            _="on htmx:afterSettle if event.target is me call me.showModal() end"></dialog>
     </body>
 </html>

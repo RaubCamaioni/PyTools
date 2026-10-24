@@ -38,6 +38,7 @@ from sandboxcore.host import (
 )
 from app.utility.trace_stream import TraceRegistry
 from app.utility import render
+from app.routes import metadata as metadata_routes
 from app.utility.build_files import BuildFileError, checked_build
 from app import TEMPLATES, logger, ENVIRONMENT
 from app.models import tools as db_tools
@@ -119,16 +120,10 @@ async def trace_stream(token: str):
 
 
 @router.api_route("/", methods=["GET", "POST"])
-async def read_root(request: Request, session: db_tools.SessionDep):
-    return TEMPLATES.TemplateResponse(
-        request,
-        "pages/index.html",
-        {
-            "header_title": "PyTools",
-            "request": request,
-            "root_path": request.scope.get("root_path"),
-        },
-    )
+async def read_root(request: Request, session: db_tools.SessionDep, search: str = ""):
+    from app.routes.browse import index_page
+
+    return index_page(request, session, None, search)
 
 
 @router.post("/tools", response_class=JSONResponse)
@@ -144,18 +139,17 @@ async def get_tools(
     body = await request.body()
     search_string = unquote(body.decode())
     query_params = parse_qs(search_string)
-    # every typed word must match the tool's name or one of its first-line hashtags
+    # every typed word must match the tool's name or one of its tags
     tags = query_params.get("search", [""])[0].split()
-
-    if tags:
-        tools = db_tools.get_tools_by_tags(session, tags, start, end)
-    else:
-        tools = db_tools.get_tools_by_index(session, start, end)
+    category = query_params.get("category", [""])[0] or None  # an unknown one matches nothing
+    tools = db_tools.search_tools(session, tags, start, end, category=category)
 
     if len(tools) < (end - start):
         end = None
 
-    content = render.list_items(request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50)
+    content = render.list_items(
+        request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50, category=category
+    )
     return HTMLResponse(content=content)
 
 
@@ -238,6 +232,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
             "time": time.time(),
             "votes": _votes_block(request, session, tool.id),
             "author": _author_label(session, tool),
+            "tool_meta": metadata_routes.display(request, session, tool),
         },
     )
 

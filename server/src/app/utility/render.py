@@ -110,8 +110,10 @@ def list_items(
     end: Optional[int] = None,
     tags: Optional[list[str]] = None,
     page: int = 50,
+    category: Optional[str] = None,
 ):
-    """Render the ls-style tool list; `end` (if any) is where the next page of `page` tools starts."""
+    """Render the ls-style tool list; `end` (if any) is where the next page of `page` tools starts; the next
+    page's loader carries the search words and the category."""
     tags = tags or []
 
     htmlx = []
@@ -133,6 +135,7 @@ def list_items(
                 "start": end,
                 "end": end + page,
                 "tags": " ".join(tags),
+                "category": category,
                 "root_path": base_url or "",  # fragments rendered outside a request must be told the prefix
             },
         )
@@ -165,6 +168,24 @@ def tool_votes(root_path, tool_id, up, down, my_vote=None, reported=False, login
         my_vote=my_vote,
         reported=reported,
         login_needed=login_needed,
+    )
+
+
+def tool_meta(root_path: str, tool_id: int, values: dict) -> str:
+    """A tool's metadata as each kind's display partial."""
+    from app import metadata
+
+    return TEMPLATES.get_template("components/tool_meta.html").render(
+        root_path=root_path or "", tool_id=tool_id, kinds=metadata.KINDS, **values
+    )
+
+
+def tool_dialog(root_path: str, tool_id: Optional[int], name: Optional[str], values: dict) -> str:
+    """The profile's create/edit dialog: the file and every kind's editor, filled with `values` when editing."""
+    from app import metadata
+
+    return TEMPLATES.get_template("components/tool_dialog.html").render(
+        root_path=root_path or "", tool_id=tool_id, name=name, kinds=metadata.KINDS, **values
     )
 
 

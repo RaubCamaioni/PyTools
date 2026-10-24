@@ -1,0 +1,36 @@
+{# the profile's create/edit dialog, loaded into <dialog id="tool-dialog">. Creating needs the file; editing
+   saves the metadata alone, or replaces the code too when a file is chosen (through the validation build).
+   On success the dialog closes and the table reloads; an error is shown here and the input is kept. #}
+<form class="flex flex-col gap-3"
+    hx-post="{{ root_path }}{% if tool_id %}/manage/tool/update/{{ tool_id }}{% else %}/manage/tool/upload{% endif %}"
+    hx-encoding="multipart/form-data"
+    hx-swap="none"
+    hx-indicator="#tool-dialog-busy"
+    _="on htmx:afterRequest if event.detail.successful call #tool-dialog.close() then send refresh to #tool-rows end
+       on htmx:responseError put metaError(event.detail.xhr) into #tool-dialog-error">
+
+    <div class="prompt font-bold">{% if tool_id %}edit {{ name }}.py{% else %}create a tool{% endif %}</div>
+
+    {% with editor_id="dialog" %}
+    <div class="flex items-center gap-2">
+        <span class="text-dim">file:</span>
+        <span id="tool-dialog-file" class="text-dim">{% if tool_id %}keep {{ name }}.py{% else %}none chosen{% endif %}</span>
+        <input id="tool-dialog-input" type="file" name="file" accept=".py"{% if not tool_id %} required{% endif %}
+            class="sr-only"
+            _="on change if my.files.length > 0 put my.files[0].name into #tool-dialog-file end">
+        <label for="tool-dialog-input" class="cursor-pointer px-1 hover:bg-paper hover:text-ink">[choose file]</label>
+    </div>
+
+    {# the description reads first; the other kinds follow in their registry order #}
+    {% for kind in kinds if kind.key == "description" %}{% include kind.editor_template %}{% endfor %}
+    {% for kind in kinds if kind.key != "description" %}{% include kind.editor_template %}{% endfor %}
+    {% endwith %}
+
+    {# messages on the left; [cancel] then [save] (or [create]) at the bottom right #}
+    <div class="flex items-center gap-2">
+        <span id="tool-dialog-busy" class="htmx-indicator text-dim">saving...</span>
+        <span id="tool-dialog-error" class="flex-grow"></span>
+        <button type="button" class="text-dim hover:bg-paper hover:text-ink" _="on click call #tool-dialog.close()">[cancel]</button>
+        <button type="submit" class="hover:bg-paper hover:text-ink">{% if tool_id %}[save]{% else %}[create]{% endif %}</button>
+    </div>
+</form>
