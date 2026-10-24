@@ -73,10 +73,15 @@ number of smaller libraries. The full list is the `dependencies` table in that f
 
 ## Repository layout
 
+The sandbox core (podman runner, limits, outcomes, trace channel, run-directory helpers, the annotation
+allow-list and the in-sandbox runner) is the shared package
+[sandboxcore](https://github.com/RaubCamaioni/sandboxcore), also used by the CadQuery Catalog.
+Both `server/pyproject.toml` and `sandbox/pyproject.toml` pin the same release tag; bump them together.
+
 | Path | Contents |
 |---|---|
 | `server/` | The FastAPI application: routes, SQLModel database, templates (htmx and hyperscript), static assets, tests. |
-| `sandbox/` | The runtime that executes one tool inside its container: argument loading, result serialisation, line tracing. |
+| `sandbox/` | The sandbox image's Python packages: the tools' libraries plus the sandboxcore runner (argument loading, result serialisation, line tracing). |
 | `containers/` | `Containerfile.prod` (the app image: systemd, nested rootless podman), `Containerfile.sandbox` (the tool runtime image), app config files. |
 | `tools/` | The sample tools the site started with. |
 | `tools/converters/` | The 236 converter and calculator tools published on pywebtools.com. |
@@ -111,7 +116,7 @@ The environment file holds:
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_REDIRECT_URI` | GitHub OAuth login. Without them the site runs with login disabled. |
 | `OWNER_GITHUB_LOGIN` | The GitHub account that owns the site's own tools. |
 | `ROOT_PATH` | The URL prefix the app is served under when it does not own the whole host, for example `/tools`. Empty (the default) at the root. |
-| `SANDBOX_IMAGE`, `SANDBOX_TIMEOUT_SECONDS`, `SANDBOX_MEMORY`, `SANDBOX_CPUS`, `SANDBOX_PIDS`, `SANDBOX_MAX_CONCURRENT`, `SANDBOX_QUEUE_SECONDS`, `SANDBOX_RUN_DIR`, `SANDBOX_MAX_OUTPUT_MB` | Limits for tool runs; every one has a default (see `server/src/app/utility/sandbox_config.py`). |
+| `SANDBOX_IMAGE`, `SANDBOX_TIMEOUT_SECONDS`, `SANDBOX_MEMORY`, `SANDBOX_CPUS`, `SANDBOX_PIDS`, `SANDBOX_MAX_CONCURRENT`, `SANDBOX_QUEUE_SECONDS`, `SANDBOX_RUN_DIR`, `SANDBOX_MAX_OUTPUT_MB` | Limits for tool runs; every one has a default (see `SandboxConfig` in [sandboxcore](https://github.com/RaubCamaioni/sandboxcore); the image and run directory defaults are in `server/src/app/__init__.py`). |
 
 ### Serving under a sub-path
 

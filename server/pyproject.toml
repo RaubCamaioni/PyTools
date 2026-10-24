@@ -3,9 +3,11 @@ name = "pytools"
 version = "0.3.6"
 description = "Python script execution web wrapper."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "black>=24.0.0",
+    # the sandbox runner, limits, trace channel and run-directory helpers; same tag as sandbox/pyproject.toml
+    "sandboxcore @ https://github.com/RaubCamaioni/sandboxcore/archive/refs/tags/v0.1.0.tar.gz",
     "fastapi[standard]>=0.115.12",
     "itsdangerous>=2.2.0",
     "nh3>=0.2.21",

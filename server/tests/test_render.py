@@ -3,6 +3,12 @@ import pytest
 import re
 
 from app.utility import render
+from sandboxcore.host import OutputFile
+
+
+def out(name, run="abc"):
+    """A file of a run, as Sandbox.run returns it."""
+    return OutputFile(run=run, name=name, size=1, path=Path("/runs") / run / name)
 
 
 def test_list_items_loader_requests_a_full_next_page():
@@ -33,7 +39,7 @@ def test_render_dict_is_key_value_rows_with_copy_brackets():
 def test_render_copy_all_is_raw_text_for_a_string_and_json_otherwise():
     html = render.render("two\nlines")
     assert 'data-copy="two\nlines">[copy]' in html and "[copy all]" not in html  # one value, one bracket
-    html = render.render({"a": [1, "b"], "p": Path("/r/x.txt")})
+    html = render.render({"a": [1, "b"], "p": out("x.txt")})
     assert 'data-copy="{\n  &quot;a&quot;: [\n    1,\n    &quot;b&quot;\n  ],\n  &quot;p&quot;: &quot;' in html
 
 
@@ -58,21 +64,21 @@ def test_render_strings_are_raw_and_escaped():
 
 
 def test_render_image_result_is_previewed_inline():
-    html = render.render({"file": Path("/runs/abc/out.PNG")})
-    assert '<a href="/download/runs/abc/out.PNG" download="out.PNG"' in html
-    assert '<img class="preview" src="/download/runs/abc/out.PNG?preview=1" alt="out.PNG"' in html
+    html = render.render({"file": out("out.PNG")})
+    assert '<a href="/download/abc/out.PNG" download="out.PNG"' in html
+    assert '<img class="preview" src="/download/abc/out.PNG?preview=1" alt="out.PNG"' in html
 
 
 def test_render_media_results_are_embedded():
-    html = render.render([Path("/r/a.mp3"), Path("/r/b.webm"), Path("/r/c.pdf"), Path("/r/d.stl")])
-    assert '<audio class="preview" controls="" preload="metadata" src="/download/r/a.mp3?preview=1">' in html
-    assert '<video class="preview" controls="" preload="metadata" src="/download/r/b.webm?preview=1">' in html
-    assert '<object class="preview document" data="/download/r/c.pdf?preview=1" type="application/pdf">' in html
-    assert '<stl-viewer url="/download/r/d.stl">' in html
+    html = render.render([out("a.mp3"), out("b.webm"), out("c.pdf"), out("d.stl")])
+    assert '<audio class="preview" controls="" preload="metadata" src="/download/abc/a.mp3?preview=1">' in html
+    assert '<video class="preview" controls="" preload="metadata" src="/download/abc/b.webm?preview=1">' in html
+    assert '<object class="preview document" data="/download/abc/c.pdf?preview=1" type="application/pdf">' in html
+    assert '<stl-viewer url="/download/abc/d.stl">' in html
 
 
 def test_render_other_files_are_links_only():
-    html = render.render(Path("/runs/abc/out.csv"))
+    html = render.render(out("out.csv"))
     assert "<a href=" in html and "<img" not in html and "<object" not in html
 
 
@@ -114,6 +120,6 @@ def test_format_runs_fits_four_characters(count, text):
 
 
 def test_result_paths_render_as_download_links():
-    html = render.render(Path("/tmp/pywebtools-runs/abc/qr_code.png"))
-    assert 'href="/download/tmp/pywebtools-runs/abc/qr_code.png"' in html.replace("\\", "/")
-    assert 'download="qr_code.png"' in html
+    html = render.render(out("inputs/photo/my qr.png"))
+    assert 'href="/download/abc/inputs/photo/my%20qr.png"' in html  # the name inside the run, URL-quoted
+    assert 'download="my qr.png"' in html

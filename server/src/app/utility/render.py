@@ -3,11 +3,13 @@ from typing import Any, get_args
 from html import escape
 import json
 import mimetypes
-from pathlib import Path, PosixPath
+from pathlib import Path
+from urllib.parse import quote
 from jinja2 import Template
 from app import TEMPLATES, logger
 from typing import Literal, Optional  # required for form type
 from nh3 import clean as sanitize_html
+from sandboxcore.host import OutputFile
 from app.models.tools import Tool
 
 
@@ -224,14 +226,19 @@ def _copy_button(text: str, label: str = "[copy]") -> str:
     return f'<button type="button" class="copy" data-copy="{escape(text, quote=True)}">{label}</button>'
 
 
-def _download_link(path: Path, root: str) -> str:
-    href = root + (Path("/download") / path.relative_to(path.anchor)).as_posix()
-    link = f'<a href="{href}" download="{escape(path.name, quote=True)}">{escape(path.name)}</a>'
-    suffix = path.suffix.lower()
+def download_url(out: OutputFile, root: str = "") -> str:
+    """Where a file of a run is downloaded: /download/<run>/<name inside the run directory>."""
+    return f"{root}/download/{out.run}/{quote(out.name)}"
+
+
+def _download_link(out: OutputFile, root: str) -> str:
+    href = download_url(out, root)
+    link = f'<a href="{href}" download="{escape(out.filename, quote=True)}">{escape(out.filename)}</a>'
+    suffix = Path(out.filename).suffix.lower()
     if suffix == ".stl":
         embed = f'<stl-viewer url="{href}"></stl-viewer>'
     elif suffix in PREVIEW_IMAGE_SUFFIXES:
-        embed = f'<img class="preview" src="{href}?preview=1" alt="{escape(path.name, quote=True)}" loading="lazy">'
+        embed = f'<img class="preview" src="{href}?preview=1" alt="{escape(out.filename, quote=True)}" loading="lazy">'
     elif suffix in PREVIEW_AUDIO_SUFFIXES:
         embed = f'<audio class="preview" controls preload="metadata" src="{href}?preview=1"></audio>'
     elif suffix in PREVIEW_VIDEO_SUFFIXES:
@@ -251,8 +258,8 @@ def _scalar(value: Any, root: str = "") -> tuple[str, str]:
     if isinstance(value, (int, float)):
         text = repr(value)
         return f'<span class="val num">{escape(text)}</span>', text
-    if isinstance(value, (Path, PosixPath)):
-        return f'<span class="val">{_download_link(value, root)}</span>', str(value)
+    if isinstance(value, OutputFile):
+        return f'<span class="val">{_download_link(value, root)}</span>', value.filename
     text = str(value)
     return f'<span class="val str">{escape(text)}</span>', text
 
@@ -308,8 +315,8 @@ def _plain_text(value: Any) -> str:
         return "\n".join(_scalar(item)[1] for item in value)
 
     def default(obj):
-        if isinstance(obj, (Path, PosixPath)):
-            return str(obj)
+        if isinstance(obj, OutputFile):
+            return obj.filename
         if isinstance(obj, (set, frozenset)):
             return sorted(obj, key=str)
         return str(obj)

@@ -8,16 +8,17 @@ from fastapi.testclient import TestClient
 
 from app.app import app
 from app.routes import tools as tools_routes
-from app.utility.podman_runner import Outcome, RunResult
+from sandboxcore.host import Outcome, Sandbox
+from sandboxcore.host.podman import RunResult
 
 from tests.test_auth_routes import FakeGitHub, github  # noqa: F401  (fixture)
-from tests.test_tool_routes import StubRunner, public_tool  # noqa: F401  (fixture)
+from tests.test_tool_routes import FileRunner, StubRunner, public_tool  # noqa: F401  (fixture)
 
 PREFIX = "/tools"
 
 
 def prefixed_client(monkeypatch, runner=None):
-    monkeypatch.setattr(tools_routes, "runner", runner or StubRunner())
+    monkeypatch.setattr(tools_routes, "sandbox", Sandbox(tools_routes.ENVIRONMENT.sandbox, runner=runner or StubRunner()))
     return TestClient(app, root_path=PREFIX)
 
 
@@ -37,13 +38,13 @@ def test_home_page_assets_and_links_carry_the_prefix(monkeypatch, public_tool):
 
 
 def test_tool_page_and_result_links_carry_the_prefix(monkeypatch, public_tool):
-    c = prefixed_client(monkeypatch, StubRunner(RunResult(Outcome.OK, results={"file": Path("/runs/a/out.png")})))
+    c = prefixed_client(monkeypatch, FileRunner({"out.png": b"png"}))
     page = c.get(PREFIX + "/tool/8").text
     assert unprefixed_urls(page) == []
     assert f'new EventSource("{PREFIX}/trace/"' in page and f"""a[href^="{PREFIX}/download/"]""" in page
     result = c.post(PREFIX + "/tool/8", headers={"HX-Request": "true"}).text
-    assert f'href="{PREFIX}/download/runs/a/out.png"' in result
-    assert f'src="{PREFIX}/download/runs/a/out.png?preview=1"' in result
+    assert re.search(f'href="{PREFIX}/download/[A-Za-z0-9_-]{{32}}/out.png"', result)
+    assert re.search(f'src="{PREFIX}/download/[A-Za-z0-9_-]{{32}}/out.png\\?preview=1"', result)
 
 
 def test_login_round_trip_stays_under_the_prefix(monkeypatch, github, public_tool):  # noqa: F811
@@ -67,6 +68,6 @@ def test_listing_pages_and_their_loader_carry_the_prefix(monkeypatch, public_too
 
 
 def test_without_a_prefix_nothing_changes(monkeypatch, public_tool):
-    monkeypatch.setattr(tools_routes, "runner", StubRunner())
+    monkeypatch.setattr(tools_routes, "sandbox", Sandbox(tools_routes.ENVIRONMENT.sandbox, runner=StubRunner()))
     page = TestClient(app).get("/").text
     assert 'href="/static/output.css' in page and 'hx-post="/tools' in page
