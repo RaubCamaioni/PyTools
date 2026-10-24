@@ -178,3 +178,27 @@ def test_http_post_uploads_as_the_owner_through_the_real_route(monkeypatch):
         assert tool is not None and tool.user_id == OWNER
         assert metadata.load_all(session, [tool.id])[tool.id] == {
             "tags": ["posted"], "categories": ["home/storage"], "description": "Sent."}
+
+
+def test_a_lost_connection_is_a_failure_not_a_crash(monkeypatch):
+    import urllib.error
+    import urllib.request
+
+    def urlopen(request, timeout=None):
+        raise urllib.error.URLError("connection reset")
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    status, detail = admin_cli.http_post("http://app", OWNER)("x.py", b"", {})
+    assert status != 200 and "connection reset" in detail
+
+
+def test_a_stored_private_model_is_published(session_with_tools, tmp_path):
+    # e.g. a create whose response was lost after the app stored it: the next --apply publishes it
+    from app.models.tools import Tool
+
+    session, make = session_with_tools
+    make("new_box", public=False, user_id=OWNER)
+    assert "publish new_box" in admin_cli.create_missing(session, MODELS, OWNER, False, repo(tmp_path), FakeSite(session))
+    lines = admin_cli.create_missing(session, MODELS, OWNER, True, repo(tmp_path / "2"), FakeSite(session))
+    stored = session.exec(admin_cli.select(Tool).where(Tool.name == "new_box")).first()
+    assert stored.public and "published new_box" in lines and "created new_hook" in lines

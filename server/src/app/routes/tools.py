@@ -493,6 +493,11 @@ def _model_response(value: dict, name: str, root_path: str, htmx: bool):
     return json.dumps({"stl": stl_url, "step": step_url, "meta": build["meta"]})
 
 
+# an SVG is a document that can carry script, and uploaded code writes its own: served from this origin it is
+# inert (no script, no requests, a sandboxed origin) and never sniffed as anything else
+INERT_SVG = {"Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox", "X-Content-Type-Options": "nosniff"}
+
+
 @router.get("/tool/{id}/preview.svg")
 async def tool_preview(request: Request, id: int, session: db_tools.SessionDep):
     """The thumbnail drawn at upload (white lines, transparent background)."""
@@ -504,7 +509,7 @@ async def tool_preview(request: Request, id: int, session: db_tools.SessionDep):
     etag = hashlib.sha256(tool.preview_svg.encode("utf-8")).hexdigest()[:16]
     if request.headers.get("if-none-match") == f'"{etag}"':
         return Response(status_code=304, headers={"ETag": f'"{etag}"'})
-    headers = {"Cache-Control": "no-cache", "ETag": f'"{etag}"'}
+    headers = {"Cache-Control": "no-cache", "ETag": f'"{etag}"', **INERT_SVG}
     return Response(content=tool.preview_svg, media_type="image/svg+xml", headers=headers)
 
 
@@ -532,11 +537,13 @@ async def download_file(run: str, name: str, preview: bool = False):
 
     # a preview is a file the result page embeds (image, audio, video, pdf): real media type, inline
     if preview and out.path.suffix.lower() in render.PREVIEW_SUFFIXES:
+        inert = INERT_SVG if out.path.suffix.lower() == ".svg" else {"X-Content-Type-Options": "nosniff"}
         return FileResponse(
             out.path,
             media_type=render.preview_media_type(out.filename),
             filename=out.filename,
             content_disposition_type="inline",
+            headers=inert,
         )
 
     return FileResponse(

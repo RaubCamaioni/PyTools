@@ -186,3 +186,12 @@ def test_a_script_page_has_no_viewer_and_no_model_files(monkeypatch, logged_in):
     assert "<stl-viewer" not in page and "[ regenerate ]" not in page and "[ run ]" in page
     assert logged_in.get(f"/tool/{tool_id}/preview.svg").status_code == 404
     assert logged_in.get(f"/tool/{tool_id}/model.stl").status_code == 404
+
+
+def test_the_stored_thumbnail_cannot_run_script(monkeypatch, logged_in):
+    # the run writes its own preview.svg: opened directly, a <script> in it must not run as the viewer
+    upload(logged_in, monkeypatch, BuildingRunner(built()), code=MODEL.replace("demo_box", "inert_box"), name="inert_box.py")
+    r = logged_in.get(f"/tool/{stored_tool('inert_box').id}/preview.svg")
+    csp = r.headers["content-security-policy"]
+    assert "sandbox" in csp and "default-src 'none'" in csp and "script-src" not in csp
+    assert r.headers["x-content-type-options"] == "nosniff"

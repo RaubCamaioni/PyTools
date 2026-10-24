@@ -98,14 +98,23 @@ Post = Callable[[str, bytes, dict[str, list[str]]], tuple[int, str]]
 def create_missing(session: Session, manifest: dict, owner: int, apply: bool, tools_dir: Path, post: Post) -> list[str]:
     """Create the manifest's models that the owner has no tool for: `post(filename, code, form)` uploads one
     (returning the status and the error detail); a created one is made public. A failure is reported and the
-    rest still go. Returns the report lines (empty when nothing is missing)."""
+    rest still go. A stored model that is still private (a create whose answer was lost) is published.
+    Returns the report lines (empty when there is nothing to do)."""
     from app.models.tools import Tool
 
-    stored = set(session.exec(select(Tool.name).where(Tool.user_id == owner)).all())
-    missing = [n for n, e in manifest.items() if str((e or {}).get("file", "")).startswith(CREATABLE) and n not in stored]
+    models = [n for n, e in manifest.items() if str((e or {}).get("file", "")).startswith(CREATABLE)]
+    rows = session.exec(select(Tool).where(Tool.user_id == owner, Tool.name.in_(models))).all()
+    stored = {tool.name: tool for tool in rows}
+    missing = [name for name in models if name not in stored]
+    private = [name for name in models if name in stored and not stored[name].public]
     if not apply:
-        return [f"create {name}" for name in missing]
+        return [f"publish {name}" for name in private] + [f"create {name}" for name in missing]
     lines = []
+    for name in private:
+        stored[name].public = True
+        session.add(stored[name])
+        session.commit()
+        lines.append(f"published {name}")
     for name in missing:
         entry = manifest[name]
         code = (tools_dir / entry["file"]).read_bytes()
@@ -163,6 +172,8 @@ def http_post(base_url: str, owner: int) -> Post:
                 return e.code, json.loads(e.read()).get("detail", "")
             except ValueError:
                 return e.code, ""
+        except (urllib.error.URLError, OSError) as e:  # refused, reset or timed out: the next run picks it up
+            return 0, f"no answer from the app: {getattr(e, 'reason', e)}"
 
     return post
 
