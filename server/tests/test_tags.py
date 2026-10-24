@@ -24,7 +24,7 @@ def test_search_words_match_names_and_tags(session_with_tools):
     for name, tags in [("pdf_merge", ["pdf", "merge"]), ("pdf_split", ["pdf", "split"]), ("image_crop", ["image", "crop"])]:
         Tags().save(session, make(name), tags)
     session.commit()
-    names = lambda rows: sorted(name for _, name in rows)  # noqa: E731
+    names = lambda rows: sorted(row[1] for row in rows)  # noqa: E731
     assert names(db.search_tools(session, ["pdf"], 0, 50)) == ["pdf_merge", "pdf_split"]  # a tag
     assert names(db.search_tools(session, ["crop"], 0, 50)) == ["image_crop"]  # a tag that is not in the name
     assert names(db.search_tools(session, ["pdf", "split"], 0, 50)) == ["pdf_split"]  # every word must match
@@ -34,7 +34,7 @@ def test_search_words_match_names_and_tags(session_with_tools):
 def test_tools_route_searches_with_the_typed_words(monkeypatch):
     calls = []
 
-    def fake(session, tags, start, end, category=None):
+    def fake(session, tags, start, end, category=None, kind=None):
         calls.append(tags)
         return [(i, f"pdf_tool{i}") for i in range(50)]  # a full page: the loader for the next one follows
 

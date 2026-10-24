@@ -123,10 +123,10 @@ async def trace_stream(token: str):
 
 
 @router.api_route("/", methods=["GET", "POST"])
-async def read_root(request: Request, session: db_tools.SessionDep, search: str = ""):
+async def read_root(request: Request, session: db_tools.SessionDep, search: str = "", kind: str = ""):
     from app.routes.browse import index_page
 
-    return index_page(request, session, None, search)
+    return index_page(request, session, None, search, kind)
 
 
 @router.post("/tools", response_class=JSONResponse)
@@ -145,13 +145,16 @@ async def get_tools(
     # every typed word must match the tool's name or one of its tags
     tags = query_params.get("search", [""])[0].split()
     category = query_params.get("category", [""])[0] or None  # an unknown one matches nothing
-    tools = db_tools.search_tools(session, tags, start, end, category=category)
+    from app.routes.browse import normalise_kind
+
+    kind = normalise_kind(query_params.get("kind", [""])[0])
+    tools = db_tools.search_tools(session, tags, start, end, category=category, kind=kind)
 
     if len(tools) < (end - start):
         end = None
 
     content = render.list_items(
-        request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50, category=category
+        request.scope.get("root_path"), tools, end, tags, page=end - start if end else 50, category=category, kind=kind
     )
     return HTMLResponse(content=content)
 

@@ -111,9 +111,10 @@ def search_tools(
     end: int,
     only_public: bool = True,
     category: Optional[str] = None,
-) -> list[tuple[int, str]]:
-    """(id, name) of the tools where every word matches the name (substring) or a tag (exact; the last word,
-    still being typed, by prefix), optionally within a category slug or leaf path, in id order."""
+    kind: Optional[str] = None,
+) -> list[tuple[int, str, str]]:
+    """(id, name, kind) of the tools where every word matches the name (substring) or a tag (exact; the last word,
+    still being typed, by prefix), optionally within a category slug or leaf path and of one kind, in id order."""
     from app import categories
     from app.metadata.categories import tool_ids_in
     from app.metadata.tags import ToolTag, escape_like
@@ -128,7 +129,9 @@ def search_tools(
     if category is not None:
         paths = categories.paths_under(category) or ([category] if categories.is_leaf(category) else [])
         conditions.append(Tool.id.in_(tool_ids_in(paths)))
-    statement = select(Tool.id, Tool.name).where(*conditions).order_by(Tool.id).offset(start).limit(end - start)
+    if kind is not None:
+        conditions.append(Tool.kind == kind)
+    statement = select(Tool.id, Tool.name, Tool.kind).where(*conditions).order_by(Tool.id).offset(start).limit(end - start)
     return session.exec(statement).all()
 
 

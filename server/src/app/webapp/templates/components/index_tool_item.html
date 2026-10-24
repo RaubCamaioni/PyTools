@@ -1,3 +1,6 @@
 <li>
-	<a href="{{ base_url }}/tool/{{ id }}" class="block truncate px-1 no-underline hover:bg-paper hover:text-ink">{{ name }}.py</a>
+	<a href="{{ base_url }}/tool/{{ id }}" class="flex items-center gap-2 truncate px-1 no-underline hover:bg-paper hover:text-ink">
+		{%- if kind == "model" %}<img class="thumb" src="{{ base_url }}/tool/{{ id }}/preview.svg" alt="" loading="lazy">{% endif -%}
+		<span class="truncate">{{ name }}.py</span>
+	</a>
 </li>
