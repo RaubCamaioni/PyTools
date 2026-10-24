@@ -1,0 +1,1259 @@
+# Metadata for the repo's tools, applied to the site with `pytools-admin apply-manifest` (dry run by default).
+# One entry per tool file (matched on the site by name and owner): its file under tools/, up to 3 categories
+# (the first is the primary; slugs from server/src/app/categories.yaml), up to 10 tags, a description.
+
+async_tool_test:
+  file: async_tool_test.py
+  categories: [misc]
+  tags: [async, tool, test]
+  description: "A test tool: an async entrypoint that waits and returns."
+audio_to_audio:
+  file: audio_to_audio.py
+  categories: [converters/media]
+  tags: [audio]
+  description: "Convert an audio file to another format (mp3, wav, ogg, flac, m4a)."
+byte_converter:
+  file: byte_converter.py
+  categories: [text/encoding]
+  tags: [byte, converter]
+  description: "Show text as bytes in binary, octal, decimal or hexadecimal."
+container_with_lid_circle:
+  file: container_with_lid_circle.py
+  categories: [home/storage]
+  tags: [cadquery]
+  description: "A round container with a fitted lid, sized by its parameters."
+container_with_lid_sweep:
+  file: container_with_lid_sweep.py
+  categories: [home/storage]
+  tags: [cadquery]
+  description: "A container with a lid whose outline is swept from a profile."
+angle_converter:
+  file: converters/angle_converter.py
+  categories: [converters/units]
+  tags: [unit, angle, degrees, radians, converter]
+  description: "Convert an angle between degrees, radians (accepts 'pi/4'), gradians, turns, arcminutes, arcseconds and degrees-minutes-seconds (45°30'15'')."
+archive_converter:
+  file: converters/archive_converter.py
+  categories: [converters/data]
+  tags: [archive, zip, tar, 7z, gzip, compress, converter]
+  description: "Convert between ZIP, TAR, TAR.GZ and 7Z archives (or decompress a .gz file), or list what an archive contains without extracting."
+archive_creator:
+  file: converters/archive_creator.py
+  categories: [converters/data]
+  tags: [zip, archive, compress, password, gzip, bzip2, xz]
+  description: "Bundle up to three files into a zip (optionally AES-256 password protected), a tar.gz, or compress each file on its own with gzip, bzip2 or xz."
+area_converter:
+  file: converters/area_converter.py
+  categories: [converters/units]
+  tags: [unit, area, acre, hectare, square, converter]
+  description: "Convert an area between square metres, hectares, square kilometres, square feet, square yards, acres and square miles."
+ascii_banner:
+  file: converters/ascii_banner.py
+  categories: [text/generators]
+  tags: [text, ascii, art, banner, figlet, generator]
+  description: "Render text as a large ASCII-art banner (figlet fonts), for READMEs, terminals and signatures."
+audio_adjust:
+  file: converters/audio_adjust.py
+  categories: [converters/media]
+  tags: [audio, volume, fade, normalize, speed, mono, resample]
+  description: "Change an audio file's volume, add fades, speed it up or slow it down (pitch follows), normalise the peak to full scale, and convert to mono or stereo, then save as MP3/WAV/FLAC/OGG."
+audio_compress:
+  file: converters/audio_compress.py
+  categories: [converters/media]
+  tags: [audio, compress, bitrate, mp3, smaller, converter]
+  description: "Shrink an audio file by re-encoding it at a lower bitrate (and optionally to mono): podcasts and voice memos go to 64k, music to 128k or higher."
+audio_merge:
+  file: converters/audio_merge.py
+  categories: [converters/media]
+  tags: [audio, merge, join, concatenate, mix]
+  description: "Join two audio files end to end (with an optional silent gap) or mix them so they play at the same time."
+audio_silence_trim:
+  file: converters/audio_silence_trim.py
+  categories: [converters/media]
+  tags: [audio, silence, trim, split, channels, stereo]
+  description: "Cut the silence from the start and end of a recording, remove every silent gap longer than half a second, or split a stereo file into separate left and right WAV files."
+audio_tags:
+  file: converters/audio_tags.py
+  categories: [converters/media]
+  tags: [audio, tags, id3, metadata, mp3, flac, cover]
+  description: "Read, edit or strip the tags (ID3, Vorbis, MP4) of an MP3, FLAC, OGG, M4A or WAV file: title, artist, album, year, genre, track number, plus embedded cover art on read."
+audio_trim:
+  file: converters/audio_trim.py
+  categories: [converters/media]
+  tags: [audio, trim, cut, clip, mp3, wav]
+  description: "Cut a section out of an audio file (or the audio track of a video) between two times, optionally converting the format."
+audio_visualizer:
+  file: converters/audio_visualizer.py
+  categories: [converters/media, converters/images]
+  tags: [audio, waveform, spectrogram, image, visualize]
+  description: "Draw an audio file as a waveform or a spectrogram PNG (time left to right; the spectrogram shows frequency bottom to top on a log scale)."
+barcode_generator:
+  file: converters/barcode_generator.py
+  categories: [utilities/codes]
+  tags: [barcode, ean, upc, code128, isbn, generator]
+  description: "Generate a barcode image (EAN-13, EAN-8, UPC-A, Code 128, Code 39, ISBN, ISSN, ITF)."
+base64_converter:
+  file: converters/base64_converter.py
+  categories: [text/encoding]
+  tags: [text, encoding, base64, converter]
+  description: "Encode text to Base64 or decode Base64 back to text."
+base64_to_file:
+  file: converters/base64_to_file.py
+  categories: [text/encoding]
+  tags: [base64, file, image, decode, converter]
+  description: "Decode Base64 (raw or a data:...;base64, URI, pasted into a text file) back into the original file."
+bbcode_to_html:
+  file: converters/bbcode_to_html.py
+  categories: [developer/web]
+  tags: [bbcode, html, forum, markup, converter]
+  description: "Convert forum BBCode ([b], [i], [url=], [img], [quote], [list], [color=], [size=]) to HTML, or simple HTML back to BBCode."
+blur_faces:
+  file: converters/blur_faces.py
+  categories: [converters/images]
+  tags: [image, face, blur, pixelate, privacy, anonymize]
+  description: "Find faces in a photo and blur, pixelate or black them out."
+bmi_calculator:
+  file: converters/bmi_calculator.py
+  categories: [utilities/calculators]
+  tags: [bmi, health, weight, height, calculator]
+  description: "Body mass index from weight and height (kg and cm, or pounds and inches), with the WHO category and the weight range that would count as a healthy BMI for that height."
+caesar_cipher:
+  file: converters/caesar_cipher.py
+  categories: [text/encoding]
+  tags: [text, cipher, rot13, converter]
+  description: "Shift letters by N positions (ROT13 by default)."
+calendar_generator:
+  file: converters/calendar_generator.py
+  categories: [utilities/time]
+  tags: [calendar, month, year, print, generator]
+  description: "Print a month (or the whole year when month is 0) as a text calendar, an HTML table, or a CSV of every date with its weekday, ISO week and day of year."
+certificate_decoder:
+  file: converters/certificate_decoder.py
+  categories: [security/encryption]
+  tags: [certificate, x509, ssl, tls, pem, csr, decode]
+  description: "Decode an X.509 certificate or CSR (PEM or DER): subject, issuer, validity, SANs, key type, signature algorithm and fingerprints."
+chmod_calculator:
+  file: converters/chmod_calculator.py
+  categories: [developer/code]
+  tags: [chmod, permissions, linux, unix, octal]
+  description: "Convert Unix file permissions between octal (755), symbolic (rwxr-xr-x) and a readable table of owner/group/others, with the matching chmod command."
+cidr_tools:
+  file: converters/cidr_tools.py
+  categories: [developer/web]
+  tags: [network, cidr, subnet, ip-range, split, summarize]
+  description: "Subnet maths: split a block into smaller subnets, turn a start-end range into CIDRs, summarise several CIDRs into the fewest blocks, list a small subnet's hosts, or check whether two blocks overlap."
+color_blindness_simulator:
+  file: converters/color_blindness_simulator.py
+  categories: [converters/images]
+  tags: [image, color-blindness, accessibility, simulate, deuteranopia]
+  description: "Show how an image, chart or UI looks to people with red-green (deuteranopia, protanopia), blue-yellow (tritanopia) or no colour vision, singly or all four side by side."
+color_converter:
+  file: converters/color_converter.py
+  categories: [developer/web]
+  tags: [color, hex, rgb, hsl, cmyk, converter]
+  description: "Convert a color between HEX, RGB, HSL, HSV/HSB and CMYK, with luminance and contrast against black and white."
+color_palette_generator:
+  file: converters/color_palette_generator.py
+  categories: [developer/web]
+  tags: [color, palette, shades, tints, complementary, scheme, generator]
+  description: "Build a colour scheme from one base colour (hex or rgb): shades and tints, complementary, analogous, triadic, split-complementary, tetradic or monochromatic, as hex codes with CSS variables and a swat"
+comic_archive_converter:
+  file: converters/comic_archive_converter.py
+  categories: [converters/documents, converters/images]
+  tags: [cbz, cbr, comic, pdf, images, converter]
+  description: "Convert a comic archive (CBZ, a zip of page images) to PDF, or a PDF into a CBZ with one JPEG per page."
+compound_interest_calculator:
+  file: converters/compound_interest_calculator.py
+  categories: [utilities/calculators]
+  tags: [savings, compound-interest, investment, growth, calculator]
+  description: "How savings or an investment grow with compound interest and regular monthly contributions: final balance, interest earned, the year-by-year table as CSV, and the doubling time (rule of 72)."
+contacts_calendar_to_csv:
+  file: converters/contacts_calendar_to_csv.py
+  categories: [converters/data]
+  tags: [vcf, ics, contacts, calendar, csv, converter]
+  description: "Convert a vCard contacts file (.vcf) or an iCalendar file (.ics) into a CSV spreadsheet: one row per contact or event with name, email, phone, dates, location and so on."
+cooking_converter:
+  file: converters/cooking_converter.py
+  categories: [converters/units]
+  tags: [cooking, baking, cups, grams, ounces, recipe, converter]
+  description: "Convert recipe amounts between cups, spoons, millilitres and grams for a specific ingredient (a cup of flour is not a cup of sugar), plus oven temperatures in a handy table."
+cron_explainer:
+  file: converters/cron_explainer.py
+  categories: [developer/patterns]
+  tags: [cron, schedule, crontab, explain, time]
+  description: "Explain a cron expression in plain English and list its next run times (UTC)."
+csv_json_converter:
+  file: converters/csv_json_converter.py
+  categories: [converters/data]
+  tags: [csv, json, data, converter]
+  description: "Convert CSV/TSV to JSON (list of objects) or JSON (list of objects) to CSV/TSV."
+csv_merge:
+  file: converters/csv_merge.py
+  categories: [converters/data]
+  tags: [csv, merge, join, combine, vlookup, data]
+  description: "Combine two CSVs: stack the rows (header matched by name), join them on a shared key column like a VLOOKUP (left join), or put their columns side by side row for row."
+csv_split:
+  file: converters/csv_split.py
+  categories: [converters/data]
+  tags: [csv, split, chunks, data]
+  description: "Split a big CSV into smaller files (zipped), each keeping the header: every N rows, into N files, or one file per distinct value of a column (name or 1-based number)."
+csv_sql_query:
+  file: converters/csv_sql_query.py
+  categories: [converters/data]
+  tags: [csv, sql, query, data, sqlite]
+  description: "Run a SQL query against a CSV file: the file is loaded into a SQLite table called `data` with its header row as column names, so GROUP BY, ORDER BY, WHERE and aggregates all work."
+csv_to_contacts_calendar:
+  file: converters/csv_to_contacts_calendar.py
+  categories: [converters/data]
+  tags: [csv, vcf, ics, contacts, calendar, converter]
+  description: "Turn a CSV into a vCard contacts file (columns like name, email, phone, organisation) or an iCalendar file (columns like summary, start, end, location, description) that phones, Outlook and Google imp"
+csv_to_markdown_table:
+  file: converters/csv_to_markdown_table.py
+  categories: [converters/data]
+  tags: [csv, markdown, table, converter]
+  description: "Turn a CSV file into a Markdown table (padded columns), or a Markdown table back into CSV."
+csv_to_xlsx:
+  file: converters/csv_to_xlsx.py
+  categories: [converters/data]
+  tags: [csv, xlsx, excel, json, spreadsheet, converter]
+  description: "Convert a CSV/TSV file or a JSON list of objects into an Excel .xlsx workbook with a bold header row, auto-sized columns and real numbers."
+csv_tools:
+  file: converters/csv_tools.py
+  categories: [converters/data]
+  tags: [csv, columns, transpose, delimiter, dedupe, data]
+  description: "Reshape a CSV: transpose it, keep/drop/reorder columns (names or 1-based numbers, comma separated), rename the header, drop it, dedupe rows, sort by a column, or change the delimiter."
+data_rate_converter:
+  file: converters/data_rate_converter.py
+  categories: [converters/units]
+  tags: [unit, bandwidth, data-rate, mbps, download-time, converter]
+  description: "Convert connection speeds between bits and bytes per second (the Mbps vs MB/s confusion), and work out how long a file of a given size takes at that speed."
+data_size_converter:
+  file: converters/data_size_converter.py
+  categories: [converters/units]
+  tags: [unit, data, bytes, storage, bandwidth, converter]
+  description: "Convert data sizes between bits, bytes, decimal units (KB, MB, GB, TB) and binary units (KiB, MiB, GiB, TiB), plus transfer time at common speeds."
+date_difference:
+  file: converters/date_difference.py
+  categories: [utilities/time]
+  tags: [date, time, duration, calculator]
+  description: "Days, weeks, months, years and business days between two dates (age calculator, countdown, date diff)."
+date_format_converter:
+  file: converters/date_format_converter.py
+  categories: [utilities/time]
+  tags: [date, format, reformat, csv, text, converter]
+  description: "Find every date in a text or CSV file (ISO, US, UK, European, long and compact forms) and rewrite it in one chosen format."
+docker_run_to_compose:
+  file: converters/docker_run_to_compose.py
+  categories: [developer/code]
+  tags: [docker, compose, container, devops, converter]
+  description: "Turn a `docker run ...` command line into an equivalent docker-compose.yml service."
+document_metadata:
+  file: converters/document_metadata.py
+  categories: [converters/documents]
+  tags: [docx, xlsx, pptx, metadata, author, strip, privacy]
+  description: "Read or remove the hidden properties of an Office file (docx, xlsx, pptx): author, last modified by, company, dates, revision count, comments."
+document_word_counter:
+  file: converters/document_word_counter.py
+  categories: [converters/documents, text/formatting]
+  tags: [word-count, docx, pdf, pptx, pages, document, statistics]
+  description: "Word, character, sentence and paragraph counts for a Word, PDF, PowerPoint, Markdown or text file, with reading time and an estimated page count."
+docx_find_replace:
+  file: converters/docx_find_replace.py
+  categories: [converters/documents]
+  tags: [docx, word, find, replace, template, edit]
+  description: "Replace text throughout a Word document (body, tables, headers and footers) while keeping the formatting; ideal for filling `{{placeholders}}` in a template."
+docx_merge:
+  file: converters/docx_merge.py
+  categories: [converters/documents]
+  tags: [docx, word, merge, combine, join]
+  description: "Join two or three Word documents into one, in order, with a page break (or a blank line, or nothing) between them."
+docx_to_html:
+  file: converters/docx_to_html.py
+  categories: [converters/documents]
+  tags: [word, docx, html, markdown, document, converter]
+  description: "Convert a Word .docx to clean HTML (images embedded, headings/lists/tables kept) or to Markdown, using semantic styles rather than pixel layout."
+docx_to_text:
+  file: converters/docx_to_text.py
+  categories: [converters/documents]
+  tags: [docx, word, text, markdown, document, converter]
+  description: "Extract the text of a Word .docx file (paragraphs and tables) as plain text or Markdown with headings, lists and tables."
+dotenv_json_converter:
+  file: converters/dotenv_json_converter.py
+  categories: [converters/data]
+  tags: [env, dotenv, json, yaml, config, converter]
+  description: "Convert between .env files (KEY=value lines), JSON, YAML, `export KEY=value` shell lines and a docker-compose `environment:` block."
+ebook_converter:
+  file: converters/ebook_converter.py
+  categories: [converters/documents]
+  tags: [ebook, epub, mobi, pdf, fb2, cbz, text, converter]
+  description: "Convert an EPUB, MOBI, FB2, XPS or CBZ ebook to PDF (reflowed to the chosen page size), plain text, HTML or Markdown."
+electrical_calculator:
+  file: converters/electrical_calculator.py
+  categories: [utilities/calculators]
+  tags: [electrical, ohm, watts, amps, volts, calculator]
+  description: "Ohm's law and power: give any two of volts, amps, ohms and watts and get the other two, plus the energy used per day/month/year and what it costs at your electricity price."
+email_normalizer:
+  file: converters/email_normalizer.py
+  categories: [developer/web]
+  tags: [email, validate, normalize, gmail, dots, plus]
+  description: "Check an email address's syntax and normalise it: lower-case the domain, and for Gmail strip the dots and the +tag so aliases of the same inbox compare equal."
+eml_to_text:
+  file: converters/eml_to_text.py
+  categories: [converters/documents]
+  tags: [email, eml, text, attachments, converter]
+  description: "Read a saved email (.eml): headers and the message body as text or HTML, or pull out its attachments into a zip."
+encoding_converter:
+  file: converters/encoding_converter.py
+  categories: [text/encoding]
+  tags: [text, encoding, base32, base58, ascii85, punycode, uuencode, converter]
+  description: "Encode text with Base32, Base58, Ascii85, Base85, uuencode, Punycode (IDN domains) or hex, or decode it back to text."
+energy_converter:
+  file: converters/energy_converter.py
+  categories: [converters/units]
+  tags: [unit, energy, joule, calorie, kwh, btu, converter]
+  description: "Convert energy between joules, calories, kilocalories (food Calories), watt-hours, kWh, BTU, therms, electronvolts and foot-pounds."
+epoch_converter:
+  file: converters/epoch_converter.py
+  categories: [utilities/time]
+  tags: [time, epoch, unix, timestamp, date, converter]
+  description: "Convert a Unix timestamp (seconds, milliseconds, microseconds or nanoseconds are auto-detected) to human dates, or a date like 2026-10-19 14:30 to a timestamp."
+excel_merge:
+  file: converters/excel_merge.py
+  categories: [converters/data]
+  tags: [excel, xlsx, csv, merge, combine, sheets]
+  description: "Combine two or three spreadsheets (xlsx or csv) into one workbook: each file as its own sheet, or all rows stacked under one header."
+excel_to_html:
+  file: converters/excel_to_html.py
+  categories: [converters/data]
+  tags: [excel, xlsx, csv, html, xml, table, converter]
+  description: "Turn a spreadsheet (xlsx or csv) into an HTML table page or a simple XML file with one element per row and one child per column."
+excel_to_pdf:
+  file: converters/excel_to_pdf.py
+  categories: [converters/documents, converters/data]
+  tags: [excel, xlsx, csv, pdf, table, converter]
+  description: "Print an Excel workbook (every sheet) or a CSV file to a PDF table."
+favicon_generator:
+  file: converters/favicon_generator.py
+  categories: [converters/images, developer/web]
+  tags: [image, favicon, ico, icon, generator]
+  description: "Build a favicon set from any image: multi-size favicon.ico plus PNGs (16 to 512 px, including apple-touch-icon 180 and android 192/512) and a ready-to-paste HTML snippet, zipped."
+file_checksum:
+  file: converters/file_checksum.py
+  categories: [security/hashing]
+  tags: [file, checksum, hash, verify, sha256, md5]
+  description: "Compute MD5, SHA-1, SHA-256, SHA-512, BLAKE2b and CRC32 of a file at once, and check them against an expected hash if you paste one."
+file_encryptor:
+  file: converters/file_encryptor.py
+  categories: [security/encryption]
+  tags: [encrypt, decrypt, aes, password, file, security]
+  description: "Encrypt any file with a password (AES-256-GCM, key from PBKDF2-SHA256) into a .enc file, or decrypt a .enc file made here."
+file_type_detector:
+  file: converters/file_type_detector.py
+  categories: [developer/code]
+  tags: [file, type, detect, magic, extension, identify]
+  description: "Identify what a file really is from its contents (magic bytes), not its name: images, documents, archives, audio/video, fonts, executables, text encodings."
+find_replace:
+  file: converters/find_replace.py
+  categories: [text/formatting, developer/patterns]
+  tags: [text, find, replace, regex, bulk]
+  description: "Find and replace throughout a text file: plain text, whole words only, or a regular expression (use \\1 for groups in the replacement)."
+font_converter:
+  file: converters/font_converter.py
+  categories: [developer/web]
+  tags: [font, ttf, otf, woff, woff2, webfont, converter]
+  description: "Convert a font between TTF, OTF, WOFF and WOFF2 (web fonts), and report its family, style, glyph count and licence text."
+force_torque_converter:
+  file: converters/force_torque_converter.py
+  categories: [converters/units]
+  tags: [unit, force, torque, newton, pound, converter]
+  description: "Convert force (N, kN, lbf, kgf, dyne) or torque (N·m, ft·lb, in·lb, kgf·m) between units; the family is chosen by the unit you enter."
+fraction_converter:
+  file: converters/fraction_converter.py
+  categories: [utilities/calculators]
+  tags: [number, fraction, decimal, percent, converter]
+  description: "Convert between fractions, mixed numbers, decimals, percentages and ratios: 3/8, 1 1/2, 0.375, 37.5%, 3:8 are all accepted."
+frequency_converter:
+  file: converters/frequency_converter.py
+  categories: [converters/units]
+  tags: [unit, frequency, hertz, rpm, bpm, period, wavelength, converter]
+  description: "Convert frequency between Hz, kHz, MHz, GHz, RPM, BPM and rad/s, with the period, the wavelength in air and in vacuum, and the nearest musical note."
+fuel_economy_converter:
+  file: converters/fuel_economy_converter.py
+  categories: [converters/units]
+  tags: [unit, fuel, mpg, economy, car, converter]
+  description: "Convert fuel economy between US mpg, imperial mpg, L/100 km and km/L."
+gif_add_text:
+  file: converters/gif_add_text.py
+  categories: [converters/images]
+  tags: [gif, caption, text, meme, animation]
+  description: "Put a caption on every frame of an animated GIF (white text with a black outline, meme style) and save it as a new GIF."
+gif_converter:
+  file: converters/gif_converter.py
+  categories: [converters/images]
+  tags: [gif, mp4, webp, apng, animation, frames, converter]
+  description: "Convert an animated GIF (or animated WebP/APNG) to MP4, WebM, animated WebP, APNG, a zip of PNG frames or a horizontal sprite sheet."
+gif_editor:
+  file: converters/gif_editor.py
+  categories: [converters/images]
+  tags: [gif, resize, optimize, reverse, speed, crop, animation]
+  description: "Edit an animated GIF: resize to a width, shrink the file (fewer colours, dropped frames), reverse it, change its speed, make it loop once, or turn it into a boomerang."
+gif_from_images:
+  file: converters/gif_from_images.py
+  categories: [converters/images]
+  tags: [gif, animation, images, slideshow, maker]
+  description: "Turn a zip of images (ordered by file name) into an animated GIF, WebP, APNG or MP4 slideshow, every frame resized to the same width."
+gradient_generator:
+  file: converters/gradient_generator.py
+  categories: [converters/images]
+  tags: [gradient, css, background, image, color, generator]
+  description: "Make a two-colour gradient as a PNG (wallpaper, banner, placeholder) plus the matching CSS `background` rule."
+hex_dump:
+  file: converters/hex_dump.py
+  categories: [text/encoding]
+  tags: [hex, binary, file, inspect]
+  description: "Show the first bytes of any file as a classic hex dump (offset, hex, ASCII), a plain hex string or Base64."
+hmac_generator:
+  file: converters/hmac_generator.py
+  categories: [security/hashing]
+  tags: [hmac, hash, signature, security]
+  description: "Compute an HMAC signature of a message with a secret key (hex and Base64), and optionally check it against an expected signature using a constant-time comparison."
+html_entities:
+  file: converters/html_entities.py
+  categories: [developer/web, text/encoding]
+  tags: [text, html, encoding, converter]
+  description: "Escape text for HTML (& < > \" ') or decode HTML entities back to text."
+html_minifier:
+  file: converters/html_minifier.py
+  categories: [developer/code]
+  tags: [html, minify, beautify, format, compress]
+  description: "Minify an HTML file (drop comments and the whitespace between tags, keep <pre>, <script> and <style> intact) or beautify it with one tag per line and indentation."
+html_table_converter:
+  file: converters/html_table_converter.py
+  categories: [converters/data]
+  tags: [html, table, csv, converter, scrape]
+  description: "Pull a table out of an HTML page into CSV (choose which table by number), or turn a CSV into a clean HTML table snippet with a header row."
+html_to_docx:
+  file: converters/html_to_docx.py
+  categories: [converters/documents]
+  tags: [html, docx, word, document, converter]
+  description: "Convert an HTML page into a Word .docx: headings, paragraphs, bold/italic, bullet and numbered lists and tables are kept; scripts, styles and layout are dropped."
+html_to_text:
+  file: converters/html_to_text.py
+  categories: [converters/documents]
+  tags: [html, text, markdown, document, converter]
+  description: "Strip the tags from an HTML file, producing plain text or simple Markdown (headings, lists, links, emphasis)."
+id_generator:
+  file: converters/id_generator.py
+  categories: [text/generators]
+  tags: [id, ulid, nanoid, ksuid, snowflake, generator]
+  description: "Generate identifiers other than UUIDs: sortable ULIDs, URL-safe NanoIDs, Twitter-style snowflakes, hex tokens, numeric PINs or human-readable codes like `K7PX-3RMA`."
+image_bulk_resize:
+  file: converters/image_bulk_resize.py
+  categories: [converters/images]
+  tags: [image, bulk, batch, resize, convert, zip]
+  description: "Resize and/or convert every image in a zip at once (fit inside max width x height, aspect kept, never enlarged), returning a zip."
+image_caption:
+  file: converters/image_caption.py
+  categories: [converters/images]
+  tags: [image, caption, meme, text, overlay]
+  description: "Write text on an image: meme style (white block capitals with a black outline, top and bottom), a subtitle at the bottom, or a bar with a label below the picture."
+image_collage:
+  file: converters/image_collage.py
+  categories: [converters/images]
+  tags: [image, collage, grid, combine, montage]
+  description: "Combine the images in a zip into one picture: a grid (ordered by file name), a horizontal strip or a vertical strip."
+image_compare:
+  file: converters/image_compare.py
+  categories: [converters/images]
+  tags: [image, compare, diff, difference, similarity]
+  description: "Compare two images pixel by pixel: how similar they are, the changed area, and a picture that highlights the differences (or a raw difference map, or the two side by side)."
+image_compress:
+  file: converters/image_compress.py
+  categories: [converters/images]
+  tags: [image, compress, optimize, jpg, webp, png]
+  description: "Shrink an image's file size: lower JPEG/WEBP quality, palette-reduce PNG, optionally cap the longest side."
+image_crop:
+  file: converters/image_crop.py
+  categories: [converters/images]
+  tags: [image, crop, cut, aspect]
+  description: "Crop an image to a centred aspect ratio (square, 16:9, 4:3...) or to an exact pixel box (left, top, width, height)."
+image_filters:
+  file: converters/image_filters.py
+  categories: [converters/images]
+  tags: [image, filter, sepia, invert, blur, sharpen, vintage, effect]
+  description: "Apply a photo effect: grayscale, sepia, invert, posterize, solarize, blur, sharpen, emboss, contour, vintage, contrast, brightness, saturation or a pixel-art look."
+image_format_converter:
+  file: converters/image_format_converter.py
+  categories: [converters/images]
+  tags: [image, png, jpg, webp, heic, gif, bmp, tiff, converter]
+  description: "Convert an image between PNG, JPG, WEBP, GIF, BMP, TIFF, ICO and PDF."
+image_frame:
+  file: converters/image_frame.py
+  categories: [converters/images]
+  tags: [image, border, rounded, corners, circle, frame, profile]
+  description: "Add a solid border, round the corners, cut a circular avatar, pad the image to a square, or give it a Polaroid-style frame."
+image_histogram:
+  file: converters/image_histogram.py
+  categories: [converters/images]
+  tags: [image, histogram, exposure, brightness, analysis]
+  description: "Draw the RGB and luminance histogram of a photo and report exposure statistics: mean brightness, contrast, clipped shadows and highlights, and whether it looks under- or over-exposed."
+image_info:
+  file: converters/image_info.py
+  categories: [converters/images]
+  tags: [image, exif, metadata, info, inspect]
+  description: "Show an image's format, dimensions, colour mode, DPI, file size and EXIF metadata (camera, date, GPS, orientation)."
+image_palette:
+  file: converters/image_palette.py
+  categories: [converters/images]
+  tags: [image, color, palette, dominant, extract]
+  description: "Extract the dominant colours of an image as hex/RGB/HSL with their share of the picture, plus a swatch strip PNG."
+image_pixelate_region:
+  file: converters/image_pixelate_region.py
+  categories: [converters/images]
+  tags: [image, blur, pixelate, censor, region, privacy]
+  description: "Pixelate, blur or black out a rectangle of an image given as percentages of the width and height (so the same numbers work at any resolution): licence plates, addresses, faces."
+image_resize:
+  file: converters/image_resize.py
+  categories: [converters/images]
+  tags: [image, resize, scale, thumbnail]
+  description: "Resize an image."
+image_rotate_flip:
+  file: converters/image_rotate_flip.py
+  categories: [converters/images]
+  tags: [image, rotate, flip, mirror]
+  description: "Rotate or mirror an image, or fix its orientation from the EXIF tag."
+image_split:
+  file: converters/image_split.py
+  categories: [converters/images]
+  tags: [image, split, tiles, grid, instagram]
+  description: "Cut an image into a grid of equal tiles (3x3 for an Instagram grid, 2x1 for a banner...), numbered left to right, top to bottom, zipped."
+image_strip_metadata:
+  file: converters/image_strip_metadata.py
+  categories: [converters/images]
+  tags: [image, exif, metadata, privacy, remove]
+  description: "Remove EXIF, GPS location, camera and all other metadata from a photo (orientation is applied first so the picture still looks right)."
+image_to_ascii:
+  file: converters/image_to_ascii.py
+  categories: [converters/images, text/generators]
+  tags: [image, ascii, art, text, converter]
+  description: "Turn an image into ASCII art text (best viewed in a monospace font)."
+image_to_base64:
+  file: converters/image_to_base64.py
+  categories: [converters/images, text/encoding]
+  tags: [image, base64, data, uri, converter]
+  description: "Encode an image (or any file) as Base64, as a data: URI, or wrapped in an HTML <img> tag or CSS background rule."
+image_to_pdf:
+  file: converters/image_to_pdf.py
+  categories: [converters/images, converters/documents]
+  tags: [image, pdf, jpg, png, document, converter]
+  description: "Put an image (JPG, PNG, WEBP, BMP, TIFF, GIF...) on a PDF page: either sized to the image or centred on A4/Letter with a margin."
+image_upscale:
+  file: converters/image_upscale.py
+  categories: [converters/images]
+  tags: [image, upscale, enlarge, sharpen, 2x, 4x]
+  description: "Enlarge an image 2x, 3x or 4x: smooth Lanczos resampling with optional sharpening for photos, or nearest-neighbour for pixel art and screenshots."
+image_watermark:
+  file: converters/image_watermark.py
+  categories: [converters/images]
+  tags: [image, watermark, text, stamp, copyright]
+  description: "Stamp a text watermark on a photo: pick a corner, the centre, or tile it diagonally across the whole image."
+images_to_pdf:
+  file: converters/images_to_pdf.py
+  categories: [converters/images, converters/documents]
+  tags: [image, jpg, png, pdf, zip, bulk, converter]
+  description: "Combine many images into one PDF, one image per page, ordered by file name."
+ip_converter:
+  file: converters/ip_converter.py
+  categories: [developer/web]
+  tags: [network, ip, cidr, subnet, converter]
+  description: "Convert an IPv4/IPv6 address to decimal, hex, binary and reverse-DNS form; a CIDR block (10.0.0.0/8) also gives netmask, broadcast, host range and count."
+json_diff:
+  file: converters/json_diff.py
+  categories: [converters/data, developer/code]
+  tags: [json, diff, compare, data]
+  description: "Compare two JSON files structurally (order of keys ignored) and list every added, removed and changed value with its path, such as users[2].email."
+json_flatten:
+  file: converters/json_flatten.py
+  categories: [converters/data]
+  tags: [json, flatten, unflatten, nested, keys, csv]
+  description: "Flatten nested JSON into dotted keys (`user.address.city`, `items[0].price`) so it fits a spreadsheet or config file, or rebuild the nested structure from flattened keys."
+json_formatter:
+  file: converters/json_formatter.py
+  categories: [converters/data, developer/code]
+  tags: [json, format, minify, validate, converter]
+  description: "Pretty-print, minify, sort the keys of, or validate a JSON file."
+json_merge:
+  file: converters/json_merge.py
+  categories: [converters/data]
+  tags: [json, merge, combine, deep-merge, config]
+  description: "Merge two JSON files: deep-merge objects (the overlay's values win on conflicts), simply overlay top-level keys, or concatenate when both are arrays."
+json_query:
+  file: converters/json_query.py
+  categories: [converters/data, developer/code]
+  tags: [json, query, jmespath, filter, data]
+  description: "Pull values out of a JSON file with a JMESPath expression: `users[?age > `30`].name`, `items[0].price`, `length(@)`, `sort_by(@, &date)[-1]` and so on."
+json_schema_validator:
+  file: converters/json_schema_validator.py
+  categories: [converters/data, developer/code]
+  tags: [json, schema, validate, data]
+  description: "Validate a JSON document against a JSON Schema (draft 4 to 2020-12) and list every violation with its path and message."
+json_to_types:
+  file: converters/json_to_types.py
+  categories: [converters/data, developer/code]
+  tags: [json, typescript, python, dataclass, pydantic, types, generator]
+  description: "Generate type definitions from a JSON sample: TypeScript interfaces, Python dataclasses, Pydantic models or Go structs, one per nested object."
+json_yaml_converter:
+  file: converters/json_yaml_converter.py
+  categories: [converters/data]
+  tags: [json, yaml, toml, data, converter]
+  description: "Convert between JSON, YAML and TOML."
+jwt_decoder:
+  file: converters/jwt_decoder.py
+  categories: [security/encryption]
+  tags: [jwt, token, decode, json]
+  description: "Decode a JSON Web Token's header and payload (no signature verification) and explain the standard time claims."
+jwt_generator:
+  file: converters/jwt_generator.py
+  categories: [security/encryption]
+  tags: [jwt, token, sign, hs256, security]
+  description: "Sign a JSON payload into a JWT with a shared secret (HMAC)."
+length_converter:
+  file: converters/length_converter.py
+  categories: [converters/units]
+  tags: [unit, length, distance, metric, imperial, converter]
+  description: "Convert a length or distance between metric and imperial units (mm, cm, m, km, in, ft, yd, mi and more)."
+line_tools:
+  file: converters/line_tools.py
+  categories: [text/formatting]
+  tags: [text, lines, sort, dedupe]
+  description: "Sort, dedupe, reverse, shuffle, trim or number the lines of a text file."
+list_operations:
+  file: converters/list_operations.py
+  categories: [text/formatting]
+  tags: [text, lists, compare, union, intersection, difference]
+  description: "Compare two lists (one item per line): items in both, only in A, only in B, in either, in exactly one, or the two lists merged without duplicates."
+loan_calculator:
+  file: converters/loan_calculator.py
+  categories: [utilities/calculators]
+  tags: [loan, mortgage, payment, amortization, interest, calculator]
+  description: "Monthly payment, total interest and payoff date for a loan or mortgage, with the full amortisation schedule as a CSV."
+lorem_ipsum:
+  file: converters/lorem_ipsum.py
+  categories: [text/generators]
+  tags: [text, lorem, placeholder, generator]
+  description: "Generate placeholder Lorem Ipsum text as paragraphs, sentences or words."
+mac_address_formatter:
+  file: converters/mac_address_formatter.py
+  categories: [developer/web]
+  tags: [network, mac, address, format, generate]
+  description: "Normalise a MAC address into the colon, hyphen, Cisco-dot or plain style, decode its flags (unicast/multicast, globally or locally administered), or generate a random locally-administered MAC."
+markdown_to_epub:
+  file: converters/markdown_to_epub.py
+  categories: [converters/documents]
+  tags: [markdown, text, epub, ebook, converter]
+  description: "Build an EPUB ebook from a Markdown, plain text or HTML file."
+markdown_to_html:
+  file: converters/markdown_to_html.py
+  categories: [converters/documents]
+  tags: [markdown, html, document, converter]
+  description: "Render a Markdown file to HTML (tables, fenced code, footnotes and task lists supported)."
+markdown_to_pptx:
+  file: converters/markdown_to_pptx.py
+  categories: [converters/documents]
+  tags: [markdown, pptx, powerpoint, slides, converter]
+  description: "Turn a Markdown file into a PowerPoint deck: each # or ## heading starts a slide, the bullets under it become the slide's body (nested bullets indent), paragraphs become plain lines."
+markdown_toc:
+  file: converters/markdown_toc.py
+  categories: [converters/documents]
+  tags: [markdown, toc, table-of-contents, headings, document]
+  description: "Build a table of contents (GitHub-style anchor links) from the headings of a Markdown file, either on its own or inserted at the top of the document."
+math_evaluator:
+  file: converters/math_evaluator.py
+  categories: [utilities/calculators]
+  tags: [math, calculator, expression, evaluate]
+  description: "Evaluate a maths expression safely: + - * / // % **, parentheses, sqrt, trig (radians), log, ln, exp, factorial, gcd, round, min, max, and the constants pi, e and tau."
+media_info:
+  file: converters/media_info.py
+  categories: [converters/media]
+  tags: [video, audio, metadata, info, codec, inspect]
+  description: "Show the container, duration, bit rate, codecs, resolution, frame rate, audio channels and metadata tags of a video or audio file."
+mesh_converter:
+  file: converters/mesh_converter.py
+  categories: [converters/3d]
+  tags: [3d, stl, obj, ply, glb, 3mf, mesh, converter]
+  description: "Convert a 3D mesh between STL, OBJ, PLY, GLB/glTF, 3MF and OFF, and report its size, volume, surface area, triangle count and whether it is watertight (3D-print ready)."
+morse_code:
+  file: converters/morse_code.py
+  categories: [text/encoding]
+  tags: [text, morse, encoding, converter]
+  description: "Translate text to International Morse code (letters separated by spaces, words by ' / ') and back."
+nato_alphabet:
+  file: converters/nato_alphabet.py
+  categories: [text/encoding]
+  tags: [text, nato, phonetic, alphabet, spelling, converter]
+  description: "Spell text with the NATO phonetic alphabet (Alfa Bravo Charlie...) or turn spelled words back into text."
+number_base_converter:
+  file: converters/number_base_converter.py
+  categories: [utilities/calculators, text/encoding]
+  tags: [number, binary, hex, octal, converter]
+  description: "Convert a number from binary, octal, decimal, hex or base 36 into all of them at once."
+number_formatter:
+  file: converters/number_formatter.py
+  categories: [utilities/calculators]
+  tags: [number, format, currency, thousands, rounding, converter]
+  description: "Format a number with thousands separators (1,234,567.89 or 1.234.567,89 or 1 234 567,89), as a currency, a percentage or in accounting style with brackets for negatives."
+number_to_words:
+  file: converters/number_to_words.py
+  categories: [utilities/calculators]
+  tags: [number, words, text, converter]
+  description: "Spell out a number in words (one thousand two hundred...), as an ordinal, a year or a currency amount, in several languages."
+number_validator:
+  file: converters/number_validator.py
+  categories: [utilities/calculators]
+  tags: [validate, iban, credit-card, isbn, ean, vat, checksum]
+  description: "Check an IBAN, credit card number (Luhn), ISBN-10/13, EAN/UPC barcode, EU VAT number or ISSN: valid or not, why, and the normalised form."
+opendocument_to_text:
+  file: converters/opendocument_to_text.py
+  categories: [converters/documents]
+  tags: [odt, ods, odp, libreoffice, openoffice, text, csv, converter]
+  description: "Extract the content of a LibreOffice / OpenOffice file: ODT and ODP become plain text, ODS becomes a CSV of the first sheet (the rest are listed)."
+passphrase_generator:
+  file: converters/passphrase_generator.py
+  categories: [security/passwords]
+  tags: [passphrase, password, words, diceware, memorable, generator]
+  description: "Memorable passphrases made of random dictionary words (correct-horse-battery-staple style) with the entropy in bits."
+password_generator:
+  file: converters/password_generator.py
+  categories: [security/passwords]
+  tags: [password, random, generator]
+  description: "Generate random passwords with a cryptographically secure generator and report their entropy."
+password_hasher:
+  file: converters/password_hasher.py
+  categories: [security/hashing, security/passwords]
+  tags: [password, hash, bcrypt, pbkdf2, scrypt, htpasswd, security]
+  description: "Hash a password the way login systems store it (bcrypt, PBKDF2-SHA256, scrypt) or verify a password against an existing hash."
+password_strength:
+  file: converters/password_strength.py
+  categories: [security/passwords]
+  tags: [password, strength, security, check]
+  description: "Score a password's strength (0 weak to 4 strong) the way zxcvbn does: guesses needed, estimated crack times at several attack speeds, and what makes it weak."
+pdf_bookmarks:
+  file: converters/pdf_bookmarks.py
+  categories: [converters/documents]
+  tags: [pdf, bookmarks, outline, toc, chapters]
+  description: "Export a PDF's bookmarks (outline) as indented text, add bookmarks from text lines like `1 Introduction` or ` 2 Methods` (page number, indent for nesting), guess them from large headings, or remove th"
+pdf_compare:
+  file: converters/pdf_compare.py
+  categories: [converters/documents]
+  tags: [pdf, compare, diff, changes, document]
+  description: "Compare the text of two PDFs page by page and report what changed, as a unified diff or a side-by-side HTML report."
+pdf_compress:
+  file: converters/pdf_compress.py
+  categories: [converters/documents]
+  tags: [pdf, compress, shrink, optimize]
+  description: "Shrink a PDF: lossless cleans unused objects and deflates streams; the image levels also downsample and re-encode pictures as JPEG."
+pdf_crop:
+  file: converters/pdf_crop.py
+  categories: [converters/documents]
+  tags: [pdf, crop, margins, trim]
+  description: "Crop every page of a PDF: automatically trim the white margins around the content, or cut the given millimetres from each edge."
+pdf_extract_images:
+  file: converters/pdf_extract_images.py
+  categories: [converters/documents, converters/images]
+  tags: [pdf, image, extract, pictures]
+  description: "Pull every embedded picture out of a PDF (original resolution) into a zip."
+pdf_form_fields:
+  file: converters/pdf_form_fields.py
+  categories: [converters/documents]
+  tags: [pdf, form, fields, fill, json, flatten]
+  description: "List a PDF form's fields with their current values (as JSON you can edit), fill the form from a JSON object of field name to value, or flatten it so the values become fixed text."
+pdf_info:
+  file: converters/pdf_info.py
+  categories: [converters/documents]
+  tags: [pdf, metadata, info, inspect]
+  description: "Show a PDF's metadata (title, author, dates, producer), page count and sizes, encryption, fonts, images, links and text/word counts."
+pdf_merge:
+  file: converters/pdf_merge.py
+  categories: [converters/documents]
+  tags: [pdf, merge, combine, join]
+  description: "Merge two or three PDFs into one, in order."
+pdf_n_up:
+  file: converters/pdf_n_up.py
+  categories: [converters/documents]
+  tags: [pdf, n-up, pages-per-sheet, booklet, print]
+  description: "Put several pages on each sheet (2, 4, 6 or 9 up) or impose a booklet whose sheets fold in half into a stapled book."
+pdf_page_size:
+  file: converters/pdf_page_size.py
+  categories: [converters/documents]
+  tags: [pdf, page-size, a4, letter, resize, scale, blank-pages]
+  description: "Scale every page onto a standard paper size (content kept proportional and centred), insert a blank page at a position (1 = before the first page), or pad the document to an even page count for double"
+pdf_password:
+  file: converters/pdf_password.py
+  categories: [converters/documents, security/encryption]
+  tags: [pdf, password, protect, unlock, encrypt]
+  description: "Protect a PDF with a password (AES-256, opening and editing) or remove the password from a PDF you know the password for."
+pdf_rasterize:
+  file: converters/pdf_rasterize.py
+  categories: [converters/documents, converters/images]
+  tags: [pdf, flatten, grayscale, rasterize, scan, image]
+  description: "Turn every page into a picture of itself: flatten (forms, annotations and layers become fixed content, text is no longer selectable), grayscale (black and white printing), or a scanned-document look."
+pdf_redact:
+  file: converters/pdf_redact.py
+  categories: [converters/documents]
+  tags: [pdf, redact, black-out, remove, privacy]
+  description: "Permanently black out text in a PDF: an exact phrase, a regular expression, or every email address, phone number or number."
+pdf_reorder:
+  file: converters/pdf_reorder.py
+  categories: [converters/documents]
+  tags: [pdf, reorder, pages, reverse, duplicate, organize]
+  description: "Rearrange a PDF's pages: an explicit order such as 3,1,2,5-8 (pages may repeat), reverse the document, odd pages then even, fix a double-sided scan (front pages then back pages reversed), or duplicate"
+pdf_repair:
+  file: converters/pdf_repair.py
+  categories: [converters/documents]
+  tags: [pdf, repair, fix, metadata, strip, clean]
+  description: "Rebuild a damaged PDF (broken cross-reference table, truncated file) by re-saving it, and/or remove its metadata (author, title, producer, creation dates, XMP)."
+pdf_rotate:
+  file: converters/pdf_rotate.py
+  categories: [converters/documents]
+  tags: [pdf, rotate, pages]
+  description: "Rotate all pages of a PDF, or only the listed pages (1,3,5-7), clockwise by 90, 180 or 270 degrees."
+pdf_split:
+  file: converters/pdf_split.py
+  categories: [converters/documents]
+  tags: [pdf, split, extract, pages, remove]
+  description: "Extract or remove pages from a PDF (pages like 1-3,5,8-), split every page into its own file (zipped), or cut the document in two at the given page."
+pdf_to_excel:
+  file: converters/pdf_to_excel.py
+  categories: [converters/documents, converters/data]
+  tags: [pdf, excel, xlsx, csv, table, converter]
+  description: "Extract the tables from a PDF into an Excel workbook (one sheet per table) or CSV files (zipped)."
+pdf_to_images:
+  file: converters/pdf_to_images.py
+  categories: [converters/documents, converters/images]
+  tags: [pdf, image, jpg, png, converter]
+  description: "Render PDF pages to PNG or JPG images at the chosen DPI."
+pdf_to_markdown:
+  file: converters/pdf_to_markdown.py
+  categories: [converters/documents]
+  tags: [pdf, markdown, html, text, document, converter]
+  description: "Convert a PDF to Markdown (headings, lists, tables and emphasis detected), to HTML, or to plain text with a marker per page."
+pdf_to_powerpoint:
+  file: converters/pdf_to_powerpoint.py
+  categories: [converters/documents]
+  tags: [pdf, powerpoint, pptx, slides, converter]
+  description: "Turn each PDF page into a PowerPoint slide: as a full-slide image (looks identical) or as editable text boxes (keeps the words, loses the layout)."
+pdf_to_word:
+  file: converters/pdf_to_word.py
+  categories: [converters/documents]
+  tags: [pdf, word, docx, document, converter]
+  description: "Convert a PDF to an editable Word .docx, keeping text, tables, images and layout where possible."
+pdf_watermark:
+  file: converters/pdf_watermark.py
+  categories: [converters/documents]
+  tags: [pdf, watermark, stamp, page, numbers]
+  description: "Stamp text on every page of a PDF as a large diagonal watermark, a header, a footer, or add 'Page X of Y' numbering."
+percent_calculator:
+  file: converters/percent_calculator.py
+  categories: [utilities/calculators]
+  tags: [percent, percentage, calculator, change, discount]
+  description: "Everyday percentage sums: X% of Y, what percent X is of Y, the change from X to Y, adding or taking off X% (tax, discount, tip), or the whole when Y is X% of it."
+phone_number_parser:
+  file: converters/phone_number_parser.py
+  categories: [text/formatting]
+  tags: [phone, number, format, e164, country, parse]
+  description: "Parse and format a phone number: validity, country, type (mobile, landline...), E.164, international and national formats."
+power_converter:
+  file: converters/power_converter.py
+  categories: [converters/units]
+  tags: [unit, power, watt, horsepower, kilowatt, converter]
+  description: "Convert power between watts, kW, MW, horsepower (mechanical and metric PS), BTU/h, tons of refrigeration and dBm."
+pptx_to_text:
+  file: converters/pptx_to_text.py
+  categories: [converters/documents]
+  tags: [pptx, powerpoint, text, markdown, slides, converter]
+  description: "Extract all text from a PowerPoint .pptx (titles, bullets, tables and speaker notes), one section per slide, as Markdown or plain text."
+pressure_converter:
+  file: converters/pressure_converter.py
+  categories: [converters/units]
+  tags: [unit, pressure, pascal, bar, psi, atmosphere, converter]
+  description: "Convert pressure between pascals, kPa, bar, millibar/hPa, atmospheres, psi, torr/mmHg, inHg and kgf/cm2 (tyres, weather, diving)."
+python_formatter:
+  file: converters/python_formatter.py
+  categories: [developer/code]
+  tags: [python, black, format, lint]
+  description: "Format a Python file with black (the style used by this site's tools) and report whether anything changed."
+qr_code_generator:
+  file: converters/qr_code_generator.py
+  categories: [utilities/codes]
+  tags: [qr, code, image, generator]
+  description: "Generate a QR code image for a URL, text, Wi-Fi string (WIFI:T:WPA;S:name;P:pass;;) or contact card."
+qr_code_reader:
+  file: converters/qr_code_reader.py
+  categories: [utilities/codes]
+  tags: [qr, code, image, scan, decode]
+  description: "Read every QR code in an image (photo or screenshot) and return the decoded text."
+qr_code_styled:
+  file: converters/qr_code_styled.py
+  categories: [utilities/codes]
+  tags: [qr, code, styled, color, rounded, generator]
+  description: "A QR code with style: rounded or circular dots and custom colours."
+qr_code_with_logo:
+  file: converters/qr_code_with_logo.py
+  categories: [utilities/codes]
+  tags: [qr, code, logo, brand, image, generator]
+  description: "A QR code with your logo or picture in the middle."
+random_data_generator:
+  file: converters/random_data_generator.py
+  categories: [text/generators, developer/code]
+  tags: [random, fake, test-data, names, csv, json, generator]
+  description: "Generate realistic-looking fake data for testing: people (name, email, phone, birthday...), companies, addresses, products with prices, test credit card numbers, or sentences."
+random_number_generator:
+  file: converters/random_number_generator.py
+  categories: [utilities/calculators]
+  tags: [random, number, dice, coin, lottery, generator]
+  description: "Cryptographically random numbers: integers in a range (with or without repeats), dice rolls in RPG notation like 2d6+3, coin flips, or a lottery draw."
+random_picker:
+  file: converters/random_picker.py
+  categories: [text/generators]
+  tags: [random, pick, shuffle, groups, lottery, generator]
+  description: "Pick one or several random entries from a list (one per line), shuffle it, or split it into N random groups: raffles, team pickers and seating orders."
+raw_to_jpg:
+  file: converters/raw_to_jpg.py
+  categories: [converters/images]
+  tags: [image, raw, camera, cr2, nef, arw, dng, jpg, converter]
+  description: "Develop a camera RAW file (CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2, PEF...) into a JPG, PNG or TIFF, with camera or automatic white balance and a brightness multiplier."
+readability_score:
+  file: converters/readability_score.py
+  categories: [text/formatting]
+  tags: [text, readability, flesch, grade-level, writing]
+  description: "Score how easy a text is to read: Flesch Reading Ease, Flesch-Kincaid grade, Gunning Fog, SMOG, Coleman-Liau and ARI, with the sentence and word statistics behind them."
+regex_tester:
+  file: converters/regex_tester.py
+  categories: [developer/patterns]
+  tags: [regex, text, test, search]
+  description: "Run a Python regular expression against text: lists every match with its position and groups, and shows the result of re.sub when a replacement is given."
+roman_numerals:
+  file: converters/roman_numerals.py
+  categories: [utilities/calculators]
+  tags: [number, roman, converter]
+  description: "Convert an integer (1-3999) to Roman numerals, or Roman numerals back to an integer."
+rtf_to_text:
+  file: converters/rtf_to_text.py
+  categories: [converters/documents]
+  tags: [rtf, text, document, converter]
+  description: "Extract the plain text from a Rich Text Format (.rtf) document."
+scientific_notation:
+  file: converters/scientific_notation.py
+  categories: [utilities/calculators]
+  tags: [number, scientific, notation, engineering, converter]
+  description: "Convert a number between plain decimal, scientific (1.23e5), engineering (123e3) notation and SI prefixes (123 k)."
+shoe_size_converter:
+  file: converters/shoe_size_converter.py
+  categories: [converters/units]
+  tags: [shoe, size, clothing, us, uk, eu, converter]
+  description: "Convert shoe sizes between US men's, US women's, UK, EU and foot length in cm/inches (standard adult sizing; brands vary by up to half a size)."
+slugify:
+  file: converters/slugify.py
+  categories: [text/formatting, developer/web]
+  tags: [text, url, slug, converter]
+  description: "Turn any text into a URL-safe slug: accents stripped, punctuation removed, words joined by - or _."
+speed_converter:
+  file: converters/speed_converter.py
+  categories: [converters/units]
+  tags: [unit, speed, velocity, mph, kmh, knots, converter]
+  description: "Convert a speed between km/h, mph, m/s, ft/s, knots and Mach, plus the minutes-per-km and minutes-per-mile pace."
+sql_formatter:
+  file: converters/sql_formatter.py
+  categories: [developer/code]
+  tags: [sql, format, beautify, minify]
+  description: "Beautify SQL (one clause per line, indented, keywords upper- or lower-cased) or squeeze it onto one line."
+ssh_key_generator:
+  file: converters/ssh_key_generator.py
+  categories: [security/encryption]
+  tags: [ssh, rsa, ed25519, keypair, security, generator]
+  description: "Generate an SSH key pair (Ed25519 or RSA) as OpenSSH files, zipped: the private key, optionally passphrase-protected, plus the public key line for authorized_keys."
+string_escape:
+  file: converters/string_escape.py
+  categories: [developer/code, text/encoding]
+  tags: [text, escape, json, shell, csv, sql, converter]
+  description: "Escape a string for use inside JSON, Python, a shell command, a CSV cell, a SQL literal, an HTML attribute, a regular expression or XML, or unescape it back."
+subtitle_converter:
+  file: converters/subtitle_converter.py
+  categories: [converters/media]
+  tags: [subtitle, srt, vtt, caption, converter]
+  description: "Convert subtitles between SRT and WebVTT, strip them to plain text or CSV, and optionally shift all timings by a number of seconds (negative to move earlier)."
+sun_moon_calculator:
+  file: converters/sun_moon_calculator.py
+  categories: [utilities/time]
+  tags: [sunrise, sunset, moon, phase, daylight, astronomy]
+  description: "Sunrise, sunset, dawn, dusk, solar noon and day length for a place and date, plus the moon phase."
+svg_optimizer:
+  file: converters/svg_optimizer.py
+  categories: [converters/images]
+  tags: [svg, optimize, minify, clean, vector]
+  description: "Shrink an SVG file without changing how it looks: strip editor metadata, comments and unused definitions, shorten ids and round coordinates to the given number of digits."
+temperature_converter:
+  file: converters/temperature_converter.py
+  categories: [converters/units]
+  tags: [unit, temperature, celsius, fahrenheit, kelvin, converter]
+  description: "Convert a temperature between Celsius, Fahrenheit, Kelvin and Rankine."
+text_case_converter:
+  file: converters/text_case_converter.py
+  categories: [text/formatting]
+  tags: [text, case, converter]
+  description: "Convert text between upper, lower, title, sentence, snake, camel, pascal, kebab and more."
+text_cleanup:
+  file: converters/text_cleanup.py
+  categories: [text/formatting]
+  tags: [text, clean, whitespace, accents, punctuation]
+  description: "Clean up a text file: collapse or strip whitespace, drop accents, punctuation, numbers or HTML tags, swap tabs and spaces, add thousands separators to numbers, or straighten curly quotes."
+text_diff:
+  file: converters/text_diff.py
+  categories: [text/formatting]
+  tags: [text, diff, compare]
+  description: "Compare two text files and produce a unified diff, a context diff or a side-by-side HTML report."
+text_encoding_converter:
+  file: converters/text_encoding_converter.py
+  categories: [text/encoding]
+  tags: [text, encoding, utf8, latin1, line-endings, bom, converter]
+  description: "Re-encode a text file (UTF-8 with/without BOM, UTF-16, Latin-1, Windows-1252, ASCII) and normalise its line endings; the source encoding is auto-detected."
+text_extractor:
+  file: converters/text_extractor.py
+  categories: [text/formatting]
+  tags: [text, extract, emails, urls, numbers, phone, regex]
+  description: "Pull every email address, URL, number, phone number, hashtag, mention, IP, date or capitalised word out of a text file into a list, one per line."
+text_hash:
+  file: converters/text_hash.py
+  categories: [security/hashing]
+  tags: [hash, md5, sha, text, checksum]
+  description: "Hash a string with MD5, SHA-1, SHA-256, SHA-512, SHA3, BLAKE2 or CRC32 (or all at once)."
+text_to_binary:
+  file: converters/text_to_binary.py
+  categories: [text/encoding]
+  tags: [text, binary, encoding, converter]
+  description: "Convert text to space-separated 8-bit binary (UTF-8 bytes) and back."
+text_to_docx:
+  file: converters/text_to_docx.py
+  categories: [converters/documents]
+  tags: [text, docx, word, markdown, document, converter]
+  description: "Create a Word .docx from a Markdown or plain text file (headings, bullet and numbered lists, bold/italic, code blocks, simple tables)."
+text_to_pdf:
+  file: converters/text_to_pdf.py
+  categories: [converters/documents]
+  tags: [text, pdf, markdown, document, converter]
+  description: "Convert a plain text, Markdown or HTML file into a paginated PDF."
+text_transform:
+  file: converters/text_transform.py
+  categories: [text/formatting]
+  tags: [text, reverse, transform, words, sort, dedupe, rotate]
+  description: "Quick one-line text tricks: reverse characters or words, sort, shuffle or dedupe the words, count them, or restyle the text as upside-down, strikethrough, small caps, wide (vaporwave) or lightly glitc"
+text_wrap:
+  file: converters/text_wrap.py
+  categories: [text/formatting]
+  tags: [text, wrap, justify, columns, format]
+  description: "Re-flow a text file to a column width: wrap, fully justify, centre or right-align each paragraph, join wrapped lines back into paragraphs, or indent every line."
+time_duration_converter:
+  file: converters/time_duration_converter.py
+  categories: [utilities/time]
+  tags: [unit, time, duration, seconds, hours, days, converter]
+  description: "Convert a duration between milliseconds, seconds, minutes, hours, days, weeks, months and years, with an hh:mm:ss breakdown."
+timestamp_decoder:
+  file: converters/timestamp_decoder.py
+  categories: [utilities/time]
+  tags: [timestamp, epoch, ldap, snowflake, objectid, julian, ticks, converter]
+  description: "Decode the timestamp formats programmers meet: Unix seconds/milliseconds, Windows FILETIME / LDAP, .NET ticks, Twitter and Discord snowflakes, MongoDB ObjectIds, Julian days, Excel serial dates and GP"
+timezone_converter:
+  file: converters/timezone_converter.py
+  categories: [utilities/time]
+  tags: [time, timezone, date, converter]
+  description: "Convert a date/time from one time zone to another and show it in the world's major cities."
+tip_split_calculator:
+  file: converters/tip_split_calculator.py
+  categories: [utilities/calculators]
+  tags: [tip, bill, split, restaurant, calculator]
+  description: "Work out the tip, the total and each person's share of a bill, optionally rounding each share up to a convenient amount."
+tone_generator:
+  file: converters/tone_generator.py
+  categories: [converters/media]
+  tags: [audio, tone, sine, noise, test, generator]
+  description: "Generate a test tone or noise as a WAV file: sine, square, triangle, sawtooth, white or pink noise, or a 20 Hz to 20 kHz sweep."
+totp_generator:
+  file: converters/totp_generator.py
+  categories: [security/encryption]
+  tags: [totp, 2fa, otp, authenticator, security]
+  description: "Create a new authenticator secret (with the otpauth:// URI and a QR code to scan) or compute the current time-based one-time code for an existing Base32 secret, RFC 6238 style."
+unicode_converter:
+  file: converters/unicode_converter.py
+  categories: [text/encoding]
+  tags: [text, unicode, ascii, encoding, converter]
+  description: "Convert text to Unicode code points (U+0041, 65, \\u0041, &#65;) and back, or inspect each character's name."
+url_encoder:
+  file: converters/url_encoder.py
+  categories: [developer/web, text/encoding]
+  tags: [text, encoding, url, converter]
+  description: "Percent-encode text for URLs, or decode it back."
+url_parser:
+  file: converters/url_parser.py
+  categories: [developer/web]
+  tags: [url, parse, query, parameters, web]
+  description: "Break a URL into scheme, host, port, path, query parameters (decoded) and fragment."
+user_agent_parser:
+  file: converters/user_agent_parser.py
+  categories: [developer/web]
+  tags: [user-agent, browser, device, parse, web]
+  description: "Decode a browser User-Agent string into the browser, its version, the operating system and the device, and say whether it looks like a bot or a mobile."
+uuid_generator:
+  file: converters/uuid_generator.py
+  categories: [text/generators]
+  tags: [uuid, guid, generator]
+  description: "Generate UUIDs (GUIDs)."
+vcard_qr_code:
+  file: converters/vcard_qr_code.py
+  categories: [utilities/codes]
+  tags: [vcard, contact, qr, code, business-card, generator]
+  description: "Build a contact card (vCard 3.0) and the QR code that adds it to a phone's contacts when scanned: name, phone, email, organisation, title and website."
+video_converter:
+  file: converters/video_converter.py
+  categories: [converters/media]
+  tags: [video, mp4, webm, mov, mkv, compress, resize, converter]
+  description: "Convert and compress a video (MP4, MOV, MKV, WEBM, AVI, 3GP...): choose the container, cap the resolution and pick a quality."
+video_merge:
+  file: converters/video_merge.py
+  categories: [converters/media]
+  tags: [video, merge, join, concatenate, combine]
+  description: "Join two videos one after the other into a single MP4 (both re-encoded to the same size and frame rate; sound kept)."
+video_mute:
+  file: converters/video_mute.py
+  categories: [converters/media]
+  tags: [video, mute, remove-audio, silent, strip-sound]
+  description: "Remove the sound track from a video without re-encoding the picture (fast, no quality loss)."
+video_rotate_flip:
+  file: converters/video_rotate_flip.py
+  categories: [converters/media]
+  tags: [video, rotate, flip, mirror, orientation]
+  description: "Rotate or mirror a video (phone clips recorded sideways), re-encoded as MP4."
+video_speed:
+  file: converters/video_speed.py
+  categories: [converters/media]
+  tags: [video, speed, slow-motion, timelapse, reverse]
+  description: "Speed a video up (time-lapse), slow it down, or play it backwards."
+video_to_frames:
+  file: converters/video_to_frames.py
+  categories: [converters/media, converters/images]
+  tags: [video, frames, image, screenshot, thumbnail]
+  description: "Grab a still from a video at a time, extract frames every N seconds (zip of JPGs), or build a contact sheet thumbnail grid."
+video_to_gif:
+  file: converters/video_to_gif.py
+  categories: [converters/media, converters/images]
+  tags: [video, gif, mp4, animation, converter]
+  description: "Turn a clip of a video (MP4, MOV, WEBM, AVI...) into an animated GIF: choose start time, length (max 15 s), frame rate and width."
+video_to_webp:
+  file: converters/video_to_webp.py
+  categories: [converters/media, converters/images]
+  tags: [video, webp, animated, sticker, converter]
+  description: "Turn a clip of a video into an animated WebP (smaller and sharper than a GIF; what messaging stickers use)."
+video_trim:
+  file: converters/video_trim.py
+  categories: [converters/media]
+  tags: [video, trim, cut, clip, mp4]
+  description: "Cut a clip out of a video between two times (max 60 s), optionally rotating it and dropping the sound."
+volume_converter:
+  file: converters/volume_converter.py
+  categories: [converters/units]
+  tags: [unit, volume, liter, gallon, cup, cooking, converter]
+  description: "Convert a volume between litres, millilitres, cubic metres, US and imperial gallons, pints, cups, tablespoons and teaspoons."
+web_code_formatter:
+  file: converters/web_code_formatter.py
+  categories: [developer/code]
+  tags: [javascript, css, json, beautify, minify, format]
+  description: "Beautify (indent, one statement per line) or minify JavaScript and CSS files."
+web_reference_lookup:
+  file: converters/web_reference_lookup.py
+  categories: [developer/web]
+  tags: [http, status, mime, port, reference, lookup]
+  description: "Look up an HTTP status code (404 → Not Found, with its meaning), a file extension's MIME type (or a MIME type's extensions), or what a TCP port number is normally used for."
+weight_converter:
+  file: converters/weight_converter.py
+  categories: [converters/units]
+  tags: [unit, weight, mass, kilogram, pound, converter]
+  description: "Convert a weight/mass between kg, g, mg, tonnes, pounds, ounces, stone and more."
+wifi_qr_code:
+  file: converters/wifi_qr_code.py
+  categories: [utilities/codes]
+  tags: [wifi, qr, code, network, generator]
+  description: "Make the QR code phones scan to join a Wi-Fi network: point the camera at it and the phone offers to connect, no typing."
+word_counter:
+  file: converters/word_counter.py
+  categories: [text/formatting]
+  tags: [text, count, words, statistics]
+  description: "Count characters, words, sentences, lines and paragraphs in a text file, with reading time and the most common words."
+word_to_pdf:
+  file: converters/word_to_pdf.py
+  categories: [converters/documents]
+  tags: [word, docx, pdf, document, converter]
+  description: "Convert a Word .docx to PDF."
+xlsx_to_csv:
+  file: converters/xlsx_to_csv.py
+  categories: [converters/data]
+  tags: [xlsx, excel, csv, json, spreadsheet, converter]
+  description: "Convert an Excel .xlsx workbook to CSV, TSV, JSON (list of row objects) or a Markdown table."
+xml_formatter:
+  file: converters/xml_formatter.py
+  categories: [converters/data, developer/code]
+  tags: [xml, format, minify, validate]
+  description: "Pretty-print or minify an XML file, or check that it is well-formed and report the line and column of the first error."
+xml_json_converter:
+  file: converters/xml_json_converter.py
+  categories: [converters/data]
+  tags: [xml, json, data, converter]
+  description: "Convert XML to JSON or JSON to XML."
+electronic_stand:
+  file: electronic_stand.py
+  categories: [office/stands]
+  tags: [cadquery]
+  description: "A stand that holds phones or tablets at an angle on a desk."
+error_tool_test:
+  file: error_tool_test.py
+  categories: [misc]
+  tags: [error, tool, test]
+  description: "A test tool that raises an error, to show how failures are reported."
+image_to_grayscale:
+  file: image_to_grayscale.py
+  categories: [converters/images]
+  tags: [image]
+  description: "Convert an image to grayscale."
+lower_case_text:
+  file: lower_case_text.py
+  categories: [text/formatting]
+  tags: [text, converter]
+  description: "Turn the text of an uploaded file into lower case."
+multi_modal_return:
+  file: multi_modal_return.py
+  categories: [misc]
+  tags: [multi, modal, return]
+  description: "A test tool that returns several kinds of results at once."
+pdf_to_text:
+  file: pdf_to_text.py
+  categories: [converters/documents]
+  tags: [pdf]
+  description: "Extract the text of a PDF."
+profanity_check:
+  file: profanity_check.py
+  categories: [text/formatting]
+  tags: [profanity, check]
+  description: "Check text for profanity."
+sha256:
+  file: sha256.py
+  categories: [security/hashing]
+  tags: [sha]
+  description: "Hash an uploaded file with SHA-256 or another algorithm."
+video_to_audio:
+  file: video_to_audio.py
+  categories: [converters/media]
+  tags: [video, audio]
+  description: "Extract the audio track of a video as an mp3."
+video_to_video:
+  file: video_to_video.py
+  categories: [converters/media]
+  tags: [video]
+  description: "Convert a video to another format."

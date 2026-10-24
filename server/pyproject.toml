@@ -22,6 +22,7 @@ line-length = 120
 
 [project.scripts]
 pywebtool = "app.runner:runner"
+pytools-admin = "app.admin_cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.24"]
