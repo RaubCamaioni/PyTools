@@ -1,14 +1,22 @@
 {# terminal prompt: user@host:cwd $ on the left, the bracket links on the right.
-   Pages set `cwd` before including this (default ~). The link for the current page is inverted. #}
+   Pages set `cwd` before including this (default ~). The link for the current page is inverted.
+   The cwd shows as /home/<app>/...: "home" links to the site's landing page (outside the mount), and "<app>"
+   (what `~` stands for) to this app's front page. #}
 {# the request path below the mount prefix, so the active link is right under any root_path #}
 {% set path = request.url.path[root_path|length:] or '/' %}
+{% set cwd = cwd | default('~') %}
+{% macro pathlink(href, label) -%}
+<a href="{{ href }}" class="no-underline hover:bg-paper hover:text-ink">{{ label }}</a>
+{%- endmacro %}
 {% macro navlink(href, label, active) -%}
 <a href="{{ root_path }}{{ href }}" class="no-underline px-1 {% if active %}bg-paper text-ink{% else %}text-dim hover:bg-paper hover:text-ink{% endif %}">[{{ label }}]</a>
 {%- endmacro %}
 <header class="w-full border-b border-line mb-6">
   <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
 
-    <span class="whitespace-nowrap"><span class="text-dim">{{ session_alias(request) }}@pytools</span>:{{ cwd | default('~') }}<span class="text-dim"> $</span></span>
+    <span class="whitespace-nowrap"><span class="text-dim">{{ session_alias(request) }}@pytools</span>:/{{ pathlink('/', 'home') }}
+      {%- if cwd.startswith('~') %}/{{ pathlink(root_path ~ '/', root_path.strip('/') or 'tools') }}{{ cwd[1:] }}
+      {%- else %}{{ cwd[5:] if cwd.startswith('/home') else cwd }}{% endif %}<span class="text-dim"> $</span></span>
 
     <div class="flex-grow"></div>
 
