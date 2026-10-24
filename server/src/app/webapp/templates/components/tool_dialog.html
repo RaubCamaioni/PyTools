@@ -7,7 +7,7 @@
     hx-swap="none"
     hx-indicator="#tool-dialog-busy"
     _="on htmx:afterRequest if event.detail.successful call #tool-dialog.close() then send refresh to #tool-rows end
-       on htmx:responseError put metaError(event.detail.xhr) into #tool-dialog-error">
+       on htmx:responseError set #tool-dialog-error's textContent to metaError(event.detail.xhr)">
 
     <div class="prompt font-bold">{% if tool_id %}edit {{ name }}.py{% else %}create a tool{% endif %}</div>
 

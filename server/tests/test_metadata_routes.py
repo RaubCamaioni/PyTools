@@ -269,3 +269,22 @@ def test_suggest_route_lists_every_tag_when_nothing_is_typed(monkeypatch, logged
             session.commit()
     listed = {t["tag"] for t in TestClient(app).get("/tags/suggest").json()}
     assert set(many) | {"zebra-extra"} <= listed  # more than the 10 a typed prefix used to get
+
+
+def test_suggest_route_is_bounded_when_nothing_is_typed(monkeypatch, logged_in):
+    from app.routes import metadata as metadata_routes
+
+    with db.Session(db.engine) as session:
+        tool = db.Tool(name="bounded", code="", user_id=1, public=True)
+        session.add(tool)
+        session.commit()
+        Tags().save(session, tool.id, ["bound-a", "bound-b", "bound-c"])
+        session.commit()
+    monkeypatch.setattr(metadata_routes, "BROWSE_LIMIT", 2)
+    assert len(TestClient(app).get("/tags/suggest").json()) == 2
+
+
+def test_dialog_errors_are_shown_as_text(monkeypatch, logged_in):
+    page = logged_in.get("/manage/tool/create").text
+    handler = page.split("htmx:responseError")[1].split('">')[0]
+    assert "#tool-dialog-error's textContent" in handler and "into #tool-dialog-error" not in handler

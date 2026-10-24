@@ -517,7 +517,7 @@ async def tool_preview(request: Request, id: int, session: db_tools.SessionDep):
 async def tool_default_file(request: Request, id: int, ext: Literal["stl", "step"], session: db_tools.SessionDep):
     """The model built with its default parameters, kept from the validation run at upload."""
     tool = db_tools.get_tool_by_id(session, id)
-    if tool is None:
+    if tool is None or tool.kind != "model":  # a script never has a default build, whatever is on disk
         raise HTTPException(status_code=404, detail="Tool Not Found")
     _require_view(request, tool)
     path = ENVIRONMENT.MODELS_DIR / str(tool.id) / f"model.{ext}"

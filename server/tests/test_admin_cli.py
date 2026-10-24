@@ -202,3 +202,28 @@ def test_a_stored_private_model_is_published(session_with_tools, tmp_path):
     lines = admin_cli.create_missing(session, MODELS, OWNER, True, repo(tmp_path / "2"), FakeSite(session))
     stored = session.exec(admin_cli.select(Tool).where(Tool.name == "new_box")).first()
     assert stored.public and "published new_box" in lines and "created new_hook" in lines
+
+
+def test_a_dry_run_never_signs_in_as_the_owner(monkeypatch, tmp_path):
+    (tmp_path / "models").mkdir()
+    (tmp_path / "models" / "new_model.py").write_text("x = 1\n")
+    manifest = tmp_path / "catalog.yaml"
+    manifest.write_text("new_model:\n  file: models/new_model.py\n  tags: [x]\n  categories: [misc]\n")
+
+    def http_post(*args):
+        raise AssertionError("a dry run built the owner's session")
+
+    monkeypatch.setattr(admin_cli, "http_post", http_post)
+    assert admin_cli.main(["apply-manifest", str(manifest)]) == 0
+
+
+def test_creating_refuses_an_empty_session_key(monkeypatch):
+    import dataclasses
+
+    import pytest
+
+    from app import ENVIRONMENT
+
+    monkeypatch.setattr("app.ENVIRONMENT", dataclasses.replace(ENVIRONMENT, SESSION_KEY=""))
+    with pytest.raises(SystemExit, match="SESSION_KEY"):
+        admin_cli.http_post("http://app", OWNER)

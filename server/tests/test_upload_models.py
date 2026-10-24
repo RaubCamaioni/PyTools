@@ -195,3 +195,43 @@ def test_the_stored_thumbnail_cannot_run_script(monkeypatch, logged_in):
     csp = r.headers["content-security-policy"]
     assert "sandbox" in csp and "default-src 'none'" in csp and "script-src" not in csp
     assert r.headers["x-content-type-options"] == "nosniff"
+
+
+class GarbledPreviewRunner(BuildingRunner):
+    """A build whose STL is new but whose thumbnail is not text."""
+
+    async def run(self, tool, run_dir, on_line=None, runtime_args=()):
+        result = await super().run(tool, run_dir, on_line, runtime_args)
+        if not runtime_args and isinstance(result.results, dict):
+            Path(result.results["stl"]).write_text("<new.stl>")
+            Path(result.results["preview"]).write_bytes(b"\xff\xfe<svg>")
+        return result
+
+
+def test_a_build_whose_thumbnail_is_not_text_stores_nothing(monkeypatch, logged_in, tmp_path):
+    r = upload(logged_in, monkeypatch, GarbledPreviewRunner(built()), code=MODEL.replace("demo_box", "garbled_box"),
+               name="garbled_box.py")
+    assert r.status_code == 400 and "preview.svg is not text" in r.json()["detail"]
+    assert stored_tool("garbled_box") is None
+    assert list((tmp_path / "models").glob("*/model.stl")) == []
+
+
+def test_a_garbled_rebuild_keeps_the_previous_build(monkeypatch, logged_in, tmp_path):
+    r = upload(logged_in, monkeypatch, BuildingRunner(built()), code=MODEL.replace("demo_box", "rebuilt_box"), name="rebuilt_box.py")
+    assert r.status_code == 200, r.text
+    tool = stored_tool("rebuilt_box")
+    monkeypatch.setattr(tools_routes, "sandbox", Sandbox(tools_routes.ENVIRONMENT.sandbox, runner=GarbledPreviewRunner(built())))
+    code = MODEL.replace("demo_box", "rebuilt_box").replace("size, size, size", "size, size, 1")
+    r = logged_in.post(f"/manage/tool/update/{tool.id}", files={"file": ("rebuilt_box.py", code.encode(), "text/x-python")})
+    assert r.status_code == 400
+    assert (tmp_path / "models" / str(tool.id) / "model.stl").read_text() == "<model.stl>"
+    assert stored_tool("rebuilt_box").preview_svg == "<svg>preview</svg>" and stored_tool("rebuilt_box").code == tool.code
+
+
+def test_a_script_never_serves_model_files(monkeypatch, logged_in, tmp_path):
+    upload(logged_in, monkeypatch, BuildingRunner(), code="def stale(n: int = 1) -> int:\n    return n\n", name="stale.py")
+    tool_id = stored_tool("stale").id
+    left_over = tmp_path / "models" / str(tool_id)
+    left_over.mkdir(parents=True)
+    (left_over / "model.stl").write_text("left over")
+    assert logged_in.get(f"/tool/{tool_id}/model.stl").status_code == 404
