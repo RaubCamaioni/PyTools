@@ -105,7 +105,6 @@ async def tool_upload_post(
         db_tool.name = tool.name
         db_tool.code = tool.code
         db_tool.arguments = tool.arguments
-        db_tool.tags = tool.tags
         session.commit()
 
     return HTMLResponse(status_code=200)

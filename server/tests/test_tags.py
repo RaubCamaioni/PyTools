@@ -2,6 +2,7 @@ import html
 
 from sqlmodel import Session, SQLModel, create_engine
 
+from app.metadata.tags import Tags
 from app.models import tools as db
 from app.routes import tools as tools_routes
 
@@ -18,28 +19,26 @@ def session_with(tools):
     return session
 
 
-def test_search_words_match_names_and_first_line_hashtags():
-    session = session_with(
-        [
-            db.Tool(name="pdf_merge", code="", tags=["pdf", "merge", "pdf_merge"], public=True, user_id=1),
-            db.Tool(name="pdf_split", code="", tags=["pdf", "split", "pdf_split"], public=True, user_id=1),
-            db.Tool(name="image_crop", code="", tags=["image", "crop", "image_crop"], public=True, user_id=1),
-        ]
-    )
+def test_search_words_match_names_and_tags(session_with_tools):
+    session, make = session_with_tools
+    for name, tags in [("pdf_merge", ["pdf", "merge"]), ("pdf_split", ["pdf", "split"]), ("image_crop", ["image", "crop"])]:
+        Tags().save(session, make(name), tags)
+    session.commit()
     names = lambda rows: sorted(name for _, name in rows)  # noqa: E731
-    assert names(db.get_tools_by_tags(session, ["pdf"], 0, 50)) == ["pdf_merge", "pdf_split"]  # a hashtag
-    assert names(db.get_tools_by_tags(session, ["crop"], 0, 50)) == ["image_crop"]  # a hashtag that is not in the name
-    assert names(db.get_tools_by_tags(session, ["pdf", "split"], 0, 50)) == ["pdf_split"]  # every word must match
+    assert names(db.search_tools(session, ["pdf"], 0, 50)) == ["pdf_merge", "pdf_split"]  # a tag
+    assert names(db.search_tools(session, ["crop"], 0, 50)) == ["image_crop"]  # a tag that is not in the name
+    assert names(db.search_tools(session, ["pdf", "split"], 0, 50)) == ["pdf_split"]  # every word must match
+    assert names(db.search_tools(session, ["ima"], 0, 50)) == ["image_crop"]  # the last word is a prefix
 
 
 def test_tools_route_searches_with_the_typed_words(monkeypatch):
     calls = []
 
-    def fake(session, tags, start, end):
+    def fake(session, tags, start, end, category=None):
         calls.append(tags)
         return [(i, f"pdf_tool{i}") for i in range(50)]  # a full page: the loader for the next one follows
 
-    monkeypatch.setattr(db, "get_tools_by_tags", fake)
+    monkeypatch.setattr(db, "search_tools", fake)
     r = client(monkeypatch, StubRunner()).post("/tools?start=0&end=50", data={"search": "merge pdf"})
     assert r.status_code == 200 and calls == [["merge", "pdf"]]
     assert "merge pdf" in html.unescape(r.text)  # the infinite-scroll loader carries the words forward
