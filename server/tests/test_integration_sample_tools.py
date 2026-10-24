@@ -1,7 +1,7 @@
 """Run every sample tool in tools/ through the real sandbox.
 
 Needs the inner podman and the sandbox image, so it runs inside the app container
-(see test_integration_sandbox.py). Each case supplies the inputs a user would and
+(the runner's own integration tests live in sandboxcore). Each case supplies the inputs a user would and
 checks the result a user would expect.
 """
 
@@ -12,13 +12,15 @@ import os
 import shutil
 import time
 import wave
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
-from app.utility import serializer
-from app.utility.podman_runner import Outcome, PodmanRunner
-from app.utility.sandbox_config import SandboxConfig
+from sandboxcore import serializer
+from sandboxcore.host import Outcome, PodmanRunner
+
+from app import ENVIRONMENT
 
 pytestmark = [
     pytest.mark.integration,
@@ -57,7 +59,7 @@ def wav_bytes(seconds: float = 0.5, rate: int = 8000) -> bytes:
 
 @pytest.fixture(scope="module")
 def config():
-    return SandboxConfig.from_environment(os.environ)
+    return ENVIRONMENT.sandbox  # SANDBOX_* variables over the app's defaults
 
 
 @pytest.fixture
@@ -152,7 +154,7 @@ async def test_error_tool_reports_runtime_error(runner, run_dir):
 
 async def test_async_tool_hits_the_time_limit(run_dir):
     # pin a 5 s limit so the test does not depend on the production SANDBOX_TIMEOUT_SECONDS
-    short = PodmanRunner(SandboxConfig.from_environment({**os.environ, "SANDBOX_TIMEOUT_SECONDS": "5"}))
+    short = PodmanRunner(replace(ENVIRONMENT.sandbox, timeout_seconds=5.0))
     await short.start()
     assert short.available, short.unavailable_reason
     try:
@@ -167,7 +169,7 @@ CADQUERY_SECONDS = 30  # CadQuery import + geometry needs more than the default 
 
 @pytest.fixture
 async def cadquery_runner(config):
-    r = PodmanRunner(SandboxConfig.from_environment({**os.environ, "SANDBOX_TIMEOUT_SECONDS": str(CADQUERY_SECONDS)}))
+    r = PodmanRunner(replace(ENVIRONMENT.sandbox, timeout_seconds=float(CADQUERY_SECONDS)))
     await r.start()
     assert r.available, r.unavailable_reason
     yield r

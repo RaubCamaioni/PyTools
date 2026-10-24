@@ -2,9 +2,11 @@ from fastapi import Request, APIRouter, UploadFile, Query
 from fastapi.responses import HTMLResponse
 from fastapi.exceptions import HTTPException
 from app.models import tools
+from app.routes import tools as tools_routes
+from sandboxcore.host import SandboxBusy, SandboxUnavailable, SignatureError, Source, SourceError, accept_source
+from sandboxcore.source import MAX_CODE_BYTES
 from app.models.tools import SessionDep, User, FilterDep, get_user, lift_expired_ban
 from app.routes.auth import session_user
-from pathlib import Path
 from app import TEMPLATES, logger
 from typing import Optional
 from urllib.parse import parse_qsl
@@ -72,9 +74,14 @@ async def tool_upload_post(
     if name is None:
         raise HTTPException(status_code=400, detail="Upload filename required.")
 
-    code = await file.read()
+    # read at most one byte past the limit: accept_source refuses anything larger
+    data = await file.read(MAX_CODE_BYTES + 1)
+    try:
+        source = accept_source(data, name)
+    except SourceError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    clean = filter.is_clean(code.decode())
+    clean = filter.is_clean(source.code)
     if not clean:
         raise HTTPException(status_code=400, detail="Blocked by profanity filter.")
 
@@ -85,14 +92,14 @@ async def tool_upload_post(
         raise HTTPException(status_code=404, detail="Tool does not exist.")
 
     if db_tool is None:
-        tool = tools.create_tool(user.id, Path(name).stem, code.decode())
+        tool = await _create_tool(user.id, source)
         if tool is None:
             raise HTTPException(status_code=404, detail="Error creating tool.")
         session.add(tool)
         session.commit()
 
     else:
-        tool = tools.create_tool(user.id, Path(name).stem, code.decode())
+        tool = await _create_tool(user.id, source)
         if tool is None:
             raise HTTPException(status_code=404, detail="Error updating tool.")
         db_tool.name = tool.name
@@ -102,6 +109,20 @@ async def tool_upload_post(
         session.commit()
 
     return HTMLResponse(status_code=200)
+
+
+async def _create_tool(user_id: int, source: Source) -> tools.Tool:
+    """Prepare the code, read its signature in the sandbox (never parsed here), and build the tool."""
+    source = tools.prepare_source(source)
+    try:
+        signature = await tools_routes.sandbox.inspect(source)
+    except (SignatureError, SourceError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except SandboxBusy:
+        raise HTTPException(status_code=503, detail="Server busy, try again")
+    except SandboxUnavailable:
+        raise HTTPException(status_code=503, detail="Sandbox unavailable")
+    return tools.create_tool(user_id, source, signature)
 
 
 @router.post("/manage/user/settings", response_class=HTMLResponse)

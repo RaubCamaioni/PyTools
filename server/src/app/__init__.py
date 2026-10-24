@@ -1,12 +1,11 @@
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-import string
 import logging
 import os
 from dataclasses import dataclass, field
 from typing import Optional
 
-from app.utility.sandbox_config import SandboxConfig
+from sandboxcore.host import SandboxConfig
 
 
 REQUIRED_ENVIRONMENT = ("SESSION_KEY", "DATABASE")
@@ -25,7 +24,11 @@ class _ENVIRONMENT:
     # the URL prefix the app is served under, e.g. "/tools" behind a reverse proxy; "" at the root
     ROOT_PATH: str = os.environ.get("ROOT_PATH", "").rstrip("/")
     # SANDBOX_* variables all have defaults; see SandboxConfig
-    sandbox: SandboxConfig = field(default_factory=lambda: SandboxConfig.from_environment(os.environ))
+    sandbox: SandboxConfig = field(
+        default_factory=lambda: SandboxConfig.from_environment(
+            os.environ, image="docker.io/raubcamaioni/pywebtools-sandbox:latest", run_dir="/tmp/pywebtools-runs"
+        )
+    )
 
     def __post_init__(self):
         for name in REQUIRED_ENVIRONMENT:
@@ -35,7 +38,6 @@ class _ENVIRONMENT:
 
 ENVIRONMENT = _ENVIRONMENT()
 
-ALLOWED_CHARACTERS = string.ascii_letters + string.digits + "-_"
 APP_DIRECTORY = Path(__file__).parent
 def _root_path(request) -> dict:
     """Every template gets `root_path`, the prefix the app is mounted at, to build its URLs with."""

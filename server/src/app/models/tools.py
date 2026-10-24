@@ -17,11 +17,10 @@ from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from sqlalchemy import func, inspect, text
 import logging
-import ast
 import black
 
 from app import ENVIRONMENT
-from app.utility.annotations import AnnotationError, check_annotation
+from sandboxcore.host import Signature, Source
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -346,19 +345,6 @@ SessionDep = Annotated[Session, Depends(get_session)]
 FilterDep = Annotated[ProfanityFilter, Depends(get_filter)]
 
 
-class FunctionVisitor(ast.NodeVisitor):
-    def __init__(self, module: ast.Module):
-        self.nodes: list[ast.FunctionDef] = []
-        self.visit(module)
-
-    def visit_FunctionDef(self, node):
-        self.nodes.append(node)
-        self.generic_visit(node)
-
-    def __iter__(self):
-        return iter(self.nodes)
-
-
 def get_tags(tool_source: str) -> list[str]:
     word = pp.Word(pp.alphanums)
     tag = word + pp.Optional(pp.Suppress(pp.Literal(",")))
@@ -368,43 +354,6 @@ def get_tags(tool_source: str) -> list[str]:
         return list(result)
     except pp.ParseException:
         return []
-
-
-def get_arguments(tool_name: str, tool_source: str) -> dict[str, str]:
-    try:
-        tree = ast.parse(tool_source)
-    except SyntaxError as e:
-        detail = f"Python Syntax Error: line {e.lineno}"
-        raise HTTPException(status_code=400, detail=detail)
-
-    try:
-        entry_node = next(filter(lambda n: n.name == tool_name, FunctionVisitor(tree)))
-    except StopIteration:
-        detail = "Entrypoint Not Found: entrypoint function matching file name missing"
-        raise HTTPException(status_code=400, detail=detail)
-
-    defaults = [None] * len(entry_node.args.args)
-    for i, node in enumerate(entry_node.args.defaults[::-1]):
-        default = ast.unparse(node)
-
-        if default[0] in ['"', "'"] and len(default) >= 2:
-            default = default[1:-1]
-
-        defaults[-(i + 1)] = default
-
-    arguments = {}
-    for arg, default in zip(entry_node.args.args, defaults):
-        if not arg.annotation:
-            detail = "Annotation Error: arguments to entrypoint function must have annotations"
-            raise HTTPException(status_code=400, detail=detail)
-        # only the allow-listed shapes are stored: the web app reads them outside the sandbox
-        try:
-            annotation = check_annotation(arg.annotation)
-        except AnnotationError as e:
-            raise HTTPException(status_code=400, detail=f"Annotation Error: '{arg.arg}': {e}")
-        arguments[arg.arg] = (annotation, default)
-
-    return arguments
 
 
 MAX_LINE_LENGTH = 120
@@ -431,19 +380,22 @@ def format_source(tool_source: str) -> str:
     return formatted
 
 
-def create_tool(user_id: int, tool_name: str, tool_source: str) -> Tool:
-    tool_source = tool_source.replace("\r\n", "\n").replace("\r", "\n")
-    tool_source = format_source(tool_source)
+def prepare_source(source: Source) -> Source:
+    """The code as it is stored: black-formatted at the page's line length, every line within it."""
+    code = format_source(source.code)
     # black wraps code but leaves long strings and comments alone, so those still need the author
-    check_line_lengths(tool_source)
-    tags = get_tags(tool_source.split("\n")[0])
-    tags.append(tool_name)
-    arguments = get_arguments(tool_name, tool_source)
+    check_line_lengths(code)
+    return Source(source.language, source.entrypoint, code)
 
+
+def create_tool(user_id: int, source: Source, signature: Signature) -> Tool:
+    """A tool from prepared code and the signature the sandbox read from it (Sandbox.inspect)."""
+    tags = get_tags(source.code.split("\n")[0])
+    tags.append(source.entrypoint)
     return Tool(
-        name=tool_name,
-        code=tool_source,
-        arguments=arguments,
+        name=source.entrypoint,
+        code=source.code,
+        arguments=signature.to_arguments(),
         user_id=user_id,
         tags=tags,
     )

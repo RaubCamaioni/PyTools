@@ -1,5 +1,6 @@
 from app.routes import tools as tools_routes
-from app.utility.podman_runner import Outcome, RunResult, SandboxBusy
+from sandboxcore.host import Outcome, SandboxBusy
+from sandboxcore.host.podman import RunResult
 
 from tests.test_tool_routes import StubRunner, client, public_tool  # noqa: F401  (fixture)
 

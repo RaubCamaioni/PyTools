@@ -1,6 +1,7 @@
 import asyncio
 import dataclasses
 import json
+import re
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,10 +9,15 @@ from fastapi.testclient import TestClient
 from app.app import app
 from app.models import tools as db
 from app.routes import tools as tools_routes
-from app.utility.podman_runner import Outcome, RunResult, SandboxBusy, SandboxUnavailable
+from sandboxcore.host import Outcome, Sandbox, SandboxBusy, SandboxUnavailable
+from sandboxcore.host.podman import RunResult
+from sandboxcore.testing import UnsandboxedRunner
 
 
 class StubRunner:
+    """Stands in for PodmanRunner under a real Sandbox: a run returns `result`, while --inspect runs the
+    real Python runtime locally (sandboxcore.testing), so uploads are inspected as in production."""
+
     def __init__(self, result=None, raise_=None, available=True):
         self.result, self.raise_, self.available = result, raise_, available
         self.unavailable_reason = None if available else "self-test failed"
@@ -27,7 +33,9 @@ class StubRunner:
     async def stop(self):
         pass
 
-    async def run(self, tool, run_dir, on_line=None):
+    async def run(self, tool, run_dir, on_line=None, runtime_args=()):
+        if "--inspect" in runtime_args:
+            return await UnsandboxedRunner(tools_routes.ENVIRONMENT.sandbox).run(tool, run_dir, runtime_args=runtime_args)
         self.calls.append((tool, run_dir))
         self.on_line = on_line
         if self.raise_:
@@ -54,7 +62,7 @@ def public_tool(monkeypatch, tmp_path):
 
 
 def client(monkeypatch, runner):
-    monkeypatch.setattr(tools_routes, "runner", runner)
+    monkeypatch.setattr(tools_routes, "sandbox", Sandbox(tools_routes.ENVIRONMENT.sandbox, runner=runner))
     return TestClient(app)
 
 
@@ -108,7 +116,7 @@ def test_lifespan_does_not_wait_for_runner_start(monkeypatch):
         async def start(self):
             await asyncio.sleep(3)
 
-    monkeypatch.setattr(tools_routes, "runner", SlowStartRunner(available=False))
+    monkeypatch.setattr(tools_routes, "sandbox", Sandbox(tools_routes.ENVIRONMENT.sandbox, runner=SlowStartRunner(available=False)))
     started = time.monotonic()
     with TestClient(app) as c:
         assert c.get("/healthz").status_code == 503
@@ -183,49 +191,93 @@ def test_every_page_carries_the_version_tag(monkeypatch, public_tool):
         assert "github.com/RaubCamaioni/PyTools/commit/8cb5eba1234567890" in page
 
 
-def download_url(path):
-    return "/download/" + str(path.resolve().relative_to(path.resolve().anchor)).replace("\\", "/")
+class FileRunner(StubRunner):
+    """A run that writes `files` into its run directory and returns their paths, as a tool would."""
+
+    def __init__(self, files):
+        super().__init__()
+        self.files = files
+
+    async def run(self, tool, run_dir, on_line=None, runtime_args=()):
+        self.calls.append((tool, run_dir))
+        for name, data in self.files.items():
+            (run_dir / name).write_bytes(data)
+        return RunResult(Outcome.OK, results={name: run_dir / name for name in self.files})
 
 
-def test_download_serves_a_file_from_a_run_directory(monkeypatch, public_tool, tmp_path):
-    run = tmp_path / "abc"
-    run.mkdir()
-    (run / "qr_code.png").write_bytes(b"png")
-    r = client(monkeypatch, StubRunner()).get(download_url(run / "qr_code.png"))
+def run_and_get_urls(c):
+    """Run the tool (JSON response): each returned file comes back as its download URL."""
+    r = c.post("/tool/8")
+    assert r.status_code == 200, r.text
+    return json.loads(r.text)
+
+
+# `with` keeps one event loop across requests, as in production: a client without it gives each request its
+# own loop, and closing it cancels the run's cleanup task, which removes the run directory at once
+def test_download_serves_a_file_the_run_returned(monkeypatch, public_tool):
+    with client(monkeypatch, FileRunner({"qr_code.png": b"png"})) as c:
+        url = run_and_get_urls(c)["qr_code.png"]
+        assert re.fullmatch(r"/download/[A-Za-z0-9_-]{32}/qr_code.png", url)
+        r = c.get(url)
     assert r.status_code == 200 and r.content == b"png"
     assert "qr_code.png" in r.headers["content-disposition"]
 
 
-def test_image_preview_is_served_inline_with_its_media_type(monkeypatch, public_tool, tmp_path):
-    run = tmp_path / "abc"
-    run.mkdir()
-    (run / "qr_code.png").write_bytes(b"png")
-    (run / "data.csv").write_bytes(b"a,b")
-    (run / "song.mp3").write_bytes(b"mp3")
-    (run / "doc.pdf").write_bytes(b"pdf")
-    c = client(monkeypatch, StubRunner())
-    for name, media_type in (("qr_code.png", "image/png"), ("song.mp3", "audio/mpeg"), ("doc.pdf", "application/pdf")):
-        r = c.get(download_url(run / name) + "?preview=1")
-        assert r.status_code == 200 and r.headers["content-type"] == media_type, name
-        assert r.headers["content-disposition"].startswith("inline")
-    # preview only changes how images are served; anything else stays a download
-    r = c.get(download_url(run / "data.csv") + "?preview=1")
+def test_image_preview_is_served_inline_with_its_media_type(monkeypatch, public_tool):
+    files = {"qr_code.png": b"png", "data.csv": b"a,b", "song.mp3": b"mp3", "doc.pdf": b"pdf"}
+    with client(monkeypatch, FileRunner(files)) as c:
+        urls = run_and_get_urls(c)
+        for name, media_type in (("qr_code.png", "image/png"), ("song.mp3", "audio/mpeg"), ("doc.pdf", "application/pdf")):
+            r = c.get(urls[name] + "?preview=1")
+            assert r.status_code == 200 and r.headers["content-type"] == media_type, name
+            assert r.headers["content-disposition"].startswith("inline")
+        # preview only changes how images are served; anything else stays a download
+        r = c.get(urls["data.csv"] + "?preview=1")
     assert r.headers["content-type"] == "application/octet-stream"
     assert r.headers["content-disposition"].startswith("attachment")
 
 
-def test_download_of_an_expired_result_is_404_with_a_reason(monkeypatch, public_tool, tmp_path):
-    r = client(monkeypatch, StubRunner()).get(download_url(tmp_path / "gone" / "qr_code.png"))
+def test_download_of_an_expired_result_is_404_with_a_reason(monkeypatch, public_tool):
+    r = client(monkeypatch, StubRunner()).get("/download/" + "x" * 32 + "/qr_code.png")
     assert r.status_code == 404 and "expired" in r.json()["detail"]
 
 
-def test_download_outside_the_run_root_is_forbidden(monkeypatch, public_tool, tmp_path):
-    outside = tmp_path.parent / "elsewhere.txt"
-    outside.write_text("x")
-    assert client(monkeypatch, StubRunner()).get(download_url(outside)).status_code == 403
-    assert client(monkeypatch, StubRunner()).get(download_url(tmp_path)).status_code == 403  # the root itself
+def test_only_files_inside_a_kept_run_are_served(monkeypatch, public_tool, tmp_path):
+    (tmp_path.parent / "elsewhere.txt").write_text("x")
+    with client(monkeypatch, FileRunner({"out.txt": b"o"})) as c:
+        url = run_and_get_urls(c)["out.txt"]
+        assert c.get(url).status_code == 200  # the run is kept: the refusals below are not just expiry
+        run = url.split("/")[2]
+        for name in ["../../elsewhere.txt", "%2E%2E/%2E%2E/elsewhere.txt", "args.json", "byte_converter.py", "/etc/passwd"]:
+            assert c.get(f"/download/{run}/{name}").status_code == 404, name
+
+
+def test_a_returned_path_outside_the_run_is_refused(monkeypatch, public_tool, tmp_path):
+    (tmp_path.parent / "secret.txt").write_text("SESSION_KEY=x")
+    stub = StubRunner(RunResult(Outcome.OK, results={"f": tmp_path.parent / "secret.txt"}))
+    r = client(monkeypatch, stub).post("/tool/8")
+    assert r.json() == {"detail": "Tool returned a path that is not a file it made"}
 
 
 def test_tool_page_downloads_results_in_place(monkeypatch, public_tool):
     page = client(monkeypatch, StubRunner()).get("/tool/8").text
     assert """closest('a[href^="/download/"]')""" in page and "event.preventDefault()" in page
+
+
+def create_tool(user_id: int, name: str, code) -> db.Tool:
+    """A tool made the way an upload makes it: accept_source, prepare_source, then Sandbox.inspect with
+    the real Python runtime run locally (sandboxcore.testing). Refusals raise HTTPException as the route does."""
+    from unittest import mock
+
+    from fastapi import HTTPException
+
+    from app.routes import upload as upload_routes
+    from sandboxcore.host import SourceError, accept_source
+
+    config = tools_routes.ENVIRONMENT.sandbox
+    try:
+        source = accept_source(code.encode() if isinstance(code, str) else code, f"{name}.py")
+    except SourceError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    with mock.patch.object(tools_routes, "sandbox", Sandbox(config, runner=UnsandboxedRunner(config))):
+        return asyncio.run(upload_routes._create_tool(user_id, source))

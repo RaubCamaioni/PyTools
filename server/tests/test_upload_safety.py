@@ -10,7 +10,8 @@ from sqlmodel import Session
 from app.models import tools as db
 from app.routes import tools as tools_routes
 from app.routes import upload as upload_routes
-from app.utility.podman_runner import Outcome, RunResult
+from sandboxcore.host import Outcome
+from sandboxcore.host.podman import RunResult
 
 from tests.test_tool_routes import StubRunner, client
 
