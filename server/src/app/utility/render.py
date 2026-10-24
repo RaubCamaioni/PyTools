@@ -351,3 +351,22 @@ def render(results: Any, root_path: str = "") -> str:
         attributes=ALLOWED_ATTRIBUTES,
         url_schemes={"http", "https"},
     )
+
+
+# the export dict a run returns when its tool returned a CadQuery object (sandbox/src/sandbox/export.py)
+MODEL_KEYS = {"stl", "step", "preview", "meta"}
+
+
+def is_model_result(value: Any) -> bool:
+    """Whether a run's result has the shape of a model export; the files are checked by build_files."""
+    return (
+        isinstance(value, dict)
+        and set(value) == MODEL_KEYS
+        and all(isinstance(value[key], OutputFile) for key in ("stl", "step", "preview"))
+    )
+
+
+def model_result(root_path: str, name: str, stl_url: str, step_url: str, meta: dict) -> str:
+    """The viewer, measurements and download links for a built model (components/model_result.html)."""
+    template: Template = TEMPLATES.get_template("components/model_result.html")
+    return template.render(root_path=root_path or "", name=name, stl_url=stl_url, step_url=step_url, meta=meta)

@@ -38,6 +38,7 @@ from sandboxcore.host import (
 )
 from app.utility.trace_stream import TraceRegistry
 from app.utility import render
+from app.utility.build_files import BuildFileError, checked_build
 from app import TEMPLATES, logger, ENVIRONMENT
 from app.models import tools as db_tools
 from app.routes.auth import User, session_user
@@ -416,10 +417,29 @@ async def run_isolated(
             return HTMLResponse(content=render.render(text))
         return JSONResponse({"detail": result.message})
 
+    if render.is_model_result(result.value):
+        return _model_response(result.value, db_tools.get_tool_by_id(session, id).name, root_path, htmx)
+
     if htmx:
         return HTMLResponse(content=render.render(result.value, root_path))
     # files become their download URLs
     return json.dumps(result.value, default=lambda obj: render.download_url(obj, root_path) if isinstance(obj, OutputFile) else str(obj))
+
+
+def _model_response(value: dict, name: str, root_path: str, htmx: bool):
+    """A run whose tool returned a CadQuery object: the viewer (htmx) or the file URLs and measurements.
+    The export is checked first (fixed file names, size caps, the measurements' shape)."""
+    try:
+        build = checked_build(value)
+    except BuildFileError as e:
+        failure = f"Export Error: {e}"
+        if htmx:
+            return HTMLResponse(content=render.render(failure))
+        return JSONResponse({"detail": failure}, status_code=422)
+    stl_url, step_url = render.download_url(build["stl"], root_path), render.download_url(build["step"], root_path)
+    if htmx:
+        return HTMLResponse(content=render.model_result(root_path, name, stl_url, step_url, build["meta"]))
+    return json.dumps({"stl": stl_url, "step": step_url, "meta": build["meta"]})
 
 
 @router.get("/download/{run}/{name:path}", response_class=FileResponse)

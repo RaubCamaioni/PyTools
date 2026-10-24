@@ -2,6 +2,7 @@ import asyncio
 import dataclasses
 import json
 import re
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,6 +13,18 @@ from app.routes import tools as tools_routes
 from sandboxcore.host import Outcome, Sandbox, SandboxBusy, SandboxUnavailable
 from sandboxcore.host.podman import RunResult
 from sandboxcore.testing import UnsandboxedRunner
+
+# what the sandbox returns when a tool returned a CadQuery object: the export dict (see sandbox/export.py)
+BUILD = {
+    "stl": "model.stl",
+    "step": "model.step",
+    "preview": "preview.svg",
+    "meta": {"size_mm": [30, 20, 10], "volume_mm3": 6000.0, "area_mm2": 2200.0, "solids": 1},
+}
+
+
+def built(**meta):
+    return RunResult(Outcome.OK, results={**BUILD, "meta": {**BUILD["meta"], **meta}})
 
 
 class StubRunner:
@@ -40,6 +53,15 @@ class StubRunner:
         self.on_line = on_line
         if self.raise_:
             raise self.raise_
+        if self.result.outcome is Outcome.OK and isinstance(self.result.results, dict):
+            # a real run leaves a model's export in its run directory and names it there
+            results = dict(self.result.results)
+            for key in ("stl", "step", "preview"):
+                if results.get(key) in ("model.stl", "model.step", "preview.svg"):
+                    path = Path(run_dir) / results[key]
+                    path.write_text(f"<{results[key]}>")
+                    results[key] = path
+            return RunResult(Outcome.OK, results=results)
         return self.result
 
 
@@ -281,3 +303,29 @@ def create_tool(user_id: int, name: str, code) -> db.Tool:
         raise HTTPException(status_code=400, detail=str(e))
     with mock.patch.object(tools_routes, "sandbox", Sandbox(config, runner=UnsandboxedRunner(config))):
         return asyncio.run(upload_routes._create_tool(user_id, source))
+
+
+def test_a_run_that_returns_a_model_shows_the_viewer(monkeypatch, public_tool):
+    runner = StubRunner(built())
+    c = client(monkeypatch, runner)
+    body = json.loads(c.post("/tool/8").text)
+    run = "/download/" + Path(runner.calls[-1][1]).name  # the run's id is its directory's name
+    assert body["stl"] == f"{run}/model.stl" and body["step"] == f"{run}/model.step"
+    assert body["meta"]["size_mm"] == [30, 20, 10]
+    page = c.post("/tool/8", headers={"HX-Request": "true"}).text
+    run = "/download/" + Path(runner.calls[-1][1]).name
+    assert f'<stl-viewer url="{run}/model.stl">' in page
+    assert "30 &times; 20 &times; 10 mm" in page and "6.00 cm&sup3;" in page
+    assert f'href="{run}/model.step" download="byte_converter.step"' in page
+
+
+def test_a_model_with_malformed_measurements_is_an_export_error(monkeypatch, public_tool):
+    c = client(monkeypatch, StubRunner(built(solids="many")))
+    page = c.post("/tool/8", headers={"HX-Request": "true"}).text
+    assert "Export Error" in page and "<stl-viewer" not in page
+
+
+def test_a_dict_that_is_not_a_model_renders_as_before(monkeypatch, public_tool):
+    c = client(monkeypatch, StubRunner(RunResult(Outcome.OK, results={"stl": "not a file", "other": 1})))
+    page = c.post("/tool/8", headers={"HX-Request": "true"}).text
+    assert "<stl-viewer" not in page and "not a file" in page
