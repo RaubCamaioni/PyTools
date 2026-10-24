@@ -25,7 +25,6 @@
       {{ navlink('/privacy-policy', 'privacy', path == '/privacy-policy') }}
       {{ navlink('/terms-of-service', 'terms', path == '/terms-of-service') }}
       {{ navlink('/user', 'profile', path == '/user') }}
-      {% if session_admin(request) %}{{ navlink('/admin', 'admin', path == '/admin') }}{% endif %}
       {{ login_control(request) | safe }}
     </nav>
 
