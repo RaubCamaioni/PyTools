@@ -421,6 +421,47 @@ async def run_isolated(
     return json.dumps(result.value, default=lambda obj: render.download_url(obj, root_path) if isinstance(obj, OutputFile) else str(obj))
 
 
+async def build_model(tool, values: dict, on_line=None):
+    """Build a model's code in the sandbox from submitted values ({} builds it with its defaults).
+    The result's value is the checked export dict, or the error text."""
+    if not sandbox.available:
+        raise HTTPException(status_code=503, detail="Sandbox unavailable")
+    # the stored signature is checked again and every value converted through it, never evaluated:
+    # this runs in the web app, outside the sandbox. A file parameter without an upload is left out,
+    # so the model's own `= None` default builds its demo
+    try:
+        signature = Signature.from_arguments("python", tool.name, tool.arguments)
+        arguments, files = signature.bind(values)
+        job = Job(Source("python", tool.name, tool.code), arguments, files)
+    except (SignatureError, SourceError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    # !DANGER! user submitted code
+    try:
+        result = await sandbox.run(job, on_line=on_line)
+    except (JobError, SourceError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except SandboxBusy:
+        raise HTTPException(status_code=503, detail="Server busy, try again")
+    except SandboxUnavailable:
+        raise HTTPException(status_code=503, detail="Sandbox unavailable")
+    # the core vetted every file; keep only the export's fixed names and the measurements' shape
+    if result.outcome is Outcome.OK and isinstance(result.value, dict):
+        try:
+            result.value = checked_build(result.value)
+        except BuildFileError as e:
+            result.value = f"Export Error: {e}"
+    return result
+
+
+def build_failure(result) -> Optional[str]:
+    """Why a build did not produce a model, or None when it did."""
+    if result.outcome is not Outcome.OK:
+        return result.message + (f"\n{result.stderr_tail}" if result.stderr_tail else "")
+    if not isinstance(result.value, dict) or "stl" not in result.value:
+        return str(result.value)  # the runtime's own error text (Runtime Error ..., Export Error ...)
+    return None
+
+
 def _model_response(value: dict, name: str, root_path: str, htmx: bool):
     """A run whose tool returned a CadQuery object: the viewer (htmx) or the file URLs and measurements.
     The export is checked first (fixed file names, size caps, the measurements' shape)."""
