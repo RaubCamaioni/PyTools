@@ -146,8 +146,8 @@ def http_post(base_url: str, owner: int) -> Post:
     if not ENVIRONMENT.SESSION_KEY:  # every upload would be refused as logged out
         raise SystemExit("pytools-admin: SESSION_KEY is empty; read the env file as systemd does, not with sh")
     with Session(engine) as session:
-        user_json = get_user(session, owner).model_dump_json()
-    payload = base64.b64encode(json.dumps({"user": user_json}).encode())
+        get_user(session, owner)  # the owner's account exists before its first upload
+    payload = base64.b64encode(json.dumps({"user_id": owner}).encode())
     cookie = "pytools_session=" + TimestampSigner(ENVIRONMENT.SESSION_KEY).sign(payload).decode()
 
     def post(filename: str, code: bytes, form: dict[str, list[str]]) -> tuple[int, str]:

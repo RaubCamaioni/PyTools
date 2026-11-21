@@ -12,9 +12,10 @@ from urllib.parse import urlencode
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from pydantic import ValidationError
+from sqlmodel import Session
 
 from app import ENVIRONMENT, TEMPLATES, logger
+from app.models import tools as db
 from app.models.tools import SessionDep, User, get_user, hash_id, lift_expired_ban
 
 router = APIRouter()
@@ -79,19 +80,27 @@ class GitHubOAuth:
 github = GitHubOAuth(ENVIRONMENT.GITHUB_CLIENT_ID, ENVIRONMENT.GITHUB_CLIENT_SECRET, ENVIRONMENT.GITHUB_REDIRECT_URI)
 
 
+def session_user_id(request: Request) -> Optional[int]:
+    """The id of the logged-in account, or None. It is all the session cookie says about the user."""
+    user_id = request.session.get("user_id")
+    return user_id if isinstance(user_id, int) else None
+
+
+def current_user(request: Request, session: Session) -> Optional[User]:
+    """The logged-in user as the database has them now, or None when logged out or banned. The role and the
+    ban are read on every request, so a change to either applies to the sessions that already exist."""
+    user_id = session_user_id(request)
+    if user_id is None:
+        return None
+    user = get_user(session, user_id)
+    lift_expired_ban(session, user)
+    return None if user.banned else user
+
+
 def _session_user(request: Request) -> Optional[User]:
-    if "user" not in request.session:
-        return None
-    try:
-        return User.model_validate_json(request.session["user"])
-    except ValidationError:
-        del request.session["user"]
-        return None
-
-
-def session_user(request: Request) -> Optional[User]:
-    """The logged-in user from the session cookie, or None."""
-    return _session_user(request)
+    """current_user for the page header, which is rendered without the route's database session."""
+    with Session(db.engine, expire_on_commit=False) as session:
+        return current_user(request, session)
 
 
 def session_alias(request: Request) -> str:
@@ -168,13 +177,14 @@ async def auth_github(request: Request, code: str, state: str, session: SessionD
         user.alias = account["login"]
         session.commit()
 
-    request.session["user"] = user.model_dump_json()
+    request.session.clear()  # nothing from an earlier login or an older cookie format is carried over
+    request.session["user_id"] = user.id
     return RedirectResponse(url=(request.scope.get("root_path") or "") + "/")
 
 
 @router.get("/whoami")
-async def whoami(request: Request):
-    user = _session_user(request)
+async def whoami(request: Request, session: SessionDep):
+    user = current_user(request, session)
     if user is None:
         return JSONResponse({"detail": "not logged in"}, status_code=401)
     return JSONResponse({"id": user.id, "alias": user.alias})

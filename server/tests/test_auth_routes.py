@@ -42,8 +42,6 @@ def github(monkeypatch):
     fake = FakeGitHub()
     monkeypatch.setattr(auth_routes, "github", fake)
     monkeypatch.setattr(auth_routes, "OWNER_GITHUB_ID", 4242)
-    # the route imported get_user by name, so patch it where it is used
-    monkeypatch.setattr(auth_routes, "get_user", lambda session, id: db.User(id=id))
     return fake
 
 

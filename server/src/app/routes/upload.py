@@ -7,7 +7,7 @@ from app.routes import tools as tools_routes
 from sandboxcore.host import SandboxBusy, SandboxUnavailable, SignatureError, Source, SourceError, accept_source
 from sandboxcore.source import MAX_CODE_BYTES
 from app.models.tools import SessionDep, User, FilterDep, get_user, lift_expired_ban
-from app.routes.auth import session_user
+from app.routes.auth import current_user, session_user_id
 from app import TEMPLATES, ENVIRONMENT, logger
 from app.utility.build_files import MAX_BYTES, checked_meta, read_build_file
 from typing import Optional
@@ -23,7 +23,7 @@ async def tool_delete(
     id: int,
     session: SessionDep,
 ):
-    user = session_user(request)
+    user = current_user(request, session)
     if user is None:
         logger.info("user is not logged in")
         return HTMLResponse(status_code=407)
@@ -102,10 +102,10 @@ def forget_build(tool_id: int) -> None:
 
 def _uploader(request: Request, session) -> User:
     """The logged-in, unbanned user from the database (the cookie only says who is logged in)."""
-    session_account = session_user(request)
-    if session_account is None:
+    user_id = session_user_id(request)
+    if user_id is None:
         raise HTTPException(status_code=404, detail="Uploading code requires login.")
-    user: User = get_user(session, session_account.id)
+    user: User = get_user(session, user_id)
     lift_expired_ban(session, user)
     if user.banned:
         raise HTTPException(status_code=403, detail="This account is banned.")
@@ -217,18 +217,15 @@ async def user_settings(
     request: Request,
     session: SessionDep,
 ):
-    if "user" not in request.session:
+    user = current_user(request, session)
+    if user is None:
         raise HTTPException(status_code=404, detail="Requires Login.")
-    user: User = User.model_validate_json(request.session["user"])
-    user: User = get_user(session, user.id)
 
     form_data = await request.form()
 
     if "alias" in form_data:
         user.alias = str(form_data["alias"])
 
-    # update session and database
-    request.session["user"] = user.model_dump_json()
     session.commit()
 
     return HTMLResponse(status_code=200)
@@ -242,9 +239,9 @@ async def tool_set_public(
     public: Optional[bool] = None,
     anonymous: Optional[bool] = None,
 ):
-    if "user" not in request.session:
+    user = current_user(request, session)
+    if user is None:
         raise HTTPException(status_code=404, detail="Requires login.")
-    user: User = User.model_validate_json(request.session["user"])
 
     db_tool: Optional[tools.Tool] = tools.get_tool(session, id)
 

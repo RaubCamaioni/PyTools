@@ -1,4 +1,3 @@
-import json
 
 from fastapi.testclient import TestClient
 from sqlalchemy import inspect, text
@@ -113,7 +112,7 @@ def test_the_profile_shows_no_accounts_to_anonymous_and_ordinary_users(monkeypat
 
     c = client(monkeypatch, StubRunner())
     assert "ls -l /home/*/tools/" not in c.get("/user").text
-    monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=2, alias="eve"))
+    monkeypatch.setattr(admin_routes, "current_user", lambda request, session: db.User(id=2, alias="eve"))
     assert "ls -l /home/*/tools/" not in c.get("/user").text
     assert c.post("/admin/ban/2", params={"months": "1"}).status_code == 404
     assert c.post("/admin/unban/2").status_code == 404
@@ -122,7 +121,7 @@ def test_the_profile_shows_no_accounts_to_anonymous_and_ordinary_users(monkeypat
 def test_an_admins_profile_lists_accounts_and_their_tools(monkeypatch):
     from app.routes import admin as admin_routes
 
-    monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    monkeypatch.setattr(admin_routes, "current_user", lambda request, session: db.User(id=1, alias="rob", admin=True))
     from datetime import datetime, timezone
 
     rob = db.User(id=1, alias="rob", admin=True)
@@ -154,7 +153,7 @@ def test_admin_can_ban_for_a_period_and_unban(monkeypatch):
     from app.routes import admin as admin_routes
 
     calls = []
-    monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    monkeypatch.setattr(admin_routes, "current_user", lambda request, session: db.User(id=1, alias="rob", admin=True))
     monkeypatch.setattr(db, "set_banned", lambda session, user_id, months: calls.append((user_id, months)))
     c = client(monkeypatch, StubRunner())
     assert c.post("/admin/ban/2", params={"months": "1"}).status_code == 200
@@ -172,9 +171,9 @@ def test_admin_can_delete_another_users_tool(monkeypatch):
     tool = db.Tool(id=6, name="b", code="", user_id=2, public=True, tags=[])
     monkeypatch.setattr(upload_routes.tools, "get_tool", lambda session, id: tool)
     monkeypatch.setattr(upload_routes.tools, "del_tool", lambda session, t: deleted.append(t.id))
-    monkeypatch.setattr(upload_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    monkeypatch.setattr(upload_routes, "current_user", lambda request, session: db.User(id=1, alias="rob", admin=True))
     assert client(monkeypatch, StubRunner()).delete("/manage/tool/delete/6").status_code == 200 and deleted == [6]
-    monkeypatch.setattr(upload_routes, "session_user", lambda request: db.User(id=3, alias="eve"))
+    monkeypatch.setattr(upload_routes, "current_user", lambda request, session: db.User(id=3, alias="eve"))
     assert client(monkeypatch, StubRunner()).delete("/manage/tool/delete/6").status_code == 404 and deleted == [6]
 
 
@@ -190,7 +189,7 @@ def test_admin_opens_a_private_tool_page(monkeypatch, tmp_path):
     monkeypatch.setattr(tools_routes, "ENVIRONMENT", dataclasses.replace(env, sandbox=dataclasses.replace(env.sandbox, run_dir=tmp_path)))
     c = client(monkeypatch, StubRunner())
     assert c.get("/tool/9").status_code == 404  # anonymous
-    monkeypatch.setattr(tools_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    monkeypatch.setattr(tools_routes, "current_user", lambda request, session: db.User(id=1, alias="rob", admin=True))
     assert c.get("/tool/9").status_code == 200
 
 
@@ -220,15 +219,10 @@ def test_banned_user_cannot_log_in(monkeypatch):
     assert r.status_code == 403 and "banned until 2099-01-02" in r.json()["detail"]
 
 
-def test_session_user_json_carries_admin_flag():
-    user = db.User(id=1, alias="rob", admin=True)
-    assert json.loads(user.model_dump_json())["admin"] is True
-
-
 def test_an_admins_profile_folds_each_accounts_tools_behind_its_row(monkeypatch):
     from app.routes import admin as admin_routes
 
-    monkeypatch.setattr(admin_routes, "session_user", lambda request: db.User(id=1, alias="rob", admin=True))
+    monkeypatch.setattr(admin_routes, "current_user", lambda request, session: db.User(id=1, alias="rob", admin=True))
     eve = db.User(id=2, alias="eve")
     b = db.Tool(id=6, name="b", code="", user_id=2, public=True, tags=[])
     monkeypatch.setattr(db, "get_users_with_tools", lambda session: [db.AccountSummary(eve, [db.ToolSummary(b, 0, 0, 0)], 0, 0, 0)])
@@ -247,9 +241,9 @@ def test_the_header_has_no_admin_link(monkeypatch):
     from app.routes import admin as admin_routes
     from app.routes import auth as auth_routes
 
-    admin = lambda request: db.User(id=1, alias="rob", admin=True)  # noqa: E731
-    monkeypatch.setattr(admin_routes, "session_user", admin)
-    monkeypatch.setattr(auth_routes, "_session_user", admin)  # what the header reads
+    admin = db.User(id=1, alias="rob", admin=True)
+    monkeypatch.setattr(admin_routes, "current_user", lambda request, session: admin)
+    monkeypatch.setattr(auth_routes, "_session_user", lambda request: admin)  # what the header reads
     monkeypatch.setattr(db, "get_users_with_tools", lambda session: [])
     page = client(monkeypatch, StubRunner()).get("/user").text
     assert "ls -l /home/*/tools/ | column -t" in page  # the admin's profile has the accounts

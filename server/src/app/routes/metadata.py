@@ -13,8 +13,8 @@ from fastapi.responses import HTMLResponse
 from app import metadata
 from app.metadata.tags import suggest
 from app.models import tools
-from app.models.tools import SessionDep, get_user, lift_expired_ban
-from app.routes.auth import session_user
+from app.models.tools import SessionDep
+from app.routes.auth import current_user
 from app.utility import render
 
 router = APIRouter()
@@ -25,12 +25,8 @@ BROWSE_LIMIT = 5000
 
 
 def can_edit(request: Request, session, tool: tools.Tool) -> bool:
-    account = session_user(request)
-    if account is None:
-        return False
-    user = get_user(session, account.id)  # admin and banned are read from the database, never the cookie
-    lift_expired_ban(session, user)
-    if user.banned:
+    user = current_user(request, session)  # admin and banned are read from the database, never the cookie
+    if user is None:
         return False
     return tool.user_id == user.id or user.admin
 
@@ -57,7 +53,7 @@ def display(request: Request, session, tool: tools.Tool) -> str:
 @router.get("/manage/tool/create", response_class=HTMLResponse)
 async def create_dialog(request: Request, session: SessionDep):
     """The profile's [create]: the empty dialog."""
-    if session_user(request) is None:
+    if current_user(request, session) is None:
         raise HTTPException(status_code=404, detail="Not Found")
     return HTMLResponse(render.tool_dialog(request.scope.get("root_path"), None, None, {}))
 

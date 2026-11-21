@@ -197,7 +197,7 @@ def test_a_banned_user_cannot_upload_even_with_a_stale_cookie(monkeypatch, tmp_p
     with Session(db.engine) as session:
         session.merge(db.User(id=703, alias="gone", banned=True))
         session.commit()
-    monkeypatch.setattr(upload_routes, "session_user", lambda request: db.User(id=703, alias="gone"))
+    monkeypatch.setattr(upload_routes, "session_user_id", lambda request: 703)
     monkeypatch.setattr(tools_routes, "sandbox", Sandbox(tools_routes.ENVIRONMENT.sandbox, runner=BuildingRunner(built())))
     r = TestClient(app).post("/manage/tool/upload", files={"file": ("banned_box.py", MODEL.encode())})
     assert r.status_code == 403

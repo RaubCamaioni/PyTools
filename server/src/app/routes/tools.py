@@ -45,7 +45,7 @@ from app.routes import metadata as metadata_routes
 from app.utility.build_files import BuildFileError, checked_build
 from app import TEMPLATES, logger, ENVIRONMENT
 from app.models import tools as db_tools
-from app.routes.auth import User, session_user
+from app.routes.auth import current_user
 import json
 import re
 
@@ -71,11 +71,11 @@ TRACE_POLL_SECONDS = 0.05
 TRACE_IDLE_SECONDS = 1.0  # between checks that the stream was not superseded
 
 
-def _require_view(request: Request, tool) -> None:
+def _require_view(request: Request, session, tool) -> None:
     """A private tool is visible to its owner and to admins; everyone else gets a 404."""
     if tool.public:
         return
-    user = session_user(request)
+    user = current_user(request, session)
     if user is None or (tool.user_id != user.id and not user.admin):
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
@@ -161,9 +161,9 @@ async def get_tools(
 
 @router.post("/user/tools", response_class=JSONResponse)
 async def get_user_tools(request: Request, session: db_tools.SessionDep):
-    if "user" not in request.session:
+    user = current_user(request, session)
+    if user is None:
         return HTMLResponse(content="")
-    user: User = User.model_validate_json(request.session["user"])
     tools = db_tools.get_user_tools(session, user)
     content = render.list_item_user(request.scope.get("root_path"), tools)
     return HTMLResponse(content=content)
@@ -178,11 +178,8 @@ async def tool_link(request: Request, id: int, session: db_tools.SessionDep):
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
     if not tool.public:
-        if "user" not in request.session:
-            raise HTTPException(status_code=404, detail="Tool Not Found")
-        user: User = User.model_validate_json(request.session["user"])
-
-        if tool.user_id != user.id:
+        user = current_user(request, session)
+        if user is None or tool.user_id != user.id:
             raise HTTPException(status_code=404, detail="Tool Not Found")
 
     form_data = {}
@@ -210,7 +207,7 @@ async def entrypoint_page(request: Request, id: int, session: db_tools.SessionDe
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    _require_view(request, tool)
+    _require_view(request, session, tool)
 
     root_path = request.scope.get("root_path") or ""
     query = dict(request.query_params)
@@ -265,7 +262,7 @@ REPORT_REASON_MAX = 1000
 
 def _votes_block(request: Request, session, tool_id: int, login_needed: Optional[str] = None) -> str:
     """Render the vote/report block for the current viewer."""
-    user = session_user(request)
+    user = current_user(request, session)
     up, down = db_tools.vote_counts(session, tool_id)
     my_vote = db_tools.user_vote(session, user.id, tool_id) if user else None
     reported = db_tools.has_reported(session, user.id, tool_id) if user else False
@@ -279,8 +276,8 @@ async def vote_tool(request: Request, id: int, direction: str, session: db_tools
     tool = db_tools.get_tool_by_id(session, id)
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
-    _require_view(request, tool)
-    user = session_user(request)
+    _require_view(request, session, tool)
+    user = current_user(request, session)
     if user is None:
         return HTMLResponse(_votes_block(request, session, id, login_needed="vote"))
     db_tools.set_vote(session, user.id, id, direction)
@@ -292,8 +289,8 @@ async def report_tool(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
-    _require_view(request, tool)
-    user = session_user(request)
+    _require_view(request, session, tool)
+    user = current_user(request, session)
     if user is None:
         return HTMLResponse(_votes_block(request, session, id, login_needed="report"))
     form = await request.form()
@@ -311,7 +308,7 @@ async def download_tool(request: Request, id: int, session: db_tools.SessionDep)
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    _require_view(request, tool)
+    _require_view(request, session, tool)
 
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, "w") as zip_file:
@@ -349,7 +346,7 @@ async def _run_tool(request: Request, id: int, session, channel):
     if tool is None:
         raise HTTPException(status_code=404, detail="Tool Not Found")
 
-    _require_view(request, tool)
+    _require_view(request, session, tool)
 
     # the stored signature is checked again and every value converted through it, never evaluated:
     # this runs in the web app, outside the sandbox
@@ -479,7 +476,7 @@ async def tool_preview(request: Request, id: int, session: db_tools.SessionDep):
     tool = db_tools.get_tool_by_id(session, id)
     if tool is None or not tool.preview_svg:
         raise HTTPException(status_code=404, detail="No preview")
-    _require_view(request, tool)
+    _require_view(request, session, tool)
     # a re-upload replaces the thumbnail, so browsers revalidate: the ETag is the drawing's hash
     etag = hashlib.sha256(tool.preview_svg.encode("utf-8")).hexdigest()[:16]
     if request.headers.get("if-none-match") == f'"{etag}"':
@@ -494,7 +491,7 @@ async def tool_default_file(request: Request, id: int, ext: Literal["stl", "step
     tool = db_tools.get_tool_by_id(session, id)
     if tool is None or tool.kind != "model":  # a script never has a default build, whatever is on disk
         raise HTTPException(status_code=404, detail="Tool Not Found")
-    _require_view(request, tool)
+    _require_view(request, session, tool)
     path = ENVIRONMENT.MODELS_DIR / str(tool.id) / f"model.{ext}"
     if not path.is_file():
         raise HTTPException(status_code=404, detail="No default build for this model")
