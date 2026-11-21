@@ -8,20 +8,21 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.models import tools as db
-from app.routes.auth import session_user
+from app.routes.auth import current_user
 
 router = APIRouter()
 
 
-def is_admin(request: Request) -> bool:
-    user = session_user(request)
+def is_admin(request: Request, session: db.Session) -> bool:
+    user = current_user(request, session)
     return user is not None and user.admin
 
 
-def require_admin(request: Request) -> db.User:
-    if not is_admin(request):
+def require_admin(request: Request, session: db.Session) -> db.User:
+    user = current_user(request, session)
+    if user is None or not user.admin:
         raise HTTPException(status_code=404, detail="Not Found")
-    return session_user(request)
+    return user
 
 
 @router.get("/admin")
@@ -33,7 +34,7 @@ async def admin_page(request: Request):
 @router.post("/admin/ban/{user_id}", response_class=HTMLResponse)
 async def ban_user(request: Request, user_id: int, months: int, session: db.SessionDep):
     """Ban for 1, 6 or 12 months: the account cannot log in and all its tools go private."""
-    admin = require_admin(request)
+    admin = require_admin(request, session)
     if user_id == admin.id:
         raise HTTPException(status_code=400, detail="You cannot ban yourself")
     if months not in db.BAN_PERIODS_MONTHS:
@@ -44,6 +45,6 @@ async def ban_user(request: Request, user_id: int, months: int, session: db.Sess
 
 @router.post("/admin/unban/{user_id}", response_class=HTMLResponse)
 async def unban_user(request: Request, user_id: int, session: db.SessionDep):
-    require_admin(request)
+    require_admin(request, session)
     db.set_banned(session, user_id, None)
     return HTMLResponse(status_code=200)

@@ -50,7 +50,7 @@ def test_anonymous_vote_asks_for_login(monkeypatch, public_tool):
 
 def test_logged_in_vote_returns_the_updated_fragment(monkeypatch, public_tool):
     calls = []
-    monkeypatch.setattr(tools_routes, "session_user", lambda request: db.User(id=2, alias="eve"))
+    monkeypatch.setattr(tools_routes, "current_user", lambda request, session: db.User(id=2, alias="eve"))
     monkeypatch.setattr(tools_routes.db_tools, "set_vote", lambda session, user_id, tool_id, direction: calls.append((user_id, tool_id, direction)) or "up")
     monkeypatch.setattr(tools_routes.db_tools, "vote_counts", lambda session, tool_id: (13, 3))
     monkeypatch.setattr(tools_routes.db_tools, "user_vote", lambda session, user_id, tool_id: "up")
@@ -63,7 +63,7 @@ def test_logged_in_vote_returns_the_updated_fragment(monkeypatch, public_tool):
 
 def test_report_records_the_reason_and_shows_reported(monkeypatch, public_tool):
     calls = []
-    monkeypatch.setattr(tools_routes, "session_user", lambda request: db.User(id=2, alias="eve"))
+    monkeypatch.setattr(tools_routes, "current_user", lambda request, session: db.User(id=2, alias="eve"))
     monkeypatch.setattr(tools_routes.db_tools, "add_report", lambda session, user_id, tool_id, reason: calls.append((user_id, tool_id, reason)))
     monkeypatch.setattr(tools_routes.db_tools, "vote_counts", lambda session, tool_id: (0, 0))
     monkeypatch.setattr(tools_routes.db_tools, "user_vote", lambda session, user_id, tool_id: None)

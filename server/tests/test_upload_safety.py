@@ -93,7 +93,7 @@ def stored_code():
 
 
 def as_user(monkeypatch, user):
-    monkeypatch.setattr(upload_routes, "session_user", lambda request: user)
+    monkeypatch.setattr(upload_routes, "session_user_id", lambda request: user and user.id)
     return client(monkeypatch, StubRunner())
 
 
