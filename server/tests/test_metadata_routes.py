@@ -288,3 +288,15 @@ def test_dialog_errors_are_shown_as_text(monkeypatch, logged_in):
     page = logged_in.get("/manage/tool/create").text
     handler = page.split("htmx:responseError")[1].split('">')[0]
     assert "#tool-dialog-error's textContent" in handler and "into #tool-dialog-error" not in handler
+
+
+def test_a_link_cannot_change_a_tools_visibility(monkeypatch, logged_in):
+    # visibility is changed with POST /manage/tool/settings/{id} only: opening a URL changes nothing
+    post(logged_in, monkeypatch, StubRunner(), "link_box")
+    tool_id, _ = stored("link_box")
+    assert logged_in.get(f"/public/tool/{tool_id}", params={"public": "true"}).status_code in (404, 405)
+    with db.Session(db.engine) as session:
+        assert session.get(db.Tool, tool_id).public is False
+    assert logged_in.post(f"/manage/tool/settings/{tool_id}", params={"public": "true"}).status_code == 200
+    with db.Session(db.engine) as session:
+        assert session.get(db.Tool, tool_id).public is True

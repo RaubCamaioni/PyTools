@@ -328,31 +328,6 @@ async def download_tool(request: Request, id: int, session: db_tools.SessionDep)
     )
 
 
-@router.get("/public/tool/{id}", response_class=HTMLResponse)
-async def public_tool(
-    request: Request,
-    id: int,
-    session: db_tools.SessionDep,
-    public: bool = False,
-):
-    if "user" not in request.session:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    user: User = User.model_validate_json(request.session.get("user"))
-    tool = db_tools.get_tool_by_id(session, id)
-
-    if user.id != tool.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    if tool is None:
-        raise HTTPException(status_code=404, detail="Tool Not Found")
-
-    tool.public = public
-    session.commit()
-
-    return HTMLResponse(status_code=200)
-
-
 async def _form_values(request: Request, tool) -> dict:
     """The submitted values for the tool's arguments: strings, and uploads as InputFile. Stray fields are ignored."""
     values = {}
