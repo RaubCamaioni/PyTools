@@ -41,7 +41,7 @@ def state_for(c):
 def github(monkeypatch):
     fake = FakeGitHub()
     monkeypatch.setattr(auth_routes, "github", fake)
-    monkeypatch.setattr(auth_routes, "OWNER_GITHUB_LOGIN", "RaubCamaioni")
+    monkeypatch.setattr(auth_routes, "OWNER_GITHUB_ID", 4242)
     # the route imported get_user by name, so patch it where it is used
     monkeypatch.setattr(auth_routes, "get_user", lambda session, id: db.User(id=id))
     return fake
@@ -122,12 +122,45 @@ def test_header_prompt_shows_user_and_directory(github):
     assert ':/<a href="/" class="no-underline hover:bg-paper hover:text-ink">home</a>/<a href="/"' in c.get("/").text
 
 
-def test_owner_github_login_maps_to_existing_user_id(github):
-    github.user = {"id": 999, "login": "RaubCamaioni"}
+def logged_in_id(github, account):
+    github.user = account
     c = TestClient(app)
     state = state_for(c)
     c.get("/auth/github", params={"code": "abc", "state": state}, follow_redirects=False)
-    assert json.loads(c.cookies and c.get("/whoami").text)["id"] == 49600918
+    return json.loads(c.get("/whoami").text)["id"]
+
+
+def test_owner_github_id_maps_to_existing_user_id(github):
+    # the account id never changes; the login name can, so it plays no part
+    assert logged_in_id(github, {"id": 4242, "login": "renamed"}) == 49600918
+
+
+def test_the_owners_login_name_under_another_github_id_is_an_ordinary_user(github):
+    assert logged_in_id(github, {"id": 999, "login": "RaubCamaioni"}) == db.hash_id("github:999")
+
+
+def test_nobody_is_the_owner_when_no_owner_id_is_set(github, monkeypatch):
+    monkeypatch.setattr(auth_routes, "OWNER_GITHUB_ID", None)
+    assert logged_in_id(github, {"id": 4242, "login": "RaubCamaioni"}) == db.hash_id("github:4242")
+
+
+@pytest.mark.parametrize("value,expected", [(None, None), ("", None), (" 4242 ", 4242)])
+def test_owner_github_id_setting(monkeypatch, value, expected):
+    import app as app_package
+
+    if value is None:
+        monkeypatch.delenv("OWNER_GITHUB_ID", raising=False)
+    else:
+        monkeypatch.setenv("OWNER_GITHUB_ID", value)
+    assert app_package._owner_github_id() == expected
+
+
+def test_owner_github_id_setting_must_be_a_number(monkeypatch):
+    import app as app_package
+
+    monkeypatch.setenv("OWNER_GITHUB_ID", "RaubCamaioni")
+    with pytest.raises(ValueError, match="OWNER_GITHUB_ID"):
+        app_package._owner_github_id()
 
 
 def test_other_users_get_an_id_derived_from_their_github_id(github):

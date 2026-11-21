@@ -11,6 +11,16 @@ from sandboxcore.host import SandboxConfig
 REQUIRED_ENVIRONMENT = ("SESSION_KEY", "DATABASE")
 
 
+def _owner_github_id() -> Optional[int]:
+    """OWNER_GITHUB_ID as a number, or None when it is not set: then no login is the owner's."""
+    value = os.environ.get("OWNER_GITHUB_ID", "").strip()
+    if not value:
+        return None
+    if not value.isdigit():
+        raise ValueError("OWNER_GITHUB_ID must be the GitHub account's numeric id, not its login name")
+    return int(value)
+
+
 @dataclass
 class _ENVIRONMENT:
     SESSION_KEY: str = os.environ.get("SESSION_KEY")
@@ -19,8 +29,9 @@ class _ENVIRONMENT:
     GITHUB_CLIENT_ID: Optional[str] = os.environ.get("GITHUB_CLIENT_ID")
     GITHUB_CLIENT_SECRET: Optional[str] = os.environ.get("GITHUB_CLIENT_SECRET")
     GITHUB_REDIRECT_URI: str = os.environ.get("GITHUB_REDIRECT_URI", "https://pywebtools.com/auth/github")
-    # the GitHub account that owns the tools uploaded under the original (Google) account
-    OWNER_GITHUB_LOGIN: str = os.environ.get("OWNER_GITHUB_LOGIN", "RaubCamaioni")
+    # the GitHub account that owns the tools uploaded under the original (Google) account: its numeric id
+    # (the "id" at https://api.github.com/users/<login>), which stays the same when the login name changes
+    OWNER_GITHUB_ID: Optional[int] = _owner_github_id()
     # the URL prefix the app is served under, e.g. "/tools" behind a reverse proxy; "" at the root
     ROOT_PATH: str = os.environ.get("ROOT_PATH", "").rstrip("/")
     # each model's default build (model.stl, model.step) under <MODELS_DIR>/<tool id>/, beside the database

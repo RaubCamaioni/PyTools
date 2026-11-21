@@ -21,7 +21,7 @@ router = APIRouter()
 
 # the account that uploaded the original tools, created under the old Google login
 OWNER_USER_ID = 49600918
-OWNER_GITHUB_LOGIN = ENVIRONMENT.OWNER_GITHUB_LOGIN
+OWNER_GITHUB_ID = ENVIRONMENT.OWNER_GITHUB_ID  # None: no login maps to the owner's account
 DEFAULT_ALIAS = "annonymous"  # matches the User model default
 RECENT_STATES = 5  # login states kept per session (one per rendered login button)
 
@@ -157,7 +157,8 @@ async def auth_github(request: Request, code: str, state: str, session: SessionD
         logger.warning(f"github login failed: {e}")
         raise HTTPException(status_code=403, detail="GitHub login failed")
 
-    user_id = OWNER_USER_ID if account["login"] == OWNER_GITHUB_LOGIN else hash_id(f"github:{account['id']}")
+    is_owner = OWNER_GITHUB_ID is not None and account["id"] == OWNER_GITHUB_ID
+    user_id = OWNER_USER_ID if is_owner else hash_id(f"github:{account['id']}")
     user = get_user(session, user_id)
     lift_expired_ban(session, user)
     if user.banned:
