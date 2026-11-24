@@ -405,7 +405,9 @@ async def run_isolated(
     if htmx:
         return HTMLResponse(content=render.render(result.value, root_path))
     # files become their download URLs
-    return json.dumps(result.value, default=lambda obj: render.download_url(obj, root_path) if isinstance(obj, OutputFile) else str(obj))
+    # as JSON, never as a page: the route's default type is HTML, and a result can hold markup a caller chose
+    body = json.dumps(result.value, default=lambda obj: render.download_url(obj, root_path) if isinstance(obj, OutputFile) else str(obj))
+    return Response(content=body, media_type="application/json")
 
 
 async def build_model(tool, values: dict, on_line=None):
@@ -462,7 +464,7 @@ def _model_response(value: dict, name: str, root_path: str, htmx: bool):
     stl_url, step_url = render.download_url(build["stl"], root_path), render.download_url(build["step"], root_path)
     if htmx:
         return HTMLResponse(content=render.model_result(root_path, name, stl_url, step_url, build["meta"]))
-    return json.dumps({"stl": stl_url, "step": step_url, "meta": build["meta"]})
+    return JSONResponse({"stl": stl_url, "step": step_url, "meta": build["meta"]})
 
 
 # an SVG is a document that can carry script, and uploaded code writes its own: served from this origin it is

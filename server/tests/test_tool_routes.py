@@ -335,3 +335,17 @@ def test_an_svg_preview_of_a_run_cannot_run_script(monkeypatch, public_tool):
     with client(monkeypatch, FileRunner({"drawing.svg": b"<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>"})) as c:
         r = c.get(run_and_get_urls(c)["drawing.svg"] + "?preview=1")
     assert "sandbox" in r.headers["content-security-policy"] and r.headers["x-content-type-options"] == "nosniff"
+
+
+def test_a_plain_run_answers_as_json_so_a_result_is_never_a_page(monkeypatch, public_tool):
+    # without the htmx header the result is data: sent as text/html, a tool that echoes its input
+    # would let another site run script on this origin
+    c = client(monkeypatch, StubRunner(RunResult(Outcome.OK, results="<script>alert(1)</script>")))
+    r = c.post("/tool/8")
+    assert r.headers["content-type"] == "application/json"
+    assert r.json() == "<script>alert(1)</script>"
+
+
+def test_a_plain_run_of_a_model_answers_as_json(monkeypatch, public_tool):
+    r = client(monkeypatch, StubRunner(built())).post("/tool/8")
+    assert r.headers["content-type"] == "application/json" and "stl" in r.json()
